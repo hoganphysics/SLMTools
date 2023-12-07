@@ -1,5 +1,5 @@
 module HoganParameters
-using LatticeTools: dualShiftLattice, padout
+using ..LatticeTools: dualShiftLattice, padout
 
 """
     dxcam

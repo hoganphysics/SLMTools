@@ -1,6 +1,6 @@
 module ImageProcessing
 using FileIO: load
-using Images: Gray
+using Images: Gray, RGB
 
 export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid
 

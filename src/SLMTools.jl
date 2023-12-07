@@ -6,7 +6,6 @@ module SLMTools
 # include("SubModule/Submodule.jl")
 # using .Submodule
 # export subtestA, subtestB, subsubtestA, subsubtestB
-export natlat
 
 include("LatticeTools/LatticeTools.jl")
 using .LatticeTools
@@ -26,7 +25,7 @@ export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid
 # export gs, pdgs, ampSwap, phasor, pdError1, cpdError1, croppedPDGS, arraySizeChecks, gsRefine
 
 # include("OTHelpers.jl")
-# export Lattice, getMoment, getCostMatrix, pdCostMatrix, pdotBeamEstimate, safeInverse, mapify, scalarPotential2, scalarPotentialN, hyperSum, OTphase, OTreducedPhase
+# export getCostMatrix, pdCostMatrix, pdotBeamEstimate, safeInverse, mapify, scalarPotential2, scalarPotentialN, hyperSum, OTphase, OTreducedPhase
 
 include("masks/PhaseGenerators.jl")
 using .PhaseGenerators
@@ -43,7 +42,7 @@ export makeGaussian, makeRing, makeLetter, makeLetterPattern
 # export savePhase, saveBeam, saveAs8BitBMP
 
 # include("FitHelpers.jl")
-# export lineFit, sweepCoords, findCOM, getCamGrid
+# export lineFit, sweepCoords, findCOM
 
 include("other/Misc.jl")
 using .Misc
