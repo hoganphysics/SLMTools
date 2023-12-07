@@ -1,7 +1,9 @@
 module DualLattices
 using ..LatticeCore: Lattice, sft, isft
+using Interpolations: linear_interpolation 
 
 export dualLattice, dualShiftLattice, dualate
+
 
 
 """
