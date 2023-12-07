@@ -16,7 +16,7 @@ export dualLattice, dualShiftLattice, dualate
 
 include("ImageProcessing.jl")
 using .ImageProcessing
-export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid
+export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid, sweepCoords, findCOM, lineFit
 
 # include("EstimateInverse.jl")
 # export estimateInverseField, estimateInverseImage
@@ -42,7 +42,7 @@ export makeGaussian, makeRing, makeLetter, makeLetterPattern
 # export savePhase, saveBeam, saveAs8BitBMP
 
 # include("FitHelpers.jl")
-# export lineFit, sweepCoords, findCOM
+# export lineFit,  findCOM
 
 include("other/Misc.jl")
 using .Misc
