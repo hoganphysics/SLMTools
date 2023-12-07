@@ -2,7 +2,7 @@ module ImageProcessing
 using FileIO: load
 using Images: Gray
 
-export getImagesAndFilenames, imageToFloatArray, itfa
+export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid
 
 
 """
@@ -38,6 +38,40 @@ imageToFloatArray(img::Matrix) = convert.(Float64, Gray.(img))
 # Alias for `imageToFloatArray`
 itfa = imageToFloatArray;
 
+
+"""
+    getCamGrid(linImgs::Vector{Array{T,2}}, idxs, dxcam; roi=nothing)
+    Processes a collection of linear phase RGB images to determine the camera grid orientation and origin.
+
+    # Arguments
+    - `linImgs::Vector{Array{T,2}}`: A vector of 2D RGB images.
+    - `idxs`: Indices or parameters associated with each image in `linImgs`.
+    - `dxcam`: The physical unit conversion factor for camera pixels.
+    - `roi` (optional): Region of interest specified as a tuple of ranges. If not provided, the entire image is used.
+
+    # Returns
+    - A tuple representing the camera grid in physical units, adjusted by the origin.
+    - `θ`: The angle of the grid with respect to some reference.
+"""
+function getCamGrid(linImgs::Vector{Array{T,2}}, idxs, dxcam; roi=nothing) where {T<:Number}
+    isnothing(roi) && (roi = ((1:s for s in size(linImgs[1]))...,))
+    imgs = [i[roi...] for i in linImgs]
+    θ, origin, s = sweepCoords(imgs, idxs; normalize=true)
+    # pixels = ((1:length(r) for r in roi)...,)
+    # return (((pixels[j] .- origin[j]) .* dxcam for j = 1:length(pixels))...,), θ
+
+    # more julian way of doing the above, which the linter was cranky about 
+    # Assuming roi is a tuple of ranges, we obtain the axes directly
+    pixels = map(axes(roi)) do r
+        1:length(r)  # This is safe because `length(r)` will correspond to the range's size.
+    end
+
+    # We can use `eachindex` to iterate over each index of `pixels`
+    # Note that `pixels` is a tuple of ranges, so `eachindex` is equivalent to `1:length(pixels)`
+    return tuple((map(j -> (pixels[j] .- origin[j]) .* dxcam, eachindex(pixels))...)), θ
+
+end
+getCamGrid(linImgs::Vector{Array{T,2}}, idxs, dxcam; roi=nothing) where {T<:RGB} = getCamGrid(itfa.(linImgs), idxs, dxcam; roi=roi)
 
 
 

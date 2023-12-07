@@ -3,8 +3,7 @@ using SLMTools.ImageProcessing
 
 @testset "ImageProcessing tests" begin
     # assumes the image folder testdata/test_images/ exists and has exactly three bitmaps (1216,1936) in it, named 01.bmp, 02.bmp, 03.bmp
-    imgs, img_names = getImagesAndFilenames(raw"test_data\test_images_A\\", ".bmp")
-    
+    imgs, img_names = getImagesAndFilenames("test/test_data/test_images_A/", ".bmp")
     @testset "getImagesAndFilenames tests" begin
         @test size(imgs) == (3,)
         @test all(size(img) == (1216, 1936) for img in imgs[1:3])

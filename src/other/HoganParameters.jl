@@ -1,3 +1,5 @@
+module HoganParameters
+using LatticeTools: dualShiftLattice, padout
 
 """
     dxcam
@@ -52,3 +54,6 @@ LslmE = padout(Lslm, 100)
     dual lattice of LslmE
 """
 dLE = dualShiftLattice(LslmE, flambda)
+
+
+end # module HoganParameters

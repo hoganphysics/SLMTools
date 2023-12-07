@@ -17,7 +17,7 @@ export dualLattice, dualShiftLattice, dualate
 
 include("ImageProcessing.jl")
 using .ImageProcessing
-export getImagesAndFilenames, imageToFloatArray, itfa
+export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid
 
 # include("EstimateInverse.jl")
 # export estimateInverseField, estimateInverseImage
@@ -49,8 +49,9 @@ include("other/Misc.jl")
 using .Misc
 export ramp, nabs, centroid, window
 
-# include("HoganParameters.jl")
-# export dxcam, dxslm, nslm, flambda, dXslm, Lslm, dL, LslmE, dLE
+include("other/HoganParameters.jl")
+using .HoganParameters
+export dxcam, dxslm, nslm, flambda, dXslm, Lslm, dL, LslmE, dLE
 
 
 end # module SLMTools
