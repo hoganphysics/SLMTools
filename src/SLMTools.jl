@@ -14,9 +14,25 @@ export downsample, upsample, upsampleBeam
 export dualLattice, dualShiftLattice, dualate
 # export toDim, shiftedPhases, dualPhase,dualShiftLattice, padout, dualate, dualLattice, sft, isft, centroid, window, sublattice, latticeDisplacement
 
-include("ImageProcessing.jl")
+include("other/ImageProcessing.jl")
 using .ImageProcessing
-export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid
+export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid, sweepCoords, findCOM, lineFit
+
+include("masks/PhaseGenerators.jl")
+using .PhaseGenerators
+export makeRampedParabola
+
+include("masks/IntensityGenerators.jl")
+using .IntensityGenerators
+export makeGaussian, makeRing, makeLetter, makeLetterPattern
+
+include("other/Misc.jl")
+using .Misc
+export ramp, nabs, centroid, window
+
+include("other/HoganParameters.jl")
+using .HoganParameters
+export dxcam, dxslm, nslm, flambda, dXslm, Lslm, dL, LslmE, dLE
 
 # include("EstimateInverse.jl")
 # export estimateInverseField, estimateInverseImage
@@ -27,30 +43,11 @@ export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid
 # include("OTHelpers.jl")
 # export getCostMatrix, pdCostMatrix, pdotBeamEstimate, safeInverse, mapify, scalarPotential2, scalarPotentialN, hyperSum, OTphase, OTreducedPhase
 
-include("masks/PhaseGenerators.jl")
-using .PhaseGenerators
-export makeRampedParabola
-
-include("masks/IntensityGenerators.jl")
-using .IntensityGenerators
-export makeGaussian, makeRing, makeLetter, makeLetterPattern
-
 # include("VisualizationHelpers.jl")
 # export plotBeamMap, hm
 
 # include("FileHelpers.jl")
 # export savePhase, saveBeam, saveAs8BitBMP
-
-# include("FitHelpers.jl")
-# export lineFit, sweepCoords, findCOM
-
-include("other/Misc.jl")
-using .Misc
-export ramp, nabs, centroid, window
-
-include("other/HoganParameters.jl")
-using .HoganParameters
-export dxcam, dxslm, nslm, flambda, dXslm, Lslm, dL, LslmE, dLE
 
 
 end # module SLMTools

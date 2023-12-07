@@ -1,6 +1,6 @@
 module HoganParameters
 using ..LatticeTools: dualShiftLattice, padout
-
+export dxcam, dxslm, nslm, flambda, dXslm, Lslm, dL, LslmE, dLE
 """
     dxcam
     camera pixel size in microns
