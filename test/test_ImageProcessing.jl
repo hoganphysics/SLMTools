@@ -30,7 +30,8 @@ using SLMTools.ImageProcessing
         roi = ((y0-yhspan):(y0+yhspan), (x0-xhspan):(x0+xhspan))
         indstart = 19
         camgrid, angle = getCamGrid(linImgs[indstart:end], [parse(Int, n[1:2]) for n in linImgNames[indstart:end]], dxcam; roi=roi)
-        @test angle ≈ 0.02234140096699088    
-        @test isapprox(camgrid[1], 332.8237653385899:5.86:338.6837653385899)
+        @test angle ≈ 0.02234140096699088
+        @test isapprox(camgrid[1], 332.8237653385899:5.86:2090.82376533859)
+        @test isapprox(camgrid[2], -641.2742193939262:5.86:1116.7257806060738)
     end
 end
