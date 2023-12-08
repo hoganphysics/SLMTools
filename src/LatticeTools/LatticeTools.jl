@@ -1,6 +1,6 @@
 module LatticeTools
 
-include("LatticeCore.jl")
+include("LatticeCore.jl") # uses LatticeFields.jl
 using .LatticeCore
 export Lattice, natlat, sft, isft, padout
 

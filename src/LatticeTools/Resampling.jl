@@ -3,7 +3,7 @@ using ..LatticeCore
 using Interpolations: cubic_spline_interpolation, Flat, Periodic
 using FFTW: fftshift, ifftshift
 
-export downsample, coarsen, upsample, sublattice
+export downsample, coarsen, upsample
 
 
 #region ------------------downsample lattices ----------------------------
@@ -510,46 +510,6 @@ end
 
 #endregion
 
-#region ----------------------sublattice--------------------------------
-"""
-    sublattice(L::Lattice{N}, box::CartesianIndices) where {N}
 
-    Extracts a sublattice from a given `Lattice` `L` using the specified `box` of Cartesian indices.
-
-    # Arguments
-    - `L`: A lattice from which the sublattice is to be extracted.
-    - `box`: Cartesian indices defining the region of the sublattice.
-
-    # Returns
-    - A tuple representing the extracted sublattice.
-    - Throws an error if the dimensions of the `box` do not match the lattice.
-    """
-function sublattice(L::Lattice{N}, box::CartesianIndices) where {N}
-    length(size(box)) == N || error("box should have same number of dimensions as lattice.") #TODO check if this should be here
-    return ((L[j][box[1][j]:box[end][j]] for j = 1:N)...,)
-end
-
-"""
-    sublattice(L::Lattice{N}, x::Union{I,AbstractRange{I}}...) where {N,I<:Integer}
-
-    Create a sublattice from a given lattice `L` by specifying indices or ranges in each dimension. This function is particularly useful in optical trapping simulations when a smaller section of a larger lattice structure needs to be isolated for detailed analysis or for applying specific operations.
-
-    # Arguments
-    - `L::Lattice{N}`: The original lattice from which the sublattice is to be created.
-    - `x::Union{I,AbstractRange{I}}...`: A series of integers or ranges specifying the indices in each dimension to create the sublattice.
-
-    # Returns
-    - `Tuple`: A tuple representing the sublattice.
-
-    # Errors
-    Throws `DimensionMismatch` if the number of indices provided does not match the dimensions of `L`.
-
-    """
-function sublattice(L::Lattice{N}, x::Union{I,AbstractRange{I}}...) where {N,I<:Integer}
-    length(L) != length(x) && throw(DimensionMismatch("Wrong number of indices while attempting to make sublattice."))
-    y = (((i isa Integer) ? (i:i) : i for i in x)...,)
-    return ((L[j][y[j]] for j = 1:N)...,)
-end
-#endregion
 
 end

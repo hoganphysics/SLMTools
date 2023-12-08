@@ -5,16 +5,8 @@
 
 #-------------------- Dual lattices ------------------------------
 
-function dualLattice(L::Lattice{N},flambda::Number=1) where N
-    # The step size of the dual lattice is flambda/(length of lattice) = flambda/(N * dx).
-    # The periodicity (~largest element) of the dual lattice is twice the Nyquist frequency, ~flambda/dx
-    return ( ( (0:length(l)-1) .* flambda ./ (length(l)*step(l)) for l in L )..., )
-end
 
-function dualShiftLattice(L::Lattice{N},flambda::Number=1) where N
-    # These frequencies are equivalent to those of fftshift(dualLattice), but the initial entries are negative
-    return ( ( (-floor(Int,length(l)/2):floor(Int,(length(l)-1)/2)) .* flambda ./ (length(l)*step(l)) for l in L )..., )
-end
+
 
 
 
