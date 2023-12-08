@@ -6,109 +6,296 @@ using FFTW: fftshift, ifftshift
 export downsample, upsample, upsampleBeam, sublattice
 export upsample, upsampleBeam
 
-#region downsample
-"""
-    downsample(μ::AbstractArray{T,N}, r::Int; reducer=sum) where {T, N}
+#region ------------------downsample lattices ----------------------------
 
-    Downsampling operation on an N-dimensional array `μ` by a factor of `r` using a specified reduction function (default is sum). This function reduces the size of the array by grouping and aggregating elements.
+"""
+    downsample(r::AbstractRange, n::Int)
+
+    Downsample a range `r` by merging every `n` points into one, centered at the mean of the original points.
+    This function is particularly useful in reducing the resolution of a dataset in a controlled manner,
+    which can be important in optical trapping simulations when dealing with large datasets or when a lower
+    resolution is sufficient for certain analyses.
 
     # Arguments
-    - `μ`: An N-dimensional array to be downsampled.
-    - `r`: Downsampling factor, which must evenly divide each dimension of `μ`.
-    - `reducer`: A function to aggregate elements in each group (default is `sum`).
+    - `r::AbstractRange`: The original range to be downsampled.
+    - `n::Int`: The number of points to be merged into one.
 
     # Returns
-    - A downsampled version of the input array `μ`.
+    - `AbstractRange`: A new downsampled range.
 
     # Errors
-    - Throws an error if `r` does not evenly divide each dimension of `μ`.
-"""
-function downsample(μ::AbstractArray{T,N}, r::Int; reducer=sum) where {T,N}
-    size(μ) .% r == 0 .* size(μ) || error("Downsample factor must divide array size.")
-    CR = CartesianIndices(((0:r-1 for i = 1:N)...,))
-    CD = CartesianIndices(((1:r:s for s in size(μ))...,))
-    return [reducer(μ[I.+CR]) for I in CD]
+    Throws `DomainError` if `n` does not evenly divide the length of `r`.
+    """
+function downsample(r::AbstractRange, n::Int)
+    # Downsamples a range r by merging n points into one, centered at the mean of the original points.
+    # n must divide the length of r. 
+    if length(r) % n != 0
+        throw(DomainError((n, length(r)), "downsample: Downsample factor n does not divide the length of the range r."))
+    end
+    return (0:length(r)÷n-1) .* (step(r) * n) .+ (r[n] + r[1]) / 2
 end
 
 """
-    downsample(L::Lattice{N}, r::Int) where {N}
+    downsample(L::Lattice{N}, n::Int) where N
 
-    Downsampling operation for a lattice `L` by a factor of `r`. This function reduces the number of points in the lattice by selecting points at regular intervals based on the downsampling factor.
+    Downsample a lattice `L` by merging every `n^N` points into one, centered at the mean of the original points.
+    This function is key in simulations where reducing the resolution of a lattice structure can lead to more
+    efficient computations without significantly compromising the accuracy of the simulation results.
 
     # Arguments
-    - `L`: A lattice to be downsampled.
-    - `r`: Downsampling factor, which must evenly divide the length of each dimension of `L`.
+    - `L::Lattice{N}`: The original lattice to be downsampled.
+    - `n::Int`: The downsample factor for each dimension of the lattice.
 
     # Returns
-    - A downsampled version of the lattice `L`.
+    - `Tuple`: A tuple of downsampled ranges corresponding to each dimension of the lattice.
 
     # Errors
-    - Throws an error if `r` does not evenly divide the length of each dimension of `L`.
-"""
-function downsample(L::Lattice{N}, r::Int) where {N}
-    length.(L) .% r == 0 .* length.(L) || error("Downsample factor must divide lattice size.")
-    return ((((0:r:length(l)-1) .+ (r - 1) / 2) .* step(l) .+ l[1] for l in L)...,)
+    Throws `DomainError` if `n` does not evenly divide the length of each dimension of `L`.
+    """
+function downsample(L::Lattice{N}, n::Int) where {N}
+    # Downsamples a lattice L by merging n^N points into one, centered at the mean of the original points.
+    # n must divide the length of each dimension of L. 
+    return ((downsample(l, n) for l in L)...,)
 end
+
+"""
+    downsample(L::Lattice{N}, ns::NTuple{N,Int}) where N
+
+    Downsample a lattice `L` with different downsampling factors for each dimension, merging `ns[1]×ns[2]×...×ns[N]` 
+    points into one, centered at the mean of the original points. This allows for non-uniform downsampling of a lattice, 
+    which can be crucial in optical trapping simulations where different resolutions are needed across different dimensions.
+
+    # Arguments
+    - `L::Lattice{N}`: The original lattice to be downsampled.
+    - `ns::NTuple{N,Int}`: A tuple specifying the downsampling factor for each dimension of the lattice.
+
+    # Returns
+    - `Tuple`: A tuple of downsampled ranges, each corresponding to a dimension of the lattice with its own downsampling factor.
+
+    # Errors
+    Throws `DomainError` if `ns[i]` does not evenly divide the length of `L[i]` for `i=1:N`.
+    """
+function downsample(L::Lattice{N}, ns::NTuple{N,Int}) where {N}
+    # Downsamples a lattice L by merging ns[1]×ns[2]×⋯×ns[N] points into one, centered at the mean of the original points.
+    # ns[i] must divide the length of L[i] for i=1:N. 
+    return ((downsample(L[i], ns[i]) for i = 1:N)...,)
+end
+
 #endregion
 
-#region upsample
-"""
-    upsample(A::AbstractArray{T,N}, LL::Lattice{N}, LH::Lattice{N}) where {T, N}
+#region -------------------downsample arrays -------------------------------
 
-    Upsamples an N-dimensional array `A` from a lower-resolution lattice `LL` to a higher-resolution lattice `LH` using cubic spline interpolation.
+"""
+    downsample(x::AbstractArray{T,N}, Lu::Lattice{N}, Ld::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+
+    Downsample an `AbstractArray` from a fine lattice `Ld` to a coarse lattice `Lu`. This function does not require any specific relationship between the lattices; it simply interpolates `x` from one lattice to the other. It's particularly useful in optical trapping simulations where adjusting the resolution of data is necessary for different analysis scales.
 
     # Arguments
-    - `A`: An N-dimensional array to be upsampled.
-    - `LL`: The lattice corresponding to the lower-resolution of `A`.
-    - `LH`: The lattice defining the higher-resolution target.
+    - `x::AbstractArray{T,N}`: The original array on lattice `Ld`.
+    - `Lu::Lattice{N}`: The coarse lattice to downsample to.
+    - `Ld::Lattice{N}`: The fine lattice representing the original array's grid.
+    - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
+    - `bc`: Boundary conditions to use (default is periodic).
 
     # Returns
-    - An upsampled version of the array `A` fitting the higher-resolution lattice `LH`.
+    - `AbstractArray`: The downsampled array.
 
-    # Note
-    - This function uses cubic spline interpolation for the upsampling process.
-"""
-function upsample(A::AbstractArray{T,N}, LL::Lattice{N}, LH::Lattice{N}) where {T,N}
-    return cubic_spline_interpolation(LL, A, extrapolation_bc=Flat())[LH...]
+    # Errors
+    Throws `DomainError` if the size of `x` does not match the size of `Lu`.
+    """
+function downsample(x::AbstractArray{T,N}, Lu::Lattice{N}, Ld::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+    # This lattice downsampler is basically the same as the upsampler with the roles of Lu and Ld reversed. 
+    # Downsamples an array from fine lattice Ld to coarse lattice Lu.  Actually, there doesn't need to be any relationship
+    # between the lattices at all--this function just interpolates x from one lattice to the other. 
+    if size(x) != length.(Lu)
+        throw(DomainError((size(x), length.(Lu)), "downsample: Size of array x does not match size of lattice Lu."))
+    end
+    return interpolation(Lu, x, extrapolation_bc=bc)[Ld...]
 end
 
 """
-    upsampleBeam(beam::Matrix{ComplexF64}, st::Int)
+    downsample(x::AbstractArray{T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
 
-    Upsamples a complex beam matrix using cubic spline interpolation. This is typically used to increase the resolution of a beam's spatial representation.
+    Downsample an `AbstractArray` to a grid that is `n` times coarser. This is achieved by interpolating the array from its original lattice to a coarser lattice with a downsample factor of `n`. This function is valuable in scenarios where reducing data resolution is needed without losing significant information, like in certain phases of optical trapping simulations.
 
     # Arguments
-    - `beam`: A matrix representing the complex field of a beam.
-    - `st`: Step size for upsampling.
+    - `x::AbstractArray{T,N}`: The original array to be downsampled.
+    - `n::Int`: The downsample factor.
+    - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
+    - `bc`: Boundary conditions to use (default is periodic).
 
     # Returns
-    - A matrix representing the upsampled beam.
+    - `AbstractArray`: The downsampled array.
 """
-function upsampleBeam(beam::Matrix{ComplexF64}, st::Int)
-    grid = (((1:st:st*s) .- 1 for s in size(beam))...,)
-    return cubic_spline_interpolation(grid, ifftshift(beam), extrapolation_bc=Periodic())[CartesianIndices(((0:st*s-1 for s in size(beam))...,))] |> fftshift
+function downsample(x::AbstractArray{T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+    # Downsamples an array from to a grid that is n times coarser, i.e. a grid downsampled by n.
+    Lu = ((1:s for s in size(x))...,)
+    Ld = downsample(Lu, n)
+    return downsample(x, Lu, Ld; interpolation=interpolation, bc=bc)
 end
 
+"""
+    downsample(x::AbstractArray{T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
 
+Downsample an `AbstractArray` to a grid with different coarsening factors for each dimension, specified by `ns`. This allows for tailored resolution reduction in multidimensional data, useful in complex optical trapping simulations where different dimensions may require different levels of detail.
+
+# Arguments
+- `x::AbstractArray{T,N}`: The original array to be downsampled.
+- `ns::NTuple{N,Int}`: A tuple specifying the downsample factor for each dimension of the array.
+- `interpolation`: The interpolation method to use (default is cubic spline interpolation).
+- `bc`: Boundary conditions to use (default is periodic).
+
+# Returns
+- `AbstractArray`: The downsampled array.
+"""
+function downsample(x::AbstractArray{T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+    # Downsamples an array from to a grid that is n times coarser, i.e. a grid downsampled by n.
+    Lu = ((1:s for s in size(x))...,)
+    Ld = downsample(Lu, ns)
+    return downsample(x, Lu, Ld; interpolation=interpolation, bc=bc)
+end
+
+#endregion
+
+#region -------------------downsample fields -------------------------------
+
+
+
+#endregion
+
+#region -------------------- coarsen (downsampling by averaging)--------------------------------
+
+"""
+    coarsen(x::AbstractArray{T,N}, ns::NTuple{N,Int}; reducer=(x::AbstractArray -> sum(x)/length(x[:]))) where {T<:Number,N}
+
+    Coarsen (downsample) an `AbstractArray` to a grid that is `ns[i]` times coarser in dimension `i`, using a reduction function over superpixels. Unlike interpolation-based downsampling, this method averages over blocks (superpixels) of the array. It's useful in optical trapping simulations for reducing data resolution while preserving essential information through averaging.
+
+    # Arguments
+    - `x::AbstractArray{T,N}`: The original array to be coarsened.
+    - `ns::NTuple{N,Int}`: A tuple specifying the coarsening factor for each dimension.
+    - `reducer`: The function used to reduce each superpixel (default is average).
+
+    # Returns
+    - `Array`: The coarsened array.
+
+    # Errors
+    Throws `DomainError` if the `ns` factors do not evenly divide the size of `x`.
+    """
+function coarsen(x::AbstractArray{T,N}, ns::NTuple{N,Int}; reducer=(x::AbstractArray -> sum(x) / length(x[:]))) where {T<:Number,N}
+    # This is also a downsampler, but it averages over superpixels, rather than interpolating. 
+    # Downsamples an array to a grid that is ns[i] times coarser in dimension i, i.e. a grid downsampled by ns, 
+    # reducing superpixels via the supplied function reducer. 
+    sx = size(x)
+    if sx .% ns != size(x) .* 0
+        throw(DomainError((sx, ns), "coarsen: Downsample factors ns do not divide the size of array x."))
+    end
+    box = CartesianIndices(ns) .- CartesianIndex((1 for i = 1:N)...)
+    CI = CartesianIndices(((1:ns[i]:size(x)[i] for i = 1:N)...,))
+    return [reducer(x[I.+box]) for I in CI]
+end
+
+"""
+    coarsen(x::AbstractArray{T,N}, n::Int; reducer=(x::AbstractArray -> sum(x)/length(x[:]))) where {T<:Number,N}
+
+    Coarsen (downsample) an `AbstractArray` to a grid that is uniformly `n` times coarser in each dimension, using a reduction function over superpixels. This function is a specialized form of the `coarsen` method for cases where a uniform downsampling across all dimensions is desired. It is particularly effective in scenarios where a simple, uniform reduction in data resolution is required.
+
+    # Arguments
+    - `x::AbstractArray{T,N}`: The original array to be coarsened.
+    - `n::Int`: The uniform coarsening factor for each dimension.
+    - `reducer`: The function used to reduce each superpixel (default is average).
+
+    # Returns
+    - `Array`: The coarsened array.
+    """
+function coarsen(x::AbstractArray{T,N}, n::Int; reducer=(x::AbstractArray -> sum(x) / length(x[:]))) where {T<:Number,N}
+    # Downsamples an array to a grid that is n times coarser, i.e. a grid downsampled by n, reducing superpixels via the supplied function reducer. 
+    return coarsen(x, ((n for i = 1:N)...,); reducer=reducer)
+end
+
+#endregion
+
+
+#region --------------------upsample lattices----------------------------
+
+"""
+    upsample(r::AbstractRange, n::Int)
+
+    Upsample a range `r`, effectively replacing each original point in the range with `n` points,
+    centered around the original point. Useful in scenarios where higher resolution of a range is needed, 
+    such as in optical trapping simulations for fine-grained spatial control.
+
+    # Arguments
+    - `r::AbstractRange`: The original range to be upsampled.
+    - `n::Int`: The number of points to replace each original point in the range.
+
+    # Returns
+    - `AbstractRange`: A new range with each original point replaced by `n` points.
+    """
+function upsample(r::AbstractRange, n::Int)
+    # Upsamples a range r, replacing each original point by n points, centered on the original. 
+    return ((1:length(r)*n) .- (1 + n) / 2) .* (step(r) / n) .+ r[1]
+end
+
+"""
+    upsample(L::Lattice{N}, n::Int) where {N}
+
+    Upsample a lattice `L`, replacing each original pixel by `n^N` pixels. Particularly useful in 
+    optical trapping simulations involving lattice structures, where higher resolution is required for 
+    accurate modeling.
+
+    # Arguments
+    - `L::Lattice{N}`: The original lattice to be upsampled.
+    - `n::Int`: The upscaling factor for each dimension of the lattice.
+
+    # Returns
+    - `Tuple`: A tuple of upsampled ranges corresponding to each dimension of the lattice.
+    """
+function upsample(L::Lattice{N}, n::Int) where {N}
+    # Upsamples a lattice, replacing each original pixel by n^N pixels, centered on the original. 
+    return ((upsample(l, n) for l in L)...,)
+end
+
+"""
+    upsample(L::Lattice{N}, ns::NTuple{N,Int}) where {N}
+
+    Upsample a lattice `L` with different scaling factors for each dimension. Allows for non-uniform 
+    upscaling, critical in simulating asymmetrical optical trapping setups.
+
+    # Arguments
+    - `L::Lattice{N}`: The original lattice to be upsampled.
+    - `ns::NTuple{N,Int}`: A tuple specifying the upscaling factor for each dimension of the lattice.
+
+    # Returns
+    - `Tuple`: A tuple of upsampled ranges, each corresponding to a dimension of the lattice with its 
+    own scaling factor.
+    """
+function upsample(L::Lattice{N}, ns::NTuple{N,Int}) where {N}
+    # Upsamples a lattice, replacing each original pixel by n^N pixels, centered on the original. 
+    return ((upsample(L[i], ns[i]) for i = 1:N)...,)
+end
+
+#endregion
+
+#region ---------------------upsample array--------------------------------
 """
     upsample(f::LatticeField{S,T,N}, Lu::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
 
-Upsamples a `LatticeField` instance to a new lattice `Lu`. This function interpolates the data from the 
-original lattice of `f` to the new lattice `Lu` using the specified interpolation method and boundary conditions.
+    Upsamples a `LatticeField` instance to a new lattice `Lu`. This function interpolates the data from the 
+    original lattice of `f` to the new lattice `Lu` using the specified interpolation method and boundary conditions.
 
-# Parameters
-- `f`: An instance of `LatticeField` to be upsampled.
-- `Lu`: The new lattice to which the field will be upsampled.
-- `interpolation`: The interpolation method used for upsampling. Defaults to `cubic_spline_interpolation`.
-- `bc`: Boundary conditions for the interpolation. Defaults to `Periodic()`.
+    # Parameters
+    - `f`: An instance of `LatticeField` to be upsampled.
+    - `Lu`: The new lattice to which the field will be upsampled.
+    - `interpolation`: The interpolation method used for upsampling. Defaults to `cubic_spline_interpolation`.
+    - `bc`: Boundary conditions for the interpolation. Defaults to `Periodic()`.
 
-# Returns
-A new `LatticeField` instance with data upsampled to the lattice `Lu`.
+    # Returns
+    A new `LatticeField` instance with data upsampled to the lattice `Lu`.
 
-The `upsample` function is versatile, allowing for the interpolation of `f` onto any lattice `Lu`, regardless of the 
-relationship between the original and new lattices. It is particularly useful in applications where adjusting the 
-resolution or grid spacing of data is required, such as in image processing or numerical simulations in optical trapping.
-"""
+    The `upsample` function is versatile, allowing for the interpolation of `f` onto any lattice `Lu`, regardless of the 
+    relationship between the original and new lattices. It is particularly useful in applications where adjusting the 
+    resolution or grid spacing of data is required, such as in image processing or numerical simulations in optical trapping.
+    """
 function upsample(x::AbstractArray{T,N}, Ld::Lattice{N}, Lu::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
     # Upsamples an array from coarse lattice Ld to fine lattice Lu.  Actually, there doesn't need to be any relationship
     # between the lattices at all--this function just interpolates x from one lattice to the other. 
@@ -118,9 +305,57 @@ function upsample(x::AbstractArray{T,N}, Ld::Lattice{N}, Lu::Lattice{N}; interpo
     return interpolation(Ld, x, extrapolation_bc=bc)[Lu...]
 end
 
+"""
+    upsample(x::AbstractArray{T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+
+    Upsample an `AbstractArray` to a grid that is `n` times finer. This is particularly useful in scenarios like optical trapping simulations where you might need to increase the resolution of a dataset for more detailed analysis or for better simulation accuracy. The function uses cubic spline interpolation by default, but this can be adjusted as needed.
+
+    # Arguments
+    - `x::AbstractArray{T,N}`: The original array to be upsampled.
+    - `n::Int`: The factor by which the grid resolution is increased.
+    - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
+    - `bc`: Boundary conditions to use (default is periodic).
+
+    # Returns
+    - `AbstractArray`: The upsampled array.
+    """
+function upsample(x::AbstractArray{T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+    # Upsamples an array from to a grid that is n times finer, i.e. a grid upsampled by n.
+    Ld = ((1:s for s in size(x))...,)
+    Lu = upsample(Ld, n)
+    return upsample(x, Ld, Lu; interpolation=interpolation, bc=bc)
+end
+
+
+"""
+    upsample(x::AbstractArray{T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+
+    Upsample an `AbstractArray` to a grid with different upscaling factors for each dimension, allowing for non-uniform upscaling. This function can be essential in optical trapping simulations where different dimensions may require different levels of detail. It defaults to cubic spline interpolation, but this can be customized as needed.
+
+    # Arguments
+    - `x::AbstractArray{T,N}`: The original array to be upsampled.
+    - `ns::NTuple{N,Int}`: A tuple specifying the upscaling factor for each dimension of the array.
+    - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
+    - `bc`: Boundary conditions to use (default is periodic).
+
+    # Returns
+    - `AbstractArray`: The upsampled array.
+    """
+function upsample(x::AbstractArray{T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+    # Upsamples an array from to a grid that is n times finer, i.e. a grid upsampled by n.
+    Ld = ((1:s for s in size(x))...,)
+    Lu = upsample(Ld, ns)
+    return upsample(x, Ld, Lu; interpolation=interpolation, bc=bc)
+end
+#endregion
+
+#region -------------------upsample fields -------------------------------
+
+
 
 #endregion
 
+#region sublattice
 """
     sublattice(L::Lattice{N}, box::CartesianIndices) where {N}
 
@@ -135,7 +370,7 @@ end
     - Throws an error if the dimensions of the `box` do not match the lattice.
     """
 function sublattice(L::Lattice{N}, box::CartesianIndices) where {N}
-    length(size(box)) == N || error("box should have same number of dimensions as lattice.")
+    length(size(box)) == N || error("box should have same number of dimensions as lattice.") #TODO check if this should be here
     return ((L[j][box[1][j]:box[end][j]] for j = 1:N)...,)
 end
 
@@ -144,5 +379,7 @@ function sublattice(L::Lattice{N}, x::Union{I,AbstractRange{I}}...) where {N,I<:
     y = (((i isa Integer) ? (i:i) : i for i in x)...,)
     return ((L[j][y[j]] for j = 1:N)...,)
 end
+
+#endregion
 
 end

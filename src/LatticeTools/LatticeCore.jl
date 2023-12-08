@@ -10,7 +10,7 @@ export RealPhase, Generic, Phase, FieldVal, ComplexPhase
 
 
 
-
+#region -----------------------natlat------------------------
 """ 
     natlat(n::Int) 
     Create a "natural" lattice for a given integer n.
@@ -27,7 +27,9 @@ end
 function natlat(s::NTuple{N,Integer}) where {N}
     return ((natlat(n) for n in s)...,)
 end
+#endregion
 
+#region -------------------padout, lattice, then array, then field-------------------
 """
     padout(L::AbstractRange, p::Tuple{Int,Int}) 
     Pads an AbstractRange by a certain number of points before the first element and after the last element.
@@ -37,14 +39,14 @@ end
 function padout(L::AbstractRange, p::Tuple{Int,Int})
     return (0:sum(p)+length(L)-1) .* step(L) .+ (L[1] - step(L) * p[1])
 end
-
-#then some syntactic sugar for padout for abstract ranges
 padout(L::AbstractRange, p::Int) = padout(L, (p, p))
 padout(L::Lattice{N}, p::NTuple{M,Int}) where {N,M} = M == 2N ? ((padout(L[i], (p[2i-1], p[2i])) for i = 1:N)...,) : error("Bad tuple length.")
 padout(L::Lattice{N}, p::NTuple{N,Int}) where {N} = ((padout(L[i], p[i]) for i = 1:N)...,)
 padout(L::Lattice{N}, p::Int) where {N} = ((padout(L[i], p) for i = 1:N)...,)
 
-"""Pads an N-dimensional array `A` with a certain padding specified by the tuple `p` and uses `filler` as the padding value.
+"""
+    padout(A::Array{T,N}, p::NTuple{M,Int}, filler=zero(T))
+    Pads an N-dimensional array `A` with a certain padding specified by the tuple `p` and uses `filler` as the padding value.
     The `filler` defaults to zero of the same type as the array. Several overloads are provided for convenience.
     """
 function padout(A::Array{T,N}, p::NTuple{M,Int}, filler=zero(T)) where {T,N,M}
@@ -53,32 +55,34 @@ function padout(A::Array{T,N}, p::NTuple{M,Int}, filler=zero(T)) where {T,N,M}
     output[((p[2i-1]+1:size(output, i)-p[2i]) for i = 1:N)...] .= A
     return output
 end
-#then some syntactic sugar for padout for arrays
 padout(A::Array{T,N}, p::NTuple{N,Int}, filler=zero(T)) where {T,N} = padout(A, ((p[ceil(Int, i / 2)] for i = 1:2N)...,), filler)
 padout(A::Array{T,N}, p::Int, filler=zero(T)) where {T,N} = padout(A, ((p for i = 1:N)...,), filler)
 
 """
     padout(f::LF{S,T,N}, p::NTuple{N,Int}, filler=zero(T)) where {S<:FieldVal,T,N}
 
-Pads a `LatticeField` with specified padding and a filler value. This function extends the `data` field of 
-a `LatticeField` in each dimension according to the padding specified by `p`, and fills the new elements 
-with `filler`, which defaults to the zero value of type `T`.
+    Pads a `LatticeField` with specified padding and a filler value. This function extends the `data` field of 
+    a `LatticeField` in each dimension according to the padding specified by `p`, and fills the new elements 
+    with `filler`, which defaults to the zero value of type `T`.
 
-# Parameters
-- `f`: An instance of `LatticeField` to be padded.
-- `p`: An N-tuple specifying the padding for each dimension. Each element of the tuple represents the total 
-  padding (both before and after) for the corresponding dimension of the lattice.
-- `filler`: An optional value used to fill the new padded elements. Defaults to `zero(T)`.
+    # Parameters
+    - `f`: An instance of `LatticeField` to be padded.
+    - `p`: An N-tuple specifying the padding for each dimension. Each element of the tuple represents the total 
+    padding (both before and after) for the corresponding dimension of the lattice.
+    - `filler`: An optional value used to fill the new padded elements. Defaults to `zero(T)`.
 
-# Returns
-A new `LatticeField` instance with the data field padded as specified and the lattice adjusted accordingly.
+    # Returns
+    A new `LatticeField` instance with the data field padded as specified and the lattice adjusted accordingly.
 
-This function is particularly useful for operations that require modifying the size of the `LatticeField` data 
-while maintaining its structural integrity, such as in image processing or spatial analysis tasks in optical 
-trapping applications.
-"""
+    This function is particularly useful for operations that require modifying the size of the `LatticeField` data 
+    while maintaining its structural integrity, such as in image processing or spatial analysis tasks in optical 
+    trapping applications.
+    """
 padout(f::LF{S,T,N}, p::NTuple{N,Int}, filler=zero(T)) where {S<:FieldVal,T,N} = LF{S,T,N}(padout(f.data, p, filler), padout(f.L, p), f.flambda)
 
+#endregion
+
+#region -------------------sft, isft-------------------
 """
     sft(v)
 
@@ -101,6 +105,7 @@ sft(v) = fftshift(fft(ifftshift(v)))
     """
 isft(v) = fftshift(ifft(ifftshift(v)))
 
+#endregion
 
 
 

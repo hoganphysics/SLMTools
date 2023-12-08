@@ -3,6 +3,7 @@ module LatticeFields
 export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF
 export subfield, wrap, square
 
+#region ---------------------------Abstract Types and aliases--------------------------------------------
 """
     Lattice{N}
 
@@ -15,14 +16,6 @@ export subfield, wrap, square
 
     """
 const Lattice{N} = NTuple{N,AbstractRange} where {N}
-
-"""
-   elq(x::Lattice{N}, y::Lattice{N}) where {N} 
-   
-    Checks if two lattices are equal, throwing a `DomainError` if they are not.
-"""
-elq(x::Lattice{N}, y::Lattice{N}) where {N} = (all(isapprox.(x, y)) || throw(DomainError((x, y), "Unequal lattices.")); return nothing)
-
 
 """
     FieldVal
@@ -74,8 +67,6 @@ abstract type Phase <: FieldVal end
     - `ComplexPhase <: Phase` for complex phase values.
     """
 abstract type RealPhase <: Phase end
-
-
 
 """
     const UPhase = RealPhase
@@ -211,9 +202,9 @@ abstract type ComplexAmplitude <: Amplitude end
     - Use `ComplexAmp` for a compact representation of complex amplitude values in optical field manipulations.
     """
 const ComplexAmp = ComplexAmplitude
+#endregion
 
-
-
+#region ---------------------------LatticeField--------------------------------------------
 
 """
     LatticeField{S<:FieldVal,T,N}
@@ -287,6 +278,13 @@ LatticeField{S}(array::AbstractArray{T,N}, L::Lattice{N}, flambda::Real=1.0) whe
     """
 const LF = LatticeField
 
+"""
+   elq(x::Lattice{N}, y::Lattice{N}) where {N} 
+   
+    Checks if two lattices are equal, throwing a `DomainError` if they are not.
+    """
+elq(x::Lattice{N}, y::Lattice{N}) where {N} = (all(isapprox.(x, y)) || throw(DomainError((x, y), "Unequal lattices.")); return nothing)
+
 # Equal lattice query
 elq(x::LF, y::LF) = (all(isapprox.(x.L, y.L)) || throw(DomainError((x.L, y.L), "Unequal lattices.")); return nothing)
 
@@ -321,25 +319,24 @@ function Base.getindex(f::LatticeField{S,T,N}, x::Union{I,AbstractRange{I}}...) 
     return LatticeField{S,T,length(z)}(getindex(f.data, x...), sublattice(f.L[z], x[z]...), f.flambda)
 end
 
+#endregion
 
-
-
-
+#region ---------------------------subfield--------------------------------------------
 """
     subfield(f::LatticeField{S,T,N}, x::I...) where {S,T,N,I<:Integer}
 
-Extracts the field value at a specific point in the `LatticeField`. This function allows for subscripting 
-a `LatticeField` instance by integer indices to access individual field values.
+    Extracts the field value at a specific point in the `LatticeField`. This function allows for subscripting 
+    a `LatticeField` instance by integer indices to access individual field values.
 
-# Parameters
-- `f`: An instance of `LatticeField`.
-- `x`: A series of integer indices corresponding to the point in the lattice.
+    # Parameters
+    - `f`: An instance of `LatticeField`.
+    - `x`: A series of integer indices corresponding to the point in the lattice.
 
-# Returns
-The field value at the specified point in the lattice.
+    # Returns
+    The field value at the specified point in the lattice.
 
-This function is typically used for accessing values at specific lattice points.
-"""
+    This function is typically used for accessing values at specific lattice points.
+    """
 function subfield(f::LatticeField{S,T,N}, x::I...) where {S,T,N,I<:Integer}
     # Subscripting f by integers returns the field value at that location. 
     return getindex(f.data, x...)
@@ -348,18 +345,18 @@ end
 """
     subfield(f::LatticeField{S,T,N}, x::AbstractRange{I}...) where {S,T,N,I<:Integer}
 
-Creates a new `LatticeField` representing a subfield of the original field, defined on a sublattice. 
-This function is used for subscripting a `LatticeField` by ranges to extract a portion of the field.
+    Creates a new `LatticeField` representing a subfield of the original field, defined on a sublattice. 
+    This function is used for subscripting a `LatticeField` by ranges to extract a portion of the field.
 
-# Parameters
-- `f`: An instance of `LatticeField`.
-- `x`: A series of ranges specifying the portion of the lattice to extract.
+    # Parameters
+    - `f`: An instance of `LatticeField`.
+    - `x`: A series of ranges specifying the portion of the lattice to extract.
 
-# Returns
-A new `LatticeField` instance representing the specified subfield.
+    # Returns
+    A new `LatticeField` instance representing the specified subfield.
 
-This is useful for operations that require working with a specific region of the lattice.
-"""
+    This is useful for operations that require working with a specific region of the lattice.
+    """
 function subfield(f::LatticeField{S,T,N}, x::AbstractRange{I}...) where {S,T,N,I<:Integer}
     # Subscripting f by ranges returns a subfield on the sublattice. 
     return LatticeField{S,T,N}(getindex(f.data, x...), sublattice(f.L, x...), f.flambda)
@@ -368,21 +365,21 @@ end
 """
     subfield(f::LatticeField{S,T,N}, x::Union{I,AbstractRange{I}}...) where {S,T,N,I<:Integer}
 
-Extracts a subfield from a `LatticeField`, allowing for a mix of integer indices and ranges. This function 
-enables subscripting by both integers and ranges, providing flexibility in specifying the subfield.
+    Extracts a subfield from a `LatticeField`, allowing for a mix of integer indices and ranges. This function 
+    enables subscripting by both integers and ranges, providing flexibility in specifying the subfield.
 
-# Parameters
-- `f`: An instance of `LatticeField`.
-- `x`: A series of integers and/or ranges specifying the dimensions and regions of the lattice to include.
+    # Parameters
+    - `f`: An instance of `LatticeField`.
+    - `x`: A series of integers and/or ranges specifying the dimensions and regions of the lattice to include.
 
-# Returns
-A new `LatticeField` instance representing the specified subfield.
+    # Returns
+    A new `LatticeField` instance representing the specified subfield.
 
-# Note
-This method is not type safe and might not be suitable for performance-critical situations. It is intended 
-for more flexible data extraction where performance is not the primary concern.
+    # Note
+    This method is not type safe and might not be suitable for performance-critical situations. It is intended 
+    for more flexible data extraction where performance is not the primary concern.
 
-This function is especially useful when needing to fix certain dimensions while varying others.
+    This function is especially useful when needing to fix certain dimensions while varying others.
 """
 function subfield(f::LatticeField{S,T,N}, x::Union{I,AbstractRange{I}}...) where {S,T,N,I<:Integer}
     # Subscripting f by integers and ranges returns a subfield on the slice fixing dimensions with integer indices. 
@@ -390,9 +387,9 @@ function subfield(f::LatticeField{S,T,N}, x::Union{I,AbstractRange{I}}...) where
     z = filter(i -> !(x[i] isa Integer), 1:length(x))
     return LatticeField{S,T,length(z)}(getindex(f.data, x...), sublattice(f.L[z], x[z]...), f.flambda)
 end
+#endregion
 
-
-#-------------------- Lattice math and conversions -------------------------------
+#region -------------------- Lattice overloading more Base stuff -------------------------------
 
 # Default behavior is to throw an undefined method error.
 Base.:(*)(args::LF...) = error("Behavior undefined for this combination of inputs: ", *((string(i) * ", " for i in typeof.(args))...))
@@ -422,62 +419,66 @@ Base.:(+)(x::LF{RealPhase}, y::LF{RealPhase}) = (elq(x, y); LF{RealPhase}(x.data
 # ComplexAmplitude to Modulus
 Base.abs(x::LF{ComplexAmp}) = LF{Modulus}(abs.(x.data), x.L, x.flambda)
 
+# Phase conjugation
+Base.conj(x::LF{RealPhase}) = LF{RealPhase}(-x.data, x.L, x.flambda)
+Base.conj(x::LF{ComplexPhase}) = LF{ComplexPhase}(conj.(x.data), x.L, x.flambda)
+
+#endregion
+
+#region ---------------------------wrap and square--------------------------------------------
 """
     square(x::LF{<:Amplitude})
 
-Transforms a `LatticeField` containing amplitude values (`Amplitude` or its subtypes like `Modulus` or `ComplexAmplitude`) 
-into a `LatticeField` of intensity values. The transformation is achieved by squaring the absolute value of each element 
-in the `data` field of the `LatticeField`.
+    Transforms a `LatticeField` containing amplitude values (`Amplitude` or its subtypes like `Modulus` or `ComplexAmplitude`) 
+    into a `LatticeField` of intensity values. The transformation is achieved by squaring the absolute value of each element 
+    in the `data` field of the `LatticeField`.
 
-# Parameters
-- `x`: An instance of `LatticeField` with a subtype of `Amplitude`.
+    # Parameters
+    - `x`: An instance of `LatticeField` with a subtype of `Amplitude`.
 
-# Returns
-A new `LatticeField` instance with the `Intensity` type, where each data point is the square of the absolute value 
-of the corresponding point in the input `LatticeField`.
+    # Returns
+    A new `LatticeField` instance with the `Intensity` type, where each data point is the square of the absolute value 
+    of the corresponding point in the input `LatticeField`.
 
-This function is commonly used in optics and photonics to convert amplitude information into intensity information.
-"""
+    This function is commonly used in optics and photonics to convert amplitude information into intensity information.
+    """
 square(x::LF{<:Amplitude}) = LF{Intensity}(abs.(x.data) .^ 2, x.L, x.flambda)
 
 """
     wrap(x::LF{RealPhase})
 
-Transforms a `LatticeField` containing real phase values into a `LatticeField` of complex phase values. 
-The transformation involves converting each real phase value to a complex phase value using Euler's formula.
+    Transforms a `LatticeField` containing real phase values into a `LatticeField` of complex phase values. 
+    The transformation involves converting each real phase value to a complex phase value using Euler's formula.
 
-# Parameters
-- `x`: An instance of `LatticeField` with `RealPhase`.
+    # Parameters
+    - `x`: An instance of `LatticeField` with `RealPhase`.
 
-# Returns
-A new `LatticeField` instance with `ComplexPhase`, where each data point is the result of `exp(2πi * data)` 
-of the corresponding point in the input `LatticeField`.
+    # Returns
+    A new `LatticeField` instance with `ComplexPhase`, where each data point is the result of `exp(2πi * data)` 
+    of the corresponding point in the input `LatticeField`.
 
-This function is useful in scenarios where phase information needs to be represented in a complex exponential form.
-"""
+    This function is useful in scenarios where phase information needs to be represented in a complex exponential form.
+    """
 wrap(x::LF{RealPhase}) = LF{ComplexPhase}(exp.(2pi * im * x.data), x.L, x.flambda)
 
 """
     wrap(x::LF{ComplexPhase})
 
-Returns a copy of the input `LatticeField` if it already contains complex phase values. This version of the `wrap` 
-function is essentially a no-operation for `LatticeField` instances that are already of the `ComplexPhase` type.
+    Returns a copy of the input `LatticeField` if it already contains complex phase values. This version of the `wrap` 
+    function is essentially a no-operation for `LatticeField` instances that are already of the `ComplexPhase` type.
 
-# Parameters
-- `x`: An instance of `LatticeField` with `ComplexPhase`.
+    # Parameters
+    - `x`: An instance of `LatticeField` with `ComplexPhase`.
 
-# Returns
-A copy of the input `LatticeField`.
+    # Returns
+    A copy of the input `LatticeField`.
 
-This function ensures compatibility and ease of use in code where the exact phase type of a `LatticeField` might not 
-be known in advance.
-"""
+    This function ensures compatibility and ease of use in code where the exact phase type of a `LatticeField` might not 
+    be known in advance.
+    """
 wrap(x::LF{ComplexPhase}) = copy(x)
 
-# Phase conjugation
-Base.conj(x::LF{RealPhase}) = LF{RealPhase}(-x.data, x.L, x.flambda)
-Base.conj(x::LF{ComplexPhase}) = LF{ComplexPhase}(conj.(x.data), x.L, x.flambda)
-
+#endregion
 
 
 
