@@ -1,10 +1,10 @@
 module Resampling
-using ..LatticeCore: Lattice
+using ..LatticeCore
 using Interpolations: cubic_spline_interpolation, Flat, Periodic
 using FFTW: fftshift, ifftshift
 
-export downsample, upsample, upsampleBeam, sublattice
-export upsample, upsampleBeam
+export downsample, coarsen, upsample, sublattice
+
 
 #region ------------------downsample lattices ----------------------------
 
@@ -159,7 +159,65 @@ end
 
 #region -------------------downsample fields -------------------------------
 
+"""
+    downsample(f::LatticeField{S,T,N}, Ld::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
 
+    Downsample a `LatticeField` to a specified lattice `Ld`. This function interpolates the field data from its original lattice to the new lattice `Ld`. It is useful in scenarios where a reduction in lattice field resolution is necessary, such as simplifying the complexity of a simulation without significant loss of essential information.
+
+    # Arguments
+    - `f::LatticeField{S,T,N}`: The original lattice field to be downsampled.
+    - `Ld::Lattice{N}`: The target lattice for downsampling.
+    - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
+    - `bc`: Boundary conditions to use (default is periodic).
+
+    # Returns
+    - `LatticeField{S}`: The downsampled lattice field.
+    """
+function downsample(f::LatticeField{S,T,N}, Ld::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+    # Downsamples field f to lattice Lu.  Actually, there doesn't need to be any relationship
+    # between the lattices at all--this function just interpolates x from one lattice to the other. 
+    return LatticeField{S}(downsample(f.data, f.L, Ld; interpolation=interpolation, bc=bc), Ld, f.flambda)
+end
+
+"""
+    downsample(f::LatticeField{S,T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+
+    Downsample a `LatticeField` to a grid that is `n` times coarser. This function decreases the resolution of the lattice field uniformly across all dimensions, making it suitable for applications where lower resolution is sufficient or where computational efficiency is a priority.
+
+    # Arguments
+    - `f::LatticeField{S,T,N}`: The original lattice field to be downsampled.
+    - `n::Int`: The uniform downscaling factor.
+    - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
+    - `bc`: Boundary conditions to use (default is periodic).
+
+    # Returns
+    - `LatticeField{S}`: The downsampled lattice field.
+    """
+function downsample(f::LatticeField{S,T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+    # Downsamples field f to a grid that is n times coarser, i.e. a grid downsampled by n.
+    Ld = downsample(f.L, n)
+    return LatticeField{S}(downsample(f.data, f.L, Ld; interpolation=interpolation, bc=bc), Ld, f.flambda)
+end
+
+"""
+    downsample(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+
+    Downsample a `LatticeField` to a grid with different coarsening factors for each dimension, specified by `ns`. This approach allows for a tailored reduction in resolution of the lattice field, which can be important in simulations or analyses where different dimensions may not require the same level of detail.
+
+    # Arguments
+    - `f::LatticeField{S,T,N}`: The original lattice field to be downsampled.
+    - `ns::NTuple{N,Int}`: A tuple specifying the downscaling factor for each dimension of the lattice field.
+    - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
+    - `bc`: Boundary conditions to use (default is periodic).
+
+    # Returns
+    - `LatticeField{S}`: The downsampled lattice field.
+    """
+function downsample(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+    # Downsamples an array to a grid that is ns[i] times coarser in dimension i, i.e. a grid downsampled by n.
+    Ld = downsample(f.L, ns)
+    return LatticeField{S}(downsample(f.data, f.L, Ld; interpolation=interpolation, bc=bc), Ld, f.flambda)
+end
 
 #endregion
 
@@ -212,8 +270,47 @@ function coarsen(x::AbstractArray{T,N}, n::Int; reducer=(x::AbstractArray -> sum
     return coarsen(x, ((n for i = 1:N)...,); reducer=reducer)
 end
 
-#endregion
+"""
+    coarsen(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; reducer=(x::AbstractArray -> sum(x)/length(x[:]))) where {S<:FieldVal,T<:Number,N}
 
+    Coarsen (downsample) a `LatticeField` to a grid that is `ns[i]` times coarser in dimension `i`, using a reduction function over superpixels. This method differs from interpolation-based downsampling by averaging over blocks (superpixels) of the lattice field. It's particularly useful in optical trapping simulations for reducing data resolution while preserving important information through averaging.
+
+    # Arguments
+    - `f::LatticeField{S,T,N}`: The original lattice field to be coarsened.
+    - `ns::NTuple{N,Int}`: A tuple specifying the coarsening factor for each dimension.
+    - `reducer`: The function used to reduce each superpixel (default is average).
+
+    # Returns
+    - `LatticeField{S}`: The coarsened lattice field.
+    """
+function coarsen(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; reducer=(x::AbstractArray -> sum(x) / length(x[:]))) where {S<:FieldVal,T<:Number,N}
+    # Downsamples field f to a grid that is ns[i] times coarser in dimension i, i.e. a grid downsampled by ns, 
+    # reducing superpixels via the supplied function reducer. 
+    Ld = downsample(f.L, ns)
+    return LatticeField{S}(coarsen(f.data, ns; reducer=reducer), Ld, f.flambda)
+end
+
+"""
+    coarsen(f::LatticeField{S,T,N}, n::Int; reducer=(x::AbstractArray -> sum(x)/length(x[:]))) where {S<:FieldVal,T<:Number,N}
+
+    Coarsen (downsample) a `LatticeField` to a grid that is uniformly `n` times coarser in each dimension, using a reduction function over superpixels. This function provides a way to uniformly reduce the resolution of a lattice field, which can be beneficial in scenarios where a simple, uniform reduction in data resolution is required.
+
+    # Arguments
+    - `f::LatticeField{S,T,N}`: The original lattice field to be coarsened.
+    - `n::Int`: The uniform coarsening factor for each dimension.
+    - `reducer`: The function used to reduce each superpixel (default is average).
+
+    # Returns
+    - `LatticeField{S}`: The coarsened lattice field.
+    """
+function coarsen(f::LatticeField{S,T,N}, n::Int; reducer=(x::AbstractArray -> sum(x) / length(x[:]))) where {S<:FieldVal,T<:Number,N}
+    # Downsamples an array from to a grid that is n times coarser, i.e. a grid downsampled by n, reducing superpixels via the supplied function reducer. 
+    Ld = downsample(f.L, n)
+    return LatticeField{S}(coarsen(f.data, n; reducer=reducer), Ld, f.flambda)
+end
+
+
+#endregion
 
 #region --------------------upsample lattices----------------------------
 
@@ -351,11 +448,69 @@ end
 
 #region -------------------upsample fields -------------------------------
 
+"""
+    upsample(f::LatticeField{S,T,N}, Lu::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
 
+    Upsample a `LatticeField` to a specified lattice `Lu`. This function interpolates the field data from its original lattice to the new lattice `Lu`. It's useful in scenarios like optical trapping simulations where field data needs to be represented on a different lattice scale, regardless of the original lattice configuration.
+
+    # Arguments
+    - `f::LatticeField{S,T,N}`: The original lattice field to be upsampled.
+    - `Lu::Lattice{N}`: The target lattice for upsampling.
+    - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
+    - `bc`: Boundary conditions to use (default is periodic).
+
+    # Returns
+    - `LatticeField{S}`: The upsampled lattice field.
+    """
+function upsample(f::LatticeField{S,T,N}, Lu::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+    # Upsamples field f to lattice Lu.  Actually, there doesn't need to be any relationship
+    # between the lattices at all--this function just interpolates x from one lattice to the other. 
+    return LatticeField{S}(upsample(f.data, f.L, Lu; interpolation=interpolation, bc=bc), Lu, f.flambda)
+end
+
+"""
+    upsample(f::LatticeField{S,T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+
+    Upsample a `LatticeField` to a grid that is `n` times finer. This function increases the resolution of the lattice field uniformly across all dimensions, suitable for applications requiring higher precision in lattice field simulations.
+
+    # Arguments
+    - `f::LatticeField{S,T,N}`: The original lattice field to be upsampled.
+    - `n::Int`: The uniform upscaling factor.
+    - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
+    - `bc`: Boundary conditions to use (default is periodic).
+
+    # Returns
+    - `LatticeField{S}`: The upsampled lattice field.
+    """
+function upsample(f::LatticeField{S,T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+    # Upsamples field f to a grid that is n times finer, i.e. a grid upsampled by n.
+    Lu = upsample(f.L, n)
+    return upsample(f, Lu; interpolation=interpolation, bc=bc)
+end
+
+"""
+    upsample(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+
+    Upsample a `LatticeField` to a grid with different upscaling factors for each dimension, specified by `ns`. This allows for a tailored increase in resolution of the lattice field, which can be critical in simulations or analyses where different dimensions require different levels of detail.
+
+    # Arguments
+    - `f::LatticeField{S,T,N}`: The original lattice field to be upsampled.
+    - `ns::NTuple{N,Int}`: A tuple specifying the upscaling factor for each dimension of the lattice field.
+    - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
+    - `bc`: Boundary conditions to use (default is periodic).
+
+    # Returns
+    - `LatticeField{S}`: The upsampled lattice field.
+    """
+function upsample(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+    # Upsamples an array from to a grid that is ns[i] times finer in dimension i, i.e. a grid upsampled by n.
+    Lu = upsample(f.L, ns)
+    return upsample(f, Lu; interpolation=interpolation, bc=bc)
+end
 
 #endregion
 
-#region sublattice
+#region ----------------------sublattice--------------------------------
 """
     sublattice(L::Lattice{N}, box::CartesianIndices) where {N}
 
@@ -374,12 +529,27 @@ function sublattice(L::Lattice{N}, box::CartesianIndices) where {N}
     return ((L[j][box[1][j]:box[end][j]] for j = 1:N)...,)
 end
 
+"""
+    sublattice(L::Lattice{N}, x::Union{I,AbstractRange{I}}...) where {N,I<:Integer}
+
+    Create a sublattice from a given lattice `L` by specifying indices or ranges in each dimension. This function is particularly useful in optical trapping simulations when a smaller section of a larger lattice structure needs to be isolated for detailed analysis or for applying specific operations.
+
+    # Arguments
+    - `L::Lattice{N}`: The original lattice from which the sublattice is to be created.
+    - `x::Union{I,AbstractRange{I}}...`: A series of integers or ranges specifying the indices in each dimension to create the sublattice.
+
+    # Returns
+    - `Tuple`: A tuple representing the sublattice.
+
+    # Errors
+    Throws `DimensionMismatch` if the number of indices provided does not match the dimensions of `L`.
+
+    """
 function sublattice(L::Lattice{N}, x::Union{I,AbstractRange{I}}...) where {N,I<:Integer}
     length(L) != length(x) && throw(DimensionMismatch("Wrong number of indices while attempting to make sublattice."))
     y = (((i isa Integer) ? (i:i) : i for i in x)...,)
     return ((L[j][y[j]] for j = 1:N)...,)
 end
-
 #endregion
 
 end

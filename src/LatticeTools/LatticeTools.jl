@@ -6,7 +6,7 @@ export Lattice, natlat, sft, isft, padout
 
 include("Resampling.jl")
 using .Resampling
-export downsample, upsample, upsampleBeam, sublattice
+export downsample, upsample, coarsen, sublattice
 
 include("DualLattices.jl")
 using .DualLattices
