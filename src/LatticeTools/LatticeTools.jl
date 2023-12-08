@@ -6,7 +6,7 @@ export Lattice, natlat, sft, isft, padout
 
 include("Resampling.jl")
 using .Resampling
-export downsample, upsample, upsampleBeam
+export downsample, upsample, upsampleBeam, sublattice
 
 include("DualLattices.jl")
 using .DualLattices
@@ -16,23 +16,7 @@ export dualShiftLattice, dualLattice, dualate
 # export  sublattice, latticeDisplacement
 # export toDim, shiftedPhases, dualPhase
 
-"""
-    sublattice(L::Lattice{N}, box::CartesianIndices) where {N}
 
-    Extracts a sublattice from a given `Lattice` `L` using the specified `box` of Cartesian indices.
-
-    # Arguments
-    - `L`: A lattice from which the sublattice is to be extracted.
-    - `box`: Cartesian indices defining the region of the sublattice.
-
-    # Returns
-    - A tuple representing the extracted sublattice.
-    - Throws an error if the dimensions of the `box` do not match the lattice.
-    """
-function sublattice(L::Lattice{N}, box::CartesianIndices) where {N}
-    length(size(box)) == N || error("box should have same number of dimensions as lattice.")
-    return ((L[j][box[1][j]:box[end][j]] for j = 1:N)...,)
-end
 
 """
     latticeDisplacement(L::Lattice)

@@ -242,7 +242,7 @@ function downsample(x::AbstractArray{T,N},Lu::Lattice{N},Ld::Lattice{N}; interpo
     # Downsamples an array from fine lattice Ld to coarse lattice Lu.  Actually, there doesn't need to be any relationship
         # between the lattices at all--this function just interpolates x from one lattice to the other. 
     if size(x) != length.(Lu)
-        throw(DomainError((size(x),length.(Lu)), "upsample: Size of array x does not match size of lattice Lu."))
+        throw(DomainError((size(x),length.(Lu)), "downsample: Size of array x does not match size of lattice Lu."))
     end
     return interpolation(Lu,x,extrapolation_bc=bc)[Ld...]
 end

@@ -57,6 +57,27 @@ end
 padout(A::Array{T,N}, p::NTuple{N,Int}, filler=zero(T)) where {T,N} = padout(A, ((p[ceil(Int, i / 2)] for i = 1:2N)...,), filler)
 padout(A::Array{T,N}, p::Int, filler=zero(T)) where {T,N} = padout(A, ((p for i = 1:N)...,), filler)
 
+"""
+    padout(f::LF{S,T,N}, p::NTuple{N,Int}, filler=zero(T)) where {S<:FieldVal,T,N}
+
+Pads a `LatticeField` with specified padding and a filler value. This function extends the `data` field of 
+a `LatticeField` in each dimension according to the padding specified by `p`, and fills the new elements 
+with `filler`, which defaults to the zero value of type `T`.
+
+# Parameters
+- `f`: An instance of `LatticeField` to be padded.
+- `p`: An N-tuple specifying the padding for each dimension. Each element of the tuple represents the total 
+  padding (both before and after) for the corresponding dimension of the lattice.
+- `filler`: An optional value used to fill the new padded elements. Defaults to `zero(T)`.
+
+# Returns
+A new `LatticeField` instance with the data field padded as specified and the lattice adjusted accordingly.
+
+This function is particularly useful for operations that require modifying the size of the `LatticeField` data 
+while maintaining its structural integrity, such as in image processing or spatial analysis tasks in optical 
+trapping applications.
+"""
+padout(f::LF{S,T,N}, p::NTuple{N,Int}, filler=zero(T)) where {S<:FieldVal,T,N} = LF{S,T,N}(padout(f.data, p, filler), padout(f.L, p), f.flambda)
 
 """
     sft(v)
