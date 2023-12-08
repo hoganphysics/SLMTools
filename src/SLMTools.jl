@@ -9,7 +9,7 @@ module SLMTools
 
 include("LatticeTools/LatticeTools.jl")
 using .LatticeTools
-export Lattice, natlat, sft, isft
+export Lattice, natlat, sft, isft, padout, elq
 export downsample, upsample, upsampleBeam
 export dualLattice, dualShiftLattice, dualate
 # export toDim, shiftedPhases, dualPhase,dualShiftLattice, padout, dualate, dualLattice, sft, isft, centroid, window, sublattice, latticeDisplacement
