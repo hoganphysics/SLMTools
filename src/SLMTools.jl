@@ -29,11 +29,9 @@ include("other/HoganParameters.jl")
 using .HoganParameters
 export dxcam, dxslm, nslm, flambda, dXslm, Lslm, dL, LslmE, dLE
 
-# include("EstimateInverse.jl")
-# export estimateInverseField, estimateInverseImage
-
-# include("GSalgorithms.jl")
-# export gs, pdgs, ampSwap, phasor, pdError1, cpdError1, croppedPDGS, arraySizeChecks, gsRefine
+include("PhaseDiversity/LatticeIFTA.jl")
+using .LatticeIFTA
+export phasor, gs, gsIter, pdgs, pdgsIter, oneShot
 
 # include("OTHelpers.jl")
 # export getCostMatrix, pdCostMatrix, pdotBeamEstimate, safeInverse, mapify, scalarPotential2, scalarPotentialN, hyperSum, OTphase, OTreducedPhase
