@@ -1,12 +1,4 @@
-
-
-
-
-
-using FFTW, Images, Plots
-include("./LatticeFields.jl")
-include("./LatticeIFTA.jl")
-include("./slmIOHelpers.jl")
+using SLMTools, Plots, FFTW
 
 sft(v) = fftshift(fft(ifftshift(v)))
 isft(v) = fftshift(ifft(ifftshift(v)))
@@ -28,5 +20,12 @@ L1 = natlat((n,))
 ϕs = [LF{RealPhase}(α * L1[1] .^ 2 / 2, L1) for α in αs] |> Tuple;
 divImgs = [sft(sqrt(μ) * ϕ) |> square for ϕ in ϕs] |> Tuple;
 
-g = pdgs(divImgs, ϕs, 100, sqrt(ν) * ϕs[1]);
+g = pdgs(divImgs, ϕs, 100, sqrt(ν) * ϕs[1])
+
 [μ.data, abs.(square(g).data)] |> plot
+
+μ = LF{Intensity}([exp.(-(x^2 + y^2) ./ 2) for x in L0[1], y in L0[2]], L0)
+ν = LF{Intensity}([exp.(-(x^2 + y^2) ./ 4) for x in L0[1], y in L0[2]], L0)
+p = gs(μ, ν, 1000, LF{ComplexPhase}(zeros(size(μ)) * im, μ.L))
+# look(p)
+# hcat([look(μ), look(sqrt(ν)), look(p), look(sqrt(μ) * p)]...)

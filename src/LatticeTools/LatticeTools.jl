@@ -11,7 +11,7 @@ export downsample, upsample, coarsen, sublattice
 
 include("DualLattices.jl")
 using .DualLattices
-export dualShiftLattice, dualLattice, dualate, dualphase, ldq
+export dualShiftLattice, dualLattice, dualate, dualPhase, ldq
 
 
 export   latticeDisplacement, toDim

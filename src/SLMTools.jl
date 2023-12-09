@@ -6,7 +6,7 @@ using .LatticeTools
 export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF, subfield, wrap, square, sublattice
 export natlat, sft, isft, padout
 export downsample, upsample, coarsen, sublattice
-export dualLattice, dualShiftLattice, dualate, ldq, dualphase
+export dualLattice, dualShiftLattice, dualate, ldq, dualPhase
 # export toDim, shiftedPhases, dualPhase,dualShiftLattice, padout, dualate, dualLattice, sft, isft, centroid, window, sublattice, latticeDisplacement
 
 include("other/ImageProcessing.jl")
