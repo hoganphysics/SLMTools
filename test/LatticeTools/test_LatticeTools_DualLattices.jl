@@ -20,3 +20,40 @@ using SLMTools.LatticeTools.DualLattices
         @test result = isapprox_range1 && isapprox_range2
     end
 end
+
+# Define a sample lattice for testing
+sampleLattice = (1:10, 1:20)
+flambda = 2.0
+
+@testset "Dual Lattice Tests" begin
+    # Test for dualLattice function
+    @testset "Testing dualLattice" begin
+        dualLat = dualLattice(sampleLattice, flambda)
+        @test length(dualLat) == length(sampleLattice)
+
+        # Check step sizes for each dimension
+        for (l, dl) in zip(sampleLattice, dualLat)
+            expected_step_size = flambda / (length(l) * step(l))
+            actual_step_size = step(dl)
+            @test actual_step_size ≈ expected_step_size
+        end
+    end
+
+    # Test for dualShiftLattice function
+    @testset "Testing dualShiftLattice" begin
+        shiftDualLat = dualShiftLattice(sampleLattice, flambda)
+        @test length(shiftDualLat) == length(sampleLattice)
+
+        # Check step sizes and range starts for each dimension
+        for (l, sdl) in zip(sampleLattice, shiftDualLat)
+            expected_step_size = flambda / (length(l) * step(l))
+            actual_step_size = step(sdl)
+            @test actual_step_size ≈ expected_step_size
+
+            # Check if the initial entry is negative (for non-even lengths)
+            if length(l) % 2 != 0
+                @test first(sdl) < 0
+            end
+        end
+    end
+end
