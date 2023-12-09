@@ -7,24 +7,24 @@ lattice = (1:10, 1:10)
 flambda = 1.5
 
 # Test LatticeField constructor
-# @testset "LatticeField Constructor Tests" begin
-#     lf = LatticeField{ComplexPhase}(data, lattice, flambda)
-#     @test size(lf.data) == (10, 10)
-#     @test lf.L == lattice
-#     @test lf.flambda ≈ 1.5
+@testset "LatticeField Constructor Tests" begin
+    lf = LatticeField{ComplexPhase}(data, lattice, flambda)
+    @test size(lf.data) == (10, 10)
+    @test lf.L == lattice
+    @test lf.flambda ≈ 1.5
 
-#     # Test for DimensionMismatch
-#     data_mismatch = rand(ComplexF64, 8, 8)
-#     @test_throws DimensionMismatch LatticeField{ComplexPhase}(data_mismatch, lattice)
-# end
+    # Test for DimensionMismatch
+    data_mismatch = rand(ComplexF64, 8, 8)
+    @test_throws DimensionMismatch LatticeField{ComplexPhase}(data_mismatch, lattice)
+end
 
-# # Test convenience constructor
-# @testset "Convenience Constructor Tests" begin
-#     lf = LatticeField{ComplexPhase}(data, lattice)
-#     @test size(lf.data) == (10, 10)
-#     @test lf.L == lattice
-#     @test lf.flambda ≈ 1.0
-# end
+# Test convenience constructor
+@testset "Convenience Constructor Tests" begin
+    lf = LatticeField{ComplexPhase}(data, lattice)
+    @test size(lf.data) == (10, 10)
+    @test lf.L == lattice
+    @test lf.flambda ≈ 1.0
+end
 
 # Test equality checking for lattices
 @testset "Lattice Equality Tests" begin

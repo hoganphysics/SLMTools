@@ -57,3 +57,48 @@ flambda = 2.0
         end
     end
 end
+
+
+# Define sample lattices and LatticeFields for testing
+L1 = (1:10, 1:20)
+L2 = dualShiftLattice(L1)  # Creating a dual lattice for comparison
+flambda = 1.0
+
+data = rand(ComplexF64, 10, 20)
+data2 = rand(ComplexF64, 10, 20)
+LF1 = LF{ComplexPhase}(data, L1, flambda)
+LF2 = LF{ComplexPhase}(data, L2, flambda)
+LF3 = LF{ComplexPhase}(data2, L2, flambda)
+
+@testset "Lattice Duality Query Tests" begin
+    # Test ldq for lattices
+    @testset "ldq for Lattices" begin
+        @test ldq(L1, L2, flambda) == nothing
+        @test_throws DimensionMismatch ldq(L1, (1:10, 1:10), flambda)
+        @test_throws DomainError ldq(L1, L1, flambda)
+    end
+
+    # Test ldq for LatticeFields
+    @testset "ldq for LatticeFields" begin
+        @test ldq(LF1, LF2) == nothing
+        @test_throws DimensionMismatch ldq(LF1, LF{ComplexPhase}(data, (1:10, 1:10), flambda))
+        @test_throws DomainError ldq(LF1, LF1)
+    end
+end
+
+
+
+@testset "Dual Phase Tests" begin
+    @testset "dualPhase without specifying dL" begin
+        dpField = dualPhase(L1)
+        @test isa(dpField, LF{ComplexPhase})
+        @test dpField.L == dualShiftLattice(L1)
+    end
+
+    @testset "dualPhase with specifying dL" begin
+        dL = dualShiftLattice(L1)
+        dpField = dualPhase(L1, dL=dL)
+        @test isa(dpField, LF{ComplexPhase})
+        @test dpField.L == dL
+    end
+end

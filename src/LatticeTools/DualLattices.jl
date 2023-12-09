@@ -1,8 +1,8 @@
 module DualLattices
-using ..LatticeCore: Lattice, sft, isft
+using ..LatticeCore
 using Interpolations: linear_interpolation 
 
-export dualLattice, dualShiftLattice, dualate
+export dualLattice, dualShiftLattice, dualPhase, dualate, ldq
 
 """
     dualLattice(L::Lattice{N}, flambda::Number=1) where N
@@ -40,6 +40,68 @@ function dualShiftLattice(L::Lattice{N}, flambda::Number=1) where {N}
 end
 
 
+"""
+    ldq(L1::Lattice, L2::Lattice, flambda=1)
+
+    Check if two lattices, `L1` and `L2`, are duals of each other, considering a wavelength scaling factor `flambda`. The function computes the dual of `L1` using a shifted lattice approach and compares it with `L2`.
+
+    Arguments:
+    - `L1::Lattice`: The first lattice.
+    - `L2::Lattice`: The second lattice, to be compared with the dual of `L1`.
+    - `flambda`: A scaling factor for the wavelength (default is 1).
+
+    Returns:
+    - Nothing, but throws `DomainError` if lattices are not duals.
+
+    Usage:
+    ldq(lattice1, lattice2, flambda)
+    """
+ldq(L1::Lattice, L2::Lattice, flambda=1) = (all(isapprox.(dualShiftLattice(L1, flambda), L2)) || throw(DomainError((L1, L2), "Unequal lattices.")); return nothing)
+
+"""
+    ldq(f1::LF, f2::LF)
+
+    Check if two `LatticeField` instances, `f1` and `f2`, are duals of each other. It compares the dual of the lattice of `f1` with the lattice of `f2` and checks if their `flambda` values are the same.
+
+    Arguments:
+    - `f1::LF`: The first LatticeField.
+    - `f2::LF`: The second LatticeField.
+
+    Returns:
+    - Nothing, but throws `DomainError` if LatticeFields are not duals.
+
+    Usage:
+    ldq(latticeField1, latticeField2)
+    """
+ldq(f1::LF, f2::LF) = (all(isapprox.(dualShiftLattice(f1.L, f1.flambda), f2.L)) && f1.flambda == f2.flambda || throw(DomainError((f1.L, f2.L, f1.flambda, f2.flambda), "Non-dual lattices.")); return nothing)
+
+"""
+    dualPhase(L::Lattice{N}; dL = nothing) where N
+
+    Create a `LatticeField` representing the phase factors for a dual lattice. This function is used in Fourier optics and other applications involving wave propagation and interference. The phase factors are calculated based on the dual lattice of `L` (or a provided `dL`) and the lattice displacement.
+
+    Arguments:
+    - `L::Lattice{N}`: The original lattice.
+    - `dL`: An optional dual lattice. If not provided, the dual lattice is computed using `dualShiftLattice(L)`.
+
+    Returns:
+    - `LatticeField{ComplexPhase}`: A `LatticeField` with complex phase values representing the phase factors of the dual lattice.
+
+    Usage:
+    # Without specifying dL
+    dualPhaseField = dualPhase(myLattice)
+
+    # With specifying dL
+    dualLattice = dualShiftLattice(myLattice)
+    dualPhaseField = dualPhase(myLattice, dL=dualLattice)
+    """
+function dualPhase(L::Lattice{N}; dL=nothing) where {N}
+    if isnothing(dL)
+        dL = dualShiftLattice(L)
+    end
+    b = latticeDisplacement(L)
+    return LF{ComplexPhase}(exp.(-2 * pi * im .* .+((b[i] * toDim(dL[i], i, N) for i = 1:N)...)), dL)
+end
 
 
 """ dualate(imgs, slmGrid, camGrid, θ, flambda; roi=nothing)

@@ -5,8 +5,8 @@ export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, 
 export Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF
 export subfield, wrap, square, sublattice
 
-export natlat, padout, sft, isft
-export RealPhase, Generic, Phase, FieldVal, ComplexPhase
+export natlat, padout, sft, isft, latticeDisplacement, toDim
+
 
 
 
@@ -107,6 +107,45 @@ isft(v) = fftshift(ifft(ifftshift(v)))
 
 #endregion
 
+#region -------------------lattice displacement and toDim-------------------
 
+"""
+    latticeDisplacement(L::Lattice)
+
+    Calculate the displacement for each dimension of a lattice `L`. This function determines the offset from the origin for each dimension of the lattice.
+
+    Arguments:
+    - `L::Lattice`: The lattice to calculate the displacement for.
+
+    Returns:
+    - Array: Displacements for each dimension of the lattice.
+
+    Usage:
+    displacements = latticeDisplacement(myLattice)
+    """
+function latticeDisplacement(L::Lattice)
+    return [l[1] + floor(length(l) / 2) * step(l) for l in L]
+end
+
+
+"""
+    toDim(v, d::Int, n::Int)
+
+    Reshape a vector `v` into an `n`-dimensional array, with non-singleton dimension at `d`. This is useful for applying operations intended for one dimension across a specific dimension in a higher-dimensional space.
+
+    Arguments:
+    - `v`: The vector to be reshaped.
+    - `d::Int`: The dimension which `v` should span.
+    - `n::Int`: The number of dimensions of the target array.
+
+    Returns:
+    - Array: The reshaped array.
+
+    Usage:
+    reshapedArray = toDim(vector, dimension, totalDimensions)
+    """
+function toDim(v, d::Int, n::Int)
+    reshape(v, ((i == d ? length(v) : 1) for i = 1:n)...)
+end
 
 end # module Core

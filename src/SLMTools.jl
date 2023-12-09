@@ -1,17 +1,12 @@
 module SLMTools
-# using FileIO, Plots, Images, FreeTypeAbstraction
-# using Interpolations, FFTW, Statistics, OptimalTransport
-# using PyCall
 
-# include("SubModule/Submodule.jl")
-# using .Submodule
-# export subtestA, subtestB, subsubtestA, subsubtestB
 
 include("LatticeTools/LatticeTools.jl")
 using .LatticeTools
-export Lattice, natlat, sft, isft, padout, elq
-export downsample, upsample, upsampleBeam
-export dualLattice, dualShiftLattice, dualate
+export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF, subfield, wrap, square, sublattice
+export natlat, sft, isft, padout
+export downsample, upsample, coarsen, sublattice
+export dualLattice, dualShiftLattice, dualate, ldq, dualphase
 # export toDim, shiftedPhases, dualPhase,dualShiftLattice, padout, dualate, dualLattice, sft, isft, centroid, window, sublattice, latticeDisplacement
 
 include("other/ImageProcessing.jl")
