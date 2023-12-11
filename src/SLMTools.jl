@@ -36,8 +36,9 @@ export phasor, gs, gsIter, pdgs, pdgsIter, oneShot
 # include("OTHelpers.jl")
 # export getCostMatrix, pdCostMatrix, pdotBeamEstimate, safeInverse, mapify, scalarPotential2, scalarPotentialN, hyperSum, OTphase, OTreducedPhase
 
-# include("VisualizationHelpers.jl")
-# export plotBeamMap, hm
+include("other/VisualizationHelpers.jl")
+using .VisualizationHelpers
+export look
 
 # include("FileHelpers.jl")
 # export savePhase, saveBeam, saveAs8BitBMP

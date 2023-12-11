@@ -1,8 +1,16 @@
 module DualLattices
 using ..LatticeCore
 using Interpolations: linear_interpolation 
+using FFTW: fft, ifft, fftshift, ifftshift
 
 export dualLattice, dualShiftLattice, dualPhase, dualate, ldq
+
+export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase
+export Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF
+export subfield, wrap, square, sublattice
+
+export natlat, padout, sft, isft, latticeDisplacement, toDim
+
 
 """
     dualLattice(L::Lattice{N}, flambda::Number=1) where N
@@ -38,7 +46,8 @@ function dualShiftLattice(L::Lattice{N}, flambda::Number=1) where {N}
     # These frequencies are equivalent to those of fftshift(dualLattice), but the initial entries are negative
     return (((-floor(Int, length(l) / 2):floor(Int, (length(l) - 1) / 2)) .* flambda ./ (length(l) * step(l)) for l in L)...,)
 end
-
+LatticeCore.sft(v::LF{ComplexAmplitude}) = LF{ComplexAmplitude}(fftshift(fft(ifftshift(v.data))), dualShiftLattice(v.L, v.flambda), v.flambda)
+LatticeCore.isft(v::LF{ComplexAmplitude}) = LF{ComplexAmplitude}(fftshift(ifft(ifftshift(v.data))), dualShiftLattice(v.L, v.flambda), v.flambda)
 
 """
     ldq(L1::Lattice, L2::Lattice, flambda=1)
@@ -123,7 +132,7 @@ end
 function dualPhase(L::Lattice{N}, flambda::Real=1) where {N}
     dL = dualShiftLattice(L, flambda)
     b = latticeDisplacement(L)
-    return exp.(-2 * pi * im .* .+((b[i] * toDim(dL[i], i, N) for i = 1:N)...) ./ flambda)
+    return LF{ComplexPhase}(exp.(-2 * pi * im .* .+((b[i] * toDim(dL[i], i, N) for i = 1:N)...) ./ flambda), dL)
 end
 
 

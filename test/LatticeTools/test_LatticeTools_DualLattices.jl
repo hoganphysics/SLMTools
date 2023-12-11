@@ -1,5 +1,6 @@
 using Test
 using SLMTools.LatticeTools.DualLattices
+# using SLMTools
 
 @testset "DualLattices tests" begin
     @testset "dualLattice" begin
@@ -97,7 +98,7 @@ end
 
     @testset "dualPhase with specifying dL" begin
         dL = dualShiftLattice(L1)
-        dpField = dualPhase(L1, dL=dL)
+        dpField = dualPhase(L1, dL)
         @test isa(dpField, LF{ComplexPhase})
         @test dpField.L == dL
     end

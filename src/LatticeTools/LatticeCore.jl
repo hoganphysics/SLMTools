@@ -1,4 +1,5 @@
 module LatticeCore
+using FFTW
 include("LatticeFields.jl")
 using .LatticeFields
 export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase
@@ -93,7 +94,7 @@ padout(f::LF{S,T,N}, p::NTuple{N,Int}, filler=zero(T)) where {S<:FieldVal,T,N} =
     - An array containing the shifted Fourier transform of `v`.
     """
 sft(v) = fftshift(fft(ifftshift(v)))
-
+# sft(v::LF{ComplexAmplitude}) = LF{ComplexAmplitude}(fftshift(fft(ifftshift(v.data))), dualShiftLattice(v.L, v.flambda), v.flambda)
 
 """
     isft(v)
@@ -104,7 +105,7 @@ sft(v) = fftshift(fft(ifftshift(v)))
     - An array containing the inverse shifted Fourier transform of `v`.
     """
 isft(v) = fftshift(ifft(ifftshift(v)))
-
+# isft(v::LF{ComplexAmplitude}) = LF{ComplexAmplitude}(fftshift(ifft(ifftshift(v.data))), dualShiftLattice(v.L, v.flambda), v.flambda)
 #endregion
 
 #region -------------------lattice displacement and toDim-------------------

@@ -1,67 +1,46 @@
 module VisualizationHelpers
-using Plots: heatmap, plot
-"""
-    hm(a)
+using Images: Gray
+using ..LatticeTools
+export look
 
-    Create a heatmap of the input array with no colorbar.
+cycle1(x::Complex) = (angle(x) + pi) / (2pi)
+
+"""
+    look(x::LF...), look(f::LF{RealPhase}), look(f::LF{ComplexPhase}), look(f::LF{Modulus}), look(f::LF{ComplexAmp}), look(f::LF{Intensity})
+
+    Generate a heatmap of the given attribute of a LatticeField, or a combined heatmap of multiple attributes.
 
     # Arguments
-    - `a`: An array for which the heatmap is to be generated.
+    - `f::LF{attribute}
 
     # Returns
-    - A heatmap of the input array `a`.
+    - A heatmap(s) of the input field.
 
-    # Overloaded Method
-    - `hm(a...)`: Generates a combined plot of heatmaps for each input array in `a`.
-
-    This function and its overloaded method are convenience wrappers for creating heatmaps without color bars, useful for visualizing matrices or arrays of data.
-"""
-hm(a) = heatmap(a, colorbar=false)
-hm(a...) = plot((hm(i) for i in a)...)
-
-"""
-    plotBeamMap(beams::Vector{M}; st=1, roi=nothing) where {M<:Matrix}
-
-    Generate a series of heatmaps for the intensity and phase of each beam in a vector of beams.
-
-    # Arguments
-    - `beams::Vector{M}`: A vector where each element is a matrix representing a complex beam.
-    - `st`: Step size for the region of interest (ROI) in the plot, defaults to 1.
-    - `roi`: An optional tuple specifying the ROI over which to plot the beams.
-
-    # Returns
-    - A combined plot of heatmaps showing the normalized absolute square and angle of each beam within the specified ROI.
-
-    This function iterates over the vector of beams, creating two heatmaps for each: one for the normalized intensity (absolute square) and one for the phase (angle) of the beam, then vertically concatenates them for a comprehensive visualization.
-"""
-function plotBeamMap(beams::Vector{M}; st=1, roi=nothing) where {M<:Matrix}
-    if isnothing(roi)
-        roi = (1:st:s for s in size(beams[1]))
-    end
-    plot(vcat(([heatmap(nabs(beam[roi...]) .^ 2, colorbar=false), heatmap(angle.(beam[roi...]), colorbar=false)] for beam in beams)...)...)
+    This function generates a heatmap of attribute of a LatticeField, or a combined heatmap of multiple attributes. The following attributes are supported:
+    - `RealPhase`: The real part of the phase of the field.
+    - `ComplexPhase`: The phase of the field.
+    - `Modulus`: The modulus of the field.
+    - `ComplexAmp`: The complex amplitude of the field.
+    - `Intensity`: The intensity of the field.
+    - all of them together
+    """
+function look(f::LF{RealPhase})
+    return Gray.((f.data .- minimum(f.data)) .% 1)
 end
-
-
-"""
-    plotBeamMap(beam; st=1, roi=nothing)
-
-    Generate heatmaps for the intensity and phase of a single beam.
-
-    # Arguments
-    - `beam`: A matrix representing a complex beam.
-    - `st`: Step size for the region of interest (ROI) in the plot, defaults to 1.
-    - `roi`: An optional tuple specifying the ROI over which to plot the beam.
-
-    # Returns
-    - A plot with two heatmaps: one showing the normalized absolute square and the other showing the angle of the beam within the specified ROI.
-
-    This function creates a heatmap for the normalized intensity (absolute square) and another for the phase (angle) of the given beam and displays them side by side.
-"""
-function plotBeamMap(beam; st=1, roi=nothing)
-    if isnothing(roi)
-        roi = (1:st:s for s in size(beam))
-    end
-    plot(heatmap(nabs(beam[roi...]) .^ 2, colorbar=false), heatmap(angle.(beam[roi...]), colorbar=false))
+function look(f::LF{ComplexPhase})
+    return Gray.(cycle1.(f.data))
+end
+function look(f::LF{Modulus})
+    return Gray.(f.data ./ maximum(f.data))
+end
+function look(f::LF{ComplexAmp})
+    return hcat(Gray.(abs.(f.data) ./ maximum(abs.(f.data))), Gray.(cycle1.(f.data)))
+end
+function look(f::LF{Intensity})
+    return Gray.(f.data ./ maximum(f.data))
+end
+function look(x::LF...)
+    return hcat((look(y) for y in x)...)
 end
 
 end # module VisualizationHelpers
