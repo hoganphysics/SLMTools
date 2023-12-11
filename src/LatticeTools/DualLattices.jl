@@ -1,6 +1,7 @@
 module DualLattices
 using ..LatticeCore
-using Interpolations: linear_interpolation 
+using Interpolations: LinearInterpolation  
+linear_interpolation = LinearInterpolation
 using FFTW: fft, ifft, fftshift, ifftshift
 
 export dualLattice, dualShiftLattice, dualPhase, dualate, ldq

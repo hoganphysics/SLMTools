@@ -29,7 +29,7 @@ end
 # Test equality checking for lattices
 @testset "Lattice Equality Tests" begin
     lattice2 = (1:10, 1:10)
-    @test elq(lattice, lattice2) == nothing
+    @test elq(lattice, lattice2) === nothing
 
     lattice3 = (1:9, 1:10)
     @test_throws DimensionMismatch elq(lattice, lattice3)

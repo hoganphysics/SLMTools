@@ -1,11 +1,11 @@
 module Resampling
 using ..LatticeCore
-using Interpolations: cubic_spline_interpolation, Flat, Periodic
+using Interpolations: Flat, Periodic, CubicSplineInterpolation
 using FFTW: fftshift, ifftshift
 
 export downsample, coarsen, upsample
 
-
+cubic_spline_interpolation = CubicSplineInterpolation
 #region ------------------downsample lattices ----------------------------
 
 """

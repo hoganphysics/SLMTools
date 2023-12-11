@@ -74,14 +74,14 @@ LF3 = LF{ComplexPhase}(data2, L2, flambda)
 @testset "Lattice Duality Query Tests" begin
     # Test ldq for lattices
     @testset "ldq for Lattices" begin
-        @test ldq(L1, L2, flambda) == nothing
+        @test ldq(L1, L2, flambda) === nothing
         @test_throws DimensionMismatch ldq(L1, (1:10, 1:10), flambda)
         @test_throws DomainError ldq(L1, L1, flambda)
     end
 
     # Test ldq for LatticeFields
     @testset "ldq for LatticeFields" begin
-        @test ldq(LF1, LF2) == nothing
+        @test ldq(LF1, LF2) === nothing
         @test_throws DimensionMismatch ldq(LF1, LF{ComplexPhase}(data, (1:10, 1:10), flambda))
         @test_throws DomainError ldq(LF1, LF1)
     end
