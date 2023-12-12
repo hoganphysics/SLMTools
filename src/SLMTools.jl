@@ -21,7 +21,7 @@ export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid, sweepCoords, 
 # using .IntensityGenerators
 # export makeGaussian, makeRing, makeLetter, makeLetterPattern
 
-include("masks/PhaseIntensityMasks.jl")
+include("other/PhaseIntensityMasks.jl")
 using .PhaseIntensityMasks
 export lfRampedParabola, lfGaussian, lfRing
 

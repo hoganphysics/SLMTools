@@ -32,3 +32,13 @@ end
     @test lf.flambda == 1.0
     @test all(lf.data .<= 1.0)
 end
+
+# @testset "makeLetterPattern tests" begin
+#     tw = 10
+#     NT = 100
+#     word = "AI"
+#     pattern = makeLetterPattern(tw, NT, word)
+
+#     @test size(pattern) == (NT, NT)
+#     # Add more tests based on the expected properties of the pattern
+# end
