@@ -64,7 +64,7 @@ end
 
     # Details
     This function can save the complex beam and its angle as CSV files and PNG images. It appends the current date to the filenames and allows for saving the negative of the phase as well.
-"""
+    """
 function saveBeam(beam::Matrix{ComplexF64}, name::String, data=[:beamCsv, :angleCsv, :anglePng, :negativeAnglePng]; dir=pwd())
     if :beamCsv in data
         writedlm(dir * "\\" * name * "-Beam-" * string(now())[1:10] * ".csv", beam, ',')
@@ -91,7 +91,7 @@ end
     - `output_filename::String`: The filename for the saved image.
 
     This function executes python code which saves an image from the given Julia array data. The Python script is read from the file `script` and the image data is passed to the Python function `save_as_bmp` along with the output filename.
-"""
+    """
 function saveAs8BitBMP(image_data::Array{Int64,2}, output_filename::String)
     py_executable_path = PyCall.python
     ENV["PYTHON"] = py_executable_path

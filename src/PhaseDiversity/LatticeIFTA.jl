@@ -138,7 +138,7 @@ function pdgs(imgs::NTuple{M,LF{Modulus,<:Number,N}}, divPhases::NTuple{M,LF{<:P
     ft = plan_fft(zeros(s))
     ift = plan_ifft(zeros(s))
     guess = ifftshift(beamGuess.data)
-    phis = ((ifftshift(wrap(divPhases[i]).data .* dualPhase(imgs[i].L, imgs[i].flambda)) * 1.0 for i = 1:M)...,)::NTuple{M,Array{ComplexF64,N}}
+    phis = ((ifftshift(wrap(divPhases[i]).data .* dualPhase(imgs[i].L, imgs[i].flambda).data) * 1.0 for i = 1:M)...,)::NTuple{M,Array{ComplexF64,N}}
     mods = ((ifftshift(i.data) * 1.0 for i in imgs)...,)::NTuple{M,Array{Float64,N}}
     for j = 1:nit
         guess = pdgsIter(guess, phis, mods, ft, ift)

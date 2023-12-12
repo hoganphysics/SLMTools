@@ -13,14 +13,6 @@ include("other/ImageProcessing.jl")
 using .ImageProcessing
 export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid, sweepCoords, findCOM, lineFit, castImage, loadDir, parseFileName, parseStringToNum, getOrientation
 
-# include("masks/PhaseGenerators.jl")
-# using .PhaseGenerators
-# export makeRampedParabola
-
-# include("masks/IntensityGenerators.jl")
-# using .IntensityGenerators
-# export makeGaussian, makeRing, makeLetter, makeLetterPattern
-
 include("other/PhaseIntensityMasks.jl")
 using .PhaseIntensityMasks
 export lfRampedParabola, lfGaussian, lfRing
@@ -44,8 +36,8 @@ include("other/VisualizationHelpers.jl")
 using .VisualizationHelpers
 export look
 
-# include("FileHelpers.jl")
-# export savePhase, saveBeam, saveAs8BitBMP
+include("other/FileHelpers.jl")
+export savePhase, saveBeam, saveAs8BitBMP
 
 
 end # module SLMTools
