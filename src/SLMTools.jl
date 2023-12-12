@@ -7,7 +7,7 @@ export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, 
 export natlat, sft, isft, padout
 export downsample, upsample, coarsen, sublattice
 export dualLattice, dualShiftLattice, dualate, ldq, dualPhase
-# export toDim, shiftedPhases, dualPhase,dualShiftLattice, padout, dualate, dualLattice, sft, isft, centroid, window, sublattice, latticeDisplacement
+# export toDim, shiftedPhases,    latticeDisplacement
 
 include("other/ImageProcessing.jl")
 using .ImageProcessing
@@ -23,7 +23,7 @@ export makeGaussian, makeRing, makeLetter, makeLetterPattern
 
 include("other/Misc.jl")
 using .Misc
-export ramp, nabs, centroid, window
+export ramp, nabs, centroid, window, normalizeDistribution, safeInverse, hyperSum
 
 include("other/HoganParameters.jl")
 using .HoganParameters
@@ -33,8 +33,8 @@ include("PhaseDiversity/LatticeIFTA.jl")
 using .LatticeIFTA
 export phasor, gs, gsIter, pdgs, pdgsIter, oneShot
 
-# include("OTHelpers.jl")
-# export getCostMatrix, pdCostMatrix, pdotBeamEstimate, safeInverse, mapify, scalarPotential2, scalarPotentialN, hyperSum, OTphase, OTreducedPhase
+include("PhaseDiversity/OTHelpers.jl")
+export getCostMatrix, pdCostMatrix, pdotBeamEstimate,  mapify, scalarPotentialN,  OTphase, pdotPhase
 
 include("other/VisualizationHelpers.jl")
 using .VisualizationHelpers
