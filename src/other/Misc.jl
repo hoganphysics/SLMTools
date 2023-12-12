@@ -1,6 +1,6 @@
 module Misc
 using ..LatticeTools
-export ramp, nabs, centroid, window, normalizeDistribution, safeInverse, hyperSum, collapse, clip
+export ramp, nabs, centroid, window, normalizeDistribution, safeInverse, hyperSum, collapse, clip, collapse, clip, getOrientation
 
 
 """
