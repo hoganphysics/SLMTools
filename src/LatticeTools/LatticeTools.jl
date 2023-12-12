@@ -3,7 +3,7 @@ module LatticeTools
 include("LatticeCore.jl") # uses LatticeFields.jl
 using .LatticeCore
 export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF, subfield, wrap, square, sublattice
-export natlat, sft, isft, padout, latticeDisplacement, toDim
+export natlat, sft, isft, padout, latticeDisplacement, toDim, naturalize
 
 include("Resampling.jl")
 using .Resampling

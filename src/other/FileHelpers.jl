@@ -17,6 +17,41 @@ function savePhase(A::AbstractArray{ComplexF64,2}, name::String)
 end
 
 """
+    savePhase(x::LF{ComplexPhase}, name::String)
+
+    Save the phase information of a LatticeField with complex phase values to a file.
+
+    This function extracts the phase data from a `LF{ComplexPhase}` object and saves it using the specified file name.
+
+    # Arguments
+    - `x::LF{ComplexPhase}`: A LatticeField object containing complex phase values.
+    - `name::String`: The name of the file to save the phase data.
+
+    The function delegates the saving process to another `savePhase` method tailored for handling the raw data of `x`.
+    """
+function savePhase(x::LF{ComplexPhase}, name::String)
+    savePhase(x.data, name)
+end
+
+"""
+    savePhase(x::LF{RealPhase}, name::String)
+
+    Save the phase information of a LatticeField with real phase values as an image file.
+
+    This function takes a `LF{RealPhase}` object, normalizes the phase data to the range [0,1), and saves it as an image 
+    using the specified file name. The normalization is performed by taking the modulus of the phase data with 1.
+
+    # Arguments
+    - `x::LF{RealPhase}`: A LatticeField object containing real phase values.
+    - `name::String`: The name of the image file to save the normalized phase data.
+
+    The saved image visualizes the phase information by mapping phase values to grayscale intensities.
+    """
+function savePhase(x::LF{RealPhase}, name::String)
+    save(name, Gray.(mod.(x.data, 1)))
+end
+
+"""
     saveBeam(beam::Matrix{ComplexF64}, name::String, data=[:beamCsv, :angleCsv, :anglePng, :negativeAnglePng]; dir=pwd())
 
     Save various representations of a complex beam array to files.

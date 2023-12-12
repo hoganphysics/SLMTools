@@ -10,7 +10,7 @@ export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, 
 export Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF
 export subfield, wrap, square, sublattice
 
-export natlat, padout, sft, isft, latticeDisplacement, toDim
+# export natlat, padout, sft, isft, latticeDisplacement, toDim
 
 
 """
@@ -138,55 +138,73 @@ end
 
 
 
-""" dualate(imgs, slmGrid, camGrid, θ, flambda; roi=nothing)
 
-    This function performs a dualate operation on the given images.
+"""
+    dualate(f::LF{S,T,2}, L::Lattice{2}, center::Vector{<:Real}, θ::Real, flambda::Real=1.0; 
+            roi=nothing, interpolation=cubic_spline_interpolation, naturalize=false, bc=zero(T)) 
+            where {S<:FieldVal, T<:Number}
+
+    Corrects for offset and tilt in a LatticeField and interpolates it onto a lattice dual to `L`.
+
+    This function adjusts the LatticeField `f` for any offset and tilt based on `center` and `θ`, and then performs interpolation 
+    onto a new lattice that is dual to `L`. The dual lattice is calculated considering the scaling factor `flambda`.
 
     # Arguments
-    - `imgs`: An array of images to be processed.
-    - `slmGrid`: The SLM grid for the images.
-    - `camGrid`: The camera grid for the images. This should have physical units, not pixel units.
-    - `θ`: The angle output of sweepCoords.
-    - `flambda`: The scaling factor for the dual lattice.
-    - `roi`: (optional) The region of interest in the images. If not provided, the entire image is used.
+    - `f::LF{S,T,2}`: A two-dimensional LatticeField to be dualated.
+    - `L::Lattice{2}`: The target lattice for dualation.
+    - `center::Vector{<:Real}`: The center around which the dualation is performed.
+    - `θ::Real`: The angle of rotation for tilt correction.
+    - `flambda::Real`: Scaling factor for the wavelength (default: 1.0).
+    - `roi`: Optional region of interest to be considered within `f`.
+    - `interpolation`: Interpolation method to be used (default: cubic spline interpolation).
+    - `naturalize`: Boolean flag to naturalize the lattice (default: false).
+    - `bc`: Boundary condition for extrapolation (default: `zero(T)`).
 
     # Returns
-    - An array of images that have been processed with the dualate operation.
-
-    # Errors
-    - If the camera grid and image size are unequal, an error is thrown."""
-function dualate(imgs, slmGrid, camGrid, θ, flambda; roi=nothing)
+    - A new `LF{S}` representing the dualated LatticeField.
+    """
+function dualate(f::LF{S,T,2}, L::Lattice{2}, center::Vector{<:Real}, θ::Real, flambda::Real=1.0;
+    roi=nothing, interpolation=cubic_spline_interpolation, naturalize=false, bc=zero(T)) where {S<:FieldVal,T<:Number}
+    # Corrects for offset and tilt of f.L and then interpolates f onto a lattice dual to L. 
+    length(center) == length(f.L) || error("Incompatible lengths for center and f.L.")
     if !isnothing(roi)
-        if size(imgs[1]) != length.(roi)
-            imgs = [i[roi...] for i in imgs]
-        end
-        if length.(camGrid) != length.(roi)
-            camGrid = ((camGrid[i][roi[i]] for i = 1:length(camGrid))...,)
-        end
+        f = f[roi...]
     end
-    size(imgs[1]) == length.(camGrid) || error("Camera grid and image size unequal.")
-    interps = [linear_interpolation(camGrid, imgs[j], extrapolation_bc=zero(typeof(imgs[1][1]))) for j in 1:length(imgs)]
-    dL = dualShiftLattice(slmGrid, flambda)
+    L0 = Tuple(f.L[i] .- center[i] for i = 1:2)
+    interp = interpolation(L0, f.data, extrapolation_bc=bc)
+    dL = dualShiftLattice(L, flambda)
     Lx0, Lxs, Ly0, Lys = dL[1][1], step(dL[1]), dL[2][1], step(dL[2])
     R = [cos(θ) -sin(θ); sin(θ) cos(θ)]
     r0, dx, dy = (R * [Lx0, Ly0]), Lxs * R[:, 1], Lys * R[:, 2]
-
-    return [[interp((r0 + dx * I[1] + dy * I[2])...) for I in CartesianIndices(length.(dL))] for interp in interps]
+    if naturalize
+        return LF{S}([interp((r0 + dx * I[1] + dy * I[2])...) for I in CartesianIndices(length.(dL))], natlat(length.(dL)), 1.0)
+    else
+        return LF{S}([interp((r0 + dx * I[1] + dy * I[2])...) for I in CartesianIndices(length.(dL))], dL, flambda)
+    end
 end
 
+"""
+    dualate(fs::Vector{<:LF{S}}, L::Lattice{2}, center::Vector{<:Real}, theta::Real, flambda::Real=1.0; kwargs...) 
+            where {S<:FieldVal}
 
+    Perform dualation on a vector of two-dimensional LatticeFields.
 
+    This function applies the `dualate` operation to each LatticeField in the vector `fs`, adjusting for offset and tilt and 
+    interpolating onto a lattice dual to `L`.
 
+    # Arguments
+    - `fs::Vector{<:LF{S}}`: A vector of LatticeFields to be dualated.
+    - `L::Lattice{2}`: The target lattice for dualation.
+    - `center::Vector{<:Real}`: The center for dualation.
+    - `theta::Real`: The angle of rotation for tilt correction.
+    - `flambda::Real`: Scaling factor for the wavelength (default: 1.0).
+    - `kwargs...`: Additional keyword arguments passed to each `dualate` call.
 
-
-
-
-
-
-
-
-
-
+    # Returns
+    - A vector of `LF{S}` where each element is the result of applying `dualate` to the corresponding element in `fs`.
+    """
+dualate(fs::Vector{<:LF{S}}, L::Lattice{2}, center::Vector{<:Real}, theta::Real, flambda::Real=1.0; kwargs...) where {S<:FieldVal} =
+[dualate(f, L, center, theta, flambda; kwargs...) for f in fs]
 
 
 

@@ -4,7 +4,7 @@ module SLMTools
 include("LatticeTools/LatticeTools.jl")
 using .LatticeTools
 export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF, subfield, wrap, square, sublattice
-export natlat, sft, isft, padout
+export natlat, sft, isft, padout, naturalize, latticeDisplacement, toDim
 export downsample, upsample, coarsen, sublattice
 export dualLattice, dualShiftLattice, dualate, ldq, dualPhase
 
@@ -13,13 +13,17 @@ include("other/ImageProcessing.jl")
 using .ImageProcessing
 export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid, sweepCoords, findCOM, lineFit, castImage, loadDir, parseFileName, parseStringToNum, getOrientation
 
-include("masks/PhaseGenerators.jl")
-using .PhaseGenerators
-export makeRampedParabola
+# include("masks/PhaseGenerators.jl")
+# using .PhaseGenerators
+# export makeRampedParabola
 
-include("masks/IntensityGenerators.jl")
-using .IntensityGenerators
-export makeGaussian, makeRing, makeLetter, makeLetterPattern
+# include("masks/IntensityGenerators.jl")
+# using .IntensityGenerators
+# export makeGaussian, makeRing, makeLetter, makeLetterPattern
+
+include("masks/PhaseIntensityMasks.jl")
+using .PhaseIntensityMasks
+export lfRampedParabola, lfGaussian, lfRing
 
 include("other/Misc.jl")
 using .Misc

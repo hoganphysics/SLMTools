@@ -6,7 +6,7 @@ export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, 
 export Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF
 export subfield, wrap, square, sublattice
 
-export natlat, padout, sft, isft, latticeDisplacement, toDim
+export natlat, padout, sft, isft, latticeDisplacement, toDim, naturalize
 
 
 
@@ -28,6 +28,31 @@ end
 function natlat(s::NTuple{N,Integer}) where {N}
     return ((natlat(n) for n in s)...,)
 end
+
+"""
+    naturalize(f::LF{S,T,N}) where {S<:FieldVal, T, N}
+
+    Convert a LatticeField to be defined on its natural lattice.
+
+    This function takes a `LF{S,T,N}` object and converts it to be defined on the natural lattice that corresponds to its size. 
+    The natural lattice is a lattice with unit steps and origin at the first index for each dimension.
+
+    # Arguments
+    - `f::LF{S,T,N}`: A LatticeField object to be naturalized.
+
+    # Returns
+    - A `LF{S}` object with the same data as `f`, but defined on its natural lattice.
+
+    The function maintains the data of the original LatticeField but changes its lattice definition to the natural lattice. 
+    This is particularly useful for standardizing the lattice structure or for operations that assume a regular, 
+    unit-stepped lattice.
+    """
+function naturalize(f::LF{S,T,N}) where {S<:FieldVal,T,N}
+    # Converts LatticeField to be difined on the natural lattice of the same size. 
+    return LF{S}(f.data, natlat(size(f)), 1.0)
+end
+
+
 #endregion
 
 #region -------------------padout, lattice, then array, then field-------------------
