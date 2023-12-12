@@ -7,11 +7,11 @@ export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, 
 export natlat, sft, isft, padout
 export downsample, upsample, coarsen, sublattice
 export dualLattice, dualShiftLattice, dualate, ldq, dualPhase
-# export toDim, shiftedPhases,    latticeDisplacement
+
 
 include("other/ImageProcessing.jl")
 using .ImageProcessing
-export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid, sweepCoords, findCOM, lineFit
+export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid, sweepCoords, findCOM, lineFit, castImage, loadDir, parseFileName, parseStringToNum, getOrientation
 
 include("masks/PhaseGenerators.jl")
 using .PhaseGenerators

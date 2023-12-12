@@ -3,10 +3,13 @@ using SLMTools
 
 @testset "Miscellaneous tests" begin
     @testset "centroid" begin
-        img1 = [1 2; 3 4]
+        img1 = LF{Intensity}([1 2; 3 4], (1:2, 1:2))
+        img2 = LF{Intensity}(ones(3,3), (1:3, 1:3))
+        img3 = LF{Intensity}([1 0; 0 0], (1:2, 1:2))
         @test centroid(img1) == [1.7; 1.6]
-        @test centroid(ones(3, 3)) == [2.0; 2.0]
-        @test centroid([1 0; 0 0]) == [1.0; 1.0]
+        @test centroid(img1.data) == [1.7; 1.6]
+        @test centroid(img2) == [2.0; 2.0]
+        @test centroid(img3) == [1.0; 1.0]
     end
 
     @testset "window" begin
