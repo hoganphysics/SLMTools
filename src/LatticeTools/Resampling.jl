@@ -178,6 +178,8 @@ function downsample(f::LatticeField{S,T,N}, Ld::Lattice{N}; interpolation=cubic_
     # between the lattices at all--this function just interpolates x from one lattice to the other. 
     return LatticeField{S}(downsample(f.data, f.L, Ld; interpolation=interpolation, bc=bc), Ld, f.flambda)
 end
+vandyfooo=0
+
 
 """
     downsample(f::LatticeField{S,T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
