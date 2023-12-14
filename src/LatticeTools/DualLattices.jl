@@ -4,7 +4,7 @@ using Interpolations: LinearInterpolation
 linear_interpolation = LinearInterpolation
 using FFTW: fft, ifft, fftshift, ifftshift
 
-export dualLattice, dualShiftLattice, dualPhase, dualate, ldq
+export dualLattice, dualShiftLattice, dualPhase, ldq
 
 export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase
 export Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF

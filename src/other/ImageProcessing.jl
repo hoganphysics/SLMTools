@@ -3,7 +3,7 @@ using FileIO: load
 using Images: Gray, RGB, Colorant
 using ..LatticeTools
 
-export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid, sweepCoords, findCOM, lineFit, castImage, loadDir, parseFileName,parseStringToNum, getOrientation
+export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parseFileName, parseStringToNum, getOrientation, dualate, linearFit, centroid, collapse, clip
 
 """
     castImage(T::DataType, img::Matrix{<:Colorant}, L::Lattice{2}, flambda::Real)
