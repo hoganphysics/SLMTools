@@ -249,10 +249,7 @@ Base.show(io::IO, f::T) where {T<:LF} = (println(T); println("Lattice: ", f.L); 
 
 
 #= 
-# The following functions allow for creation of sublattice fields by subscripting. But there are some 
-# downsides to allowing this; for example, you can get errors by calling functions like sqrt on a lattice field. 
-# I've decided for now to leave this unimplmented, and have subfield functions that accomplish this instead. 
-Update: I've re-implemented these functions after making LF not a subtype of AbstractArray.
+# The following functions allow for creation of sublattice fields by subscripting. 
 =#
 function Base.getindex(f::LatticeField{S,T,N}, x::I...) where {S,T,N,I<:Integer}
     # Subscripting f by integers returns the field value at that location. 
@@ -267,6 +264,10 @@ function Base.getindex(f::LatticeField{S,T,N}, x::Union{I,AbstractRange{I}}...) 
     # Note that this is not a type safe method, so it should not be used in performance demanding situations. 
     z = filter(i -> !(x[i] isa Integer), 1:length(x))
     return LatticeField{S,T,length(z)}(getindex(f.data, x...), sublattice(f.L[z], x[z]...), f.flambda)
+end
+function Base.getindex(f::LatticeField{S,T,N}, x::CartesianIndices) where {S,T,N}
+    # Subscripting f by CartesianIndices returns the subfield on that region. 
+    return LatticeField{S,T,N}(getindex(f.data,x),sublattice(f.L,x),f.flambda)
 end
 
 #endregion
