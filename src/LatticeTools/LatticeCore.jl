@@ -163,4 +163,28 @@ function toDim(v, d::Int, n::Int)
     reshape(v, ((i == d ? length(v) : 1) for i = 1:n)...)
 end
 
+#endregion
+
+#region ------------------- Lattice vector math -------------------
+
+"""
+	r2(x::Lattice{N}) 
+	
+	returns an array of the L2 norm squared for each point associated with a lattice. 
+	"""
+r2(x::Lattice{N}) where N = .+( (toDim(x[i].^2,i,N) for i=1:N)... )
+
+"""
+	ldot(v,x::Lattice{N})
+	
+	Computes the dot product of a vector with the coordinates associated with a lattice.  
+	Has methods for all likely combinations of vectors and lattices, i.e. either order and 
+	with the vector being represented by a Vector or a Tuple. 
+	"""
+ldot(v::NTuple{N,Real},x::Lattice{N}) where N = .+( (toDim(x[i] * v[i],i,N) for i=1:N)... )
+ldot(x::Lattice{N},v::NTuple{N,Real}) where N = ldot(v,x)
+ldot(v::Vector{T},x::Lattice{N}) where {T,N} = (length(v)==N || error("Vector length != Lattice dimension."); .+( (toDim(x[i] * v[i],i,N) for i=1:N)... ))
+ldot(x::Lattice{N},v::Vector{T}) where {N,T} = ldot(v,x)
+
+
 end # module Core

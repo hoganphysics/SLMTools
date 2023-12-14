@@ -226,121 +226,49 @@ function parseFileName(name::String; outType=nothing)
     return parseStringToNum(name[1:idx-1], outType=outType)
 end
 
+"""
+	linearFit(xs::Vector{<:Number},ys::Vector{<:Number})
+	
+	Returns (slope,intercept) of the least squares regression linear fit to the points with x-coordinates `xs` and
+	y coordinates `ys`. 
+	"""
+function linearFit(xs::Vector{<:Number},ys::Vector{<:Number})
+    # Fits a line to the points (x,y) with x in xs, y in ys, via linear regression.  Returns (slope, intercept).
+    ((hcat(xs, ones(length(xs))) \ ys)...,)
+end
 
 """
-    findCOM(img, threshold=0.1)
-    Finds the center of mass (COM) of an image based on pixel intensity, after applying a threshold.
-    Parameters:
-    - img: The input image as a 2D array where each element represents pixel intensity.
-    - threshold=0.1: A pixel intensity threshold. Pixels with intensity below this value are not considered in the COM calculation.    #
-    Returns:
-    - A 2-element array representing the coordinates of the COM of the image.
-    Apply the threshold to the image, setting values below the threshold to zero.
+	collapse(x::AbstractArray{T,N},i::Int) where {T<:Number,N}
+	
+	Sums all dimensions of x except the i-th. 
+	"""
+function collapse(x::AbstractArray{T,N},i::Int) where {T<:Number,N}
+    # Sums all dimensions of x except the i-th.  
+    return sum(x,dims=(1:i-1...,i+1:N...))[:]
+end
+
 """
-function findCOM(img, threshold=0.1)
-    clipped = (x -> (x > threshold ? x : zero(x))).(img)
+	clip(x::Number,threshold::Number)
+	
+	Clips a number `x` to zero if it's below `threshold`. 
+	"""
+function clip(x::Number,threshold::Number)
+    # Clips a number to zero if it's below the threshold. 
+    x>threshold ? x : zero(x)
+end
+
+"""
+	centroid(img::LF{Intensity,T,N},threshold::Real=0.1) where {T,N}
+	
+	Centroid of a LatticeField, in its own coordinates as given by its lattice.
+	"""
+function centroid(img::LF{Intensity,T,N},threshold::Real=0.1) where {T,N}
+    # Centroid of a LatticeField, in its own coordinates. 
+    clipped = clip.(img.data,threshold)
     s = sum(clipped)
-    s > 0 ? (clipped /= s) : error("Black image. Can't normalize")
-    return sum(I -> clipped[I] * [I[1], I[2]], CartesianIndices(size(clipped)))
+    (s > 0) || error("Black image.  Can't normalize")
+    return [(sum(collapse(clipped,i) .* img.L[i]) for i=1:N)...] ./ s
 end
-
-"""
-    lineFit(arr, xs)
-    Performs a linear fit to a set of data points.
-    Parameters:
-    - arr: A 1D array of dependent variable values (typically 'y' values).
-    - xs: A 1D array of independent variable values (typically 'x' values) corresponding to 'arr'.    #
-    Returns:
-    - A tuple containing the slope and intercept of the fitted line.
-    Perform the linear fit by solving the normal equations.
-    `hcat(xs, ones(length(xs)))` creates a matrix with the independent variable 'xs' and a column of ones for the intercept term.
-    The `\` operator performs the matrix division, effectively solving the normal equations for the best fit.
-    The result is unpacked into a tuple containing the slope and intercept.
-    """
-function lineFit(arr, xs)
-    return ((hcat(xs, ones(length(xs))) \ arr)...,)
-end
-
-
-"""
-    sweepCoords(imgs::Vector{Matrix{T}}, idxs; normalize=false, threshold=0.1, plt=false) where {T<:Number}
-
-    Analyzes a set of images represented as matrices to compute the slope, intercept, 
-    and angle of the beam center of mass relative to provided indices or parameters.
-
-    # Arguments
-    - `imgs::Vector{Matrix{T}}`: A vector of matrices, where each matrix represents an image.
-    - `idxs`: A vector of indices or parameters for analysis.
-    - `normalize::Bool` (optional): If true, normalizes each image in `imgs` by its maximum value.
-    - `threshold::Float64` (optional): Threshold value used in the `findCOM` function.
-    - `plt::Bool` (optional): If true, plots the results of the analysis.
-
-    # Returns
-    - `θ`: The angle of the beam center of mass trajectory.
-    - `[xi, yi]`: Intercepts of the linear fit on x and y coordinates.
-    - `[xs, ys]`: Slopes of the linear fit on x and y coordinates.
-"""
-function sweepCoords(imgs::Vector{Matrix{T}}, idxs; normalize=false, threshold=0.1, plt=false) where {T<:Number}
-    if normalize
-        imgs = [i / maximum(i) for i in imgs]
-    end
-    cs = hcat((findCOM(i, threshold) for i in imgs)...)'# Compute center of mass for each image
-    xs, xi, ys, yi = lineFit(cs[:, 1], idxs)..., lineFit(cs[:, 2], idxs)...# Perform linear fit on x and y coordinates separately
-    θ = angle(xs + im * ys)
-    if plt
-        p = scatter(idxs, [cs[:, 1], cs[:, 2]], label=["Center X" "Center Y"])
-        plot!(p, idxs, [idxs .* xs .+ xi, idxs .* ys .+ yi], label=["Fit X" "Fit Y"])
-        display(p)
-    end
-    return θ, [xi, yi], [xs, ys]
-end
-
-"""
-    sweepCoords(imgs::Vector{Matrix{T}}, idxs; kwargs...) where {T<:RGB}
-    This version of the function is specifically for images of type `RGB`. It first converts the RGB images to 
-    a format suitable for analysis (`itfa=imageToFloatArray`) and then calls the main `sweepCoords` function.
-"""
-function sweepCoords(imgs::Vector{Matrix{T}}, idxs; kwargs...) where {T<:RGB}
-    return sweepCoords(itfa.(imgs), idxs; kwargs...)
-end
-"""
-    sweepCoords(imgs::Vector{Matrix{T}}, idxs; kwargs...) where {T<:RGB}
-    Analyzes a set of images with respect to a specified grid to compute the angle, adjusted intercepts, 
-    and slopes of the beam center of mass.
-
-    This version extends the functionality to handle a grid of coordinates. It adjusts the intercepts and slopes 
-    based on the step sizes of the grid ranges.
-"""
-function sweepCoords(imgs, idxs, grid::NTuple{2,AbstractRange}; kwargs...)
-    θ, i, s = sweepCoords(itfa.(imgs), idxs; kwargs...)
-    return θ, (r -> r[1] - step(r)).(grid) .+ step.(grid) .* i, s .* step.(grid)
-end
-
-
-"""
-    getCamGrid(linImgs::Vector{Array{T,2}}, idxs, dxcam; roi=nothing)
-    Processes a collection of linear phase RGB images to determine the camera grid orientation and origin.
-
-    # Arguments
-    - `linImgs::Vector{Array{T,2}}`: A vector of 2D RGB images.
-    - `idxs`: Indices or parameters associated with each image in `linImgs`.
-    - `dxcam`: The physical unit conversion factor for camera pixels.
-    - `roi` (optional): Region of interest specified as a tuple of ranges. If not provided, the entire image is used.
-
-    # Returns
-    - A tuple representing the camera grid in physical units, adjusted by the origin.
-    - `θ`: The angle of the grid with respect to some reference.
-"""
-function getCamGrid(linImgs::Vector{Array{T,2}}, idxs, dxcam; roi=nothing) where {T<:Number}
-    # Processes a collection of linear phase images to get the angle and origin of the camera.
-    # Outputs the camera grid in physical units and the angle. 
-    isnothing(roi) && (roi = ((1:s for s in size(linImgs[1]))...,))
-    imgs = [i[roi...] for i in linImgs]
-    θ, origin, s = sweepCoords(imgs, idxs; normalize=true)
-    pixels = ((1:length(r) for r in roi)...,)
-    return (((pixels[j] .- origin[j]) .* dxcam for j = 1:length(pixels))...,), θ
-end
-getCamGrid(linImgs::Vector{Array{T,2}}, idxs, dxcam; roi=nothing) where {T<:RGB} = getCamGrid(itfa.(linImgs), idxs, dxcam; roi=roi)
 
 """
     getOrientation(linImgs::Vector{LF{Intensity,T,2}}, idxs::Vector{<:Number}; 
@@ -373,5 +301,50 @@ function getOrientation(linImgs::Vector{LF{Intensity,T,2}}, idxs::Vector{<:Numbe
     return [xi, yi], theta
 end
 
+"""
+    dualate(f::LF{S,T,2}, L::Lattice{2}, center::Vector{<:Real}, θ::Real, flambda::Real=1.0; 
+            roi=nothing, interpolation=cubic_spline_interpolation, naturalize=false, bc=zero(T)) 
+            where {S<:FieldVal, T<:Number}
+
+    Corrects for offset and tilt in a LatticeField and interpolates it onto a lattice dual to `L`.
+
+    This function adjusts the LatticeField `f` for any offset and tilt based on `center` and `θ`, and then performs interpolation 
+    onto a new lattice that is dual to `L`. The dual lattice is calculated considering the scaling factor `flambda`.
+
+    # Arguments
+    - `f::LF{S,T,2}`: A two-dimensional LatticeField to be dualated.
+    - `L::Lattice{2}`: The target lattice for dualation.
+    - `center::Vector{<:Real}`: The center around which the dualation is performed.
+    - `θ::Real`: The angle of rotation for tilt correction.
+    - `flambda::Real`: Scaling factor (default: 1.0).
+    - `roi`: Optional region of interest to be considered within `f`.
+    - `interpolation`: Interpolation method to be used (default: cubic spline interpolation).
+    - `naturalize`: Boolean flag to naturalize the lattice (default: false).
+    - `bc`: Boundary condition for extrapolation (default: `zero(T)`).
+
+    # Returns
+    - A new `LF{S}` representing the dualated LatticeField.
+    """
+function dualate(f::LF{S,T,2},L::Lattice{2},center::Vector{<:Real},θ::Real,flambda::Real=1.0; 
+        roi=nothing, interpolation=cubic_spline_interpolation, naturalize=false,bc=zero(T)) where {S<:FieldVal,T<:Number}
+    # Corrects for offset and tilt of f.L and then interpolates f onto a lattice dual to L. 
+    length(center) == length(f.L) || error("Incompatible lengths for center and f.L.")
+    if !isnothing(roi)
+        f = f[roi...]
+    end
+    L0 = Tuple(f.L[i] .- center[i] for i=1:2)
+    interp = interpolation(L0, f.data, extrapolation_bc=bc)
+    dL = dualShiftLattice(L,flambda)
+    Lx0, Lxs, Ly0, Lys = dL[1][1], step(dL[1]), dL[2][1], step(dL[2])
+    R = [cos(θ) -sin(θ) ; sin(θ) cos(θ)]
+    r0, dx, dy = (R * [Lx0, Ly0]), Lxs * R[:,1], Lys * R[:,2]
+    if naturalize
+        return LF{S}([interp((r0 + dx*I[1] + dy*I[2])...) for I in CartesianIndices(length.(dL))],natlat(length.(dL)),1.0);
+    else
+        return LF{S}([interp((r0 + dx*I[1] + dy*I[2])...) for I in CartesianIndices(length.(dL))],dL,flambda);
+    end
+end
+dualate(fs::Vector{<:LF{S}},L::Lattice{2},center::Vector{<:Real},theta::Real,flambda::Real=1.0;kwargs...) where {S<:FieldVal} = 
+    [dualate(f,L,center,theta,flambda;kwargs...) for f in fs]
 
 end # module ImageProcessing

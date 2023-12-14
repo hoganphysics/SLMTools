@@ -39,9 +39,10 @@ nabs(v) = abs.(v) ./ sqrt(sum(abs.(v) .^ 2))
 
 
 """
-    window(img::Array{T,N}, w) where {T,N}
+    window(img::Array{T,N}, w::Int) where {T,N}
 
-    Creates a window around the centroid of an image `img`. The window has a size of `w` in each dimension.
+    Creates a window around the centroid of an image `img`. The window has a size of `w` in each dimension.  
+	Also has methods for handling a tuple in the second argument and a LatticeField in the first argument. 
     # Arguments
     - `img`: A multidimensional array representing an image.
     - `w`: The size of the window in each dimension.
@@ -52,6 +53,14 @@ function window(img::Array{T,N}, w) where {T,N}
     c = CartesianIndex(round.(Int, centroid(img))...)
     return CartesianIndices(((1:w for i = 1:N)...,)) .- CartesianIndex((floor(Int, w / 2) for i = 1:N)...) .+ c
 end
+function window(img::Array{T,N}, w::NTuple{N,Int}) where {T,N}
+    c = CartesianIndex(round.(Int,centroid(img))...)
+    return CartesianIndices(((1:w[i] for i=1:N)...,)) .- CartesianIndex(floor.(Int,w./2)...) .+ c
+end
+function window(f::LF{F,T,N},w::NTuple{N,Int}) where {F<:FieldVal,T,N}
+    return window(f.data,w)
+end
+
 
 """
     normalizeDistribution(U::AbstractArray{T,N}) where {T<:Number,N}
