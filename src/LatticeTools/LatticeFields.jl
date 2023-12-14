@@ -216,6 +216,7 @@ end
     This constructor is particularly useful when the types `T` and `N` can be automatically inferred from the input array. 
     """
 LatticeField{S}(array::AbstractArray{T,N}, L::Lattice{N}, flambda::Real=1.0) where {S<:FieldVal,T,N} = LatticeField{S,T,N}(array, L, flambda)
+ramp(x::T) where {T<:Number} = (x < 0 ? zero(T) : x)
 LatticeField{Intensity}(array::AbstractArray{T,N},L::Lattice{N},flambda::Real=1.0) where {T,N} = LatticeField{Intensity,T,N}(ramp.(array),L,flambda)
 
 """
