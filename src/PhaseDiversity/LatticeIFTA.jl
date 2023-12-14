@@ -125,19 +125,19 @@ end
     Returns:
     - `LF{ComplexAmp}`: Refined complex amplitude of the beam after PDGS iterations.
     """
-function pdgs(imgs::NTuple{M,LF{Modulus,<:Number,N}}, divPhases::NTuple{M,LF{<:Phase,<:Number,N}}, nit::Integer, beamGuess::LF{ComplexAmp,<:Complex,N}) where {M,N}
+function pdgs(imgs::NTuple{M,LF{Modulus,<:Number,N}},divPhases::NTuple{M,LF{<:Phase,<:Number,N}},nit::Integer,beamGuess::LF{ComplexAmp,<:Complex,N}) where {M,N}
     s = size(imgs[1])
-    all(size(i) == s for i in imgs) && all(size(i) == size(beamGuess) for i in divPhases) || error("Input size mismatch.")
-    [elq(d, beamGuess) for d in divPhases], [ldq(i, beamGuess) for i in imgs]
+    all(size(i)==s for i in imgs) && all(size(i)==size(beamGuess) for i in divPhases) || error("Input size mismatch.")
+    [elq(d,beamGuess) for d in divPhases], [ldq(i,beamGuess) for i in imgs]
     ft = plan_fft(zeros(s))
     ift = plan_ifft(zeros(s))
     guess = ifftshift(beamGuess.data)
-    phis = ((ifftshift(wrap(divPhases[i]).data .* dualPhase(imgs[i].L, imgs[i].flambda).data) * 1.0 for i = 1:M)...,)::NTuple{M,Array{ComplexF64,N}}
-    mods = ((ifftshift(i.data) * 1.0 for i in imgs)...,)::NTuple{M,Array{Float64,N}}
-    for j = 1:nit
-        guess = pdgsIter(guess, phis, mods, ft, ift)
+    phis = ((ifftshift(wrap(divPhases[i] * dualPhase(imgs[i].L,imgs[i].flambda)).data) for i=1:M)...,)::NTuple{M,Array{ComplexF64,N}}
+    mods = ((ifftshift(i.data)*1.0 for i in imgs)...,)::NTuple{M,Array{Float64,N}}
+    for j=1:nit
+        guess = pdgsIter(guess,phis,mods,ft,ift)
     end
-    return LF{ComplexAmp}(fftshift(guess), beamGuess.L, beamGuess.flambda)
+    return LF{ComplexAmp}(fftshift(guess),beamGuess.L,beamGuess.flambda)
 end
 
 """

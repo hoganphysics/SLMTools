@@ -85,57 +85,28 @@ ldq(L1::Lattice, L2::Lattice, flambda=1) = (all(isapprox.(dualShiftLattice(L1, f
     """
 ldq(f1::LF, f2::LF) = (all(isapprox.(dualShiftLattice(f1.L, f1.flambda), f2.L)) && f1.flambda == f2.flambda || throw(DomainError((f1.L, f2.L, f1.flambda, f2.flambda), "Non-dual lattices.")); return nothing)
 
-"""
-    dualPhase(L::Lattice{N}; dL = nothing) where N
 
-    Create a `LatticeField` representing the phase shift required to make an FFT map fields on the dual lattice of L to L itself. 
+"""
+    dualPhase(L::Lattice{N}, flambda::Real=1; dL = nothing) where N
+
+    Calculate the dual phase of a given lattice `L` using a specified wavelength scaling factor `flambda`.  Uses supplied dual lattice dL if provided, otherwise computes it from dualShiftLattice. Returns a LatticeField{RealPhase}.
 
     Arguments:
     - `L::Lattice{N}`: The original lattice.
-    - `dL`: An optional dual lattice. If not provided, the dual lattice is computed using `dualShiftLattice(L)`.
+    - `flambda::Real`: Scale factor.
 
     Returns:
-    - `LatticeField{ComplexPhase}`: A `LatticeField` with complex phase values representing the phase factors of the dual lattice.
+    - LatticeField{RealPhase,FloatF64, N}: LatticeField{RealPhase} representing the dual phase of the lattice `L`.
 
-    Usage:
-    # Without specifying dL
-    dualPhaseField = dualPhase(myLattice)
-
-    # With specifying dL
-    dualLattice = dualShiftLattice(myLattice)
-    dualPhaseField = dualPhase(myLattice, dL=dualLattice)
+    The dual phase is computed using the formula `.+((b[i] * toDim(dL[i],i,N) for i=1:N)...) ./ flambda`, where `dL` is the shifted dual lattice and `b` is the lattice displacement.
     """
-function dualPhase(L::Lattice{N}, dL::Union{Lattice{N},Nothing}) where {N}
+function dualPhase(L::Lattice{N}, flambda::Real=1.0; dL = nothing) where N
     if isnothing(dL)
         dL = dualShiftLattice(L)
     end
     b = latticeDisplacement(L)
-    return LF{ComplexPhase}(exp.(-2 * pi * im .* .+((b[i] * toDim(dL[i], i, N) for i = 1:N)...)), dL)
+    return LF{RealPhase}(.+((b[i] * toDim(dL[i],i,N) for i=1:N)...) ./ flambda , dL, flambda)
 end
-
-
-"""
-    dualPhase(L::Lattice{N}, flambda::Real=1) where N
-
-    Calculate the dual phase of a given lattice `L` using a specified wavelength scaling factor `flambda`. This function is useful in Fourier optics and related fields for calculating phase transformations associated with a lattice.
-
-    The dual phase is computed based on the shifted dual lattice of `L` and the lattice displacement. The result is a complex exponential array representing the phase factors.
-
-    Arguments:
-    - `L::Lattice{N}`: The original lattice.
-    - `flambda::Real`: A scaling factor for the wavelength (default is 1).
-
-    Returns:
-    - Array{ComplexF64, N}: A complex array representing the dual phase of the lattice `L`.
-
-    The dual phase is computed using the formula `exp(-2πi * (b[i] * toDim(dL[i], i, N) for i=1:N)...) / flambda`, where `dL` is the shifted dual lattice and `b` is the lattice displacement.
-    """
-function dualPhase(L::Lattice{N}, flambda::Real=1) where {N}
-    dL = dualShiftLattice(L, flambda)
-    b = latticeDisplacement(L)
-    return LF{ComplexPhase}(exp.(-2 * pi * im .* .+((b[i] * toDim(dL[i], i, N) for i = 1:N)...) ./ flambda), dL)
-end
-
 
 
 

@@ -203,6 +203,7 @@ end
     Convenience constructor for `LatticeField`. It allows for creating an instance of `LatticeField` by 
     specifying the type of field value `S`, and inferring the data type `T` and dimension `N` from the provided array. 
     The `flambda` parameter is an optional scaling factor for the wavelength, with a default value of 1.0.
+	For Intensity fields, the input array is ramped to ensure it is non-negative.  This avoid errors when converting to Modulus. 
 
     # Parameters
     - `array`: The field data as an N-dimensional array.
@@ -215,6 +216,7 @@ end
     This constructor is particularly useful when the types `T` and `N` can be automatically inferred from the input array. 
     """
 LatticeField{S}(array::AbstractArray{T,N}, L::Lattice{N}, flambda::Real=1.0) where {S<:FieldVal,T,N} = LatticeField{S,T,N}(array, L, flambda)
+LatticeField{Intensity}(array::AbstractArray{T,N},L::Lattice{N},flambda::Real=1.0) where {T,N} = LatticeField{Intensity,T,N}(ramp.(array),L,flambda)
 
 """
     const LF = LatticeField

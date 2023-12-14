@@ -228,18 +228,45 @@ end
     # See Also
     - `normalizeDistribution`, `sinkhorn`, `scalarPotentialN`
     """
-function otPhase(U::LatticeField{Intensity,<:Real,N}, V::LatticeField{Intensity,<:Number,N}, ε::Real; options...) where {N}
+function otPhase(U::LatticeField{Intensity,<:Real,N},V::LatticeField{Intensity,<:Number,N},ε::Real;options...) where N
     # Solves the optimal transport problem between distributions U and V, returning a LatticeField{RealPhase} representing
     # the scalar potential of the transport map. 
-    u, v = normalizeDistribution(U.data), normalizeDistribution(V.data)
-    C = getCostMatrix(U.L, V.L)
-    γ = sinkhorn(u[:], v[:], C, ε; options...)
-    any(isnan, γ) && error("sinkhorn returned nan.  Try changing epsilon.")
-    Γ = mapify(γ, U.L, V.L)
-    Φ = scalarPotentialN(Γ, U.L; dimOrder=N:-1:1)
-    return LF{RealPhase}(Φ, U.L)
+    u,v = normalizeDistribution(U.data), normalizeDistribution(V.data)
+    C = getCostMatrix(U.L,V.L)
+    γ = sinkhorn(u[:],v[:],C,ε; options...)
+    any(isnan,γ) && error("sinkhorn returned nan.  Try changing epsilon.")
+    Γ = mapify(γ,U.L,V.L)
+    Φ = scalarPotentialN(Γ,U.L;dimOrder=N:-1:1) 
+    return LF{RealPhase}(Φ,U.L,U.flambda)
 end
 
+
+function pdotPhase(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeField{Intensity,<:Real,N},αRoot::Real,αTarget::Real, βRoot::Vector, βTarget::Vector, ε::Real;options...) where N
+    u,v = normalizeDistribution(G2Root.data), normalizeDistribution(G2Target.data)
+    C = pdCostMatrix(G2Root.L,G2Target.L,αRoot,αTarget)
+    γ = sinkhorn(u[:], v[:], C, ε; options...)
+    any(isnan,γ) && error("sinkhorn returned nan.  Try changing epsilon.")
+    Γ = mapify(γ,G2Root.L,G2Target.L) ./ (αRoot-αTarget)
+    Φ = scalarPotentialN(Γ,G2Root.L)
+    CI = CartesianIndices(length.(G2Root.L))
+    dβ = βRoot .- βTarget
+    Φ .-= [ sum( (G2Root.L[i][I[i]] - dβ[i])^2 for i=1:N)/(2*(αRoot-αTarget)) for I in CI ]
+    return LF{RealPhase}(Φ,G2Root.L,G2Root.flambda)
+end
+
+function pdotBeamEstimate(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeField{Intensity,<:Real,N}, αRoot::Real,αTarget::Real, βRoot::Vector, βTarget::Vector, ε::Real; LFine::Union{Nothing,Lattice{N}}=nothing, options...) where N
+    Φ = pdotPhase(G2Root,G2Target,αRoot,αTarget,βRoot,βTarget,ε;options...)
+    GR = sqrt(G2Root)
+    if !isnothing(LFine)
+        GR = upsample(GR,LFine; bc=0) * upsample(Φ,LFine; bc=Linear())
+    else
+        GR = GR * Φ
+    end
+    dL = dualShiftLattice(GR.L)
+    CI = CartesianIndices(size(GR))
+    divPhase = LF{RealPhase}([(αRoot/2 * sum(dL[i][I[i]]^2 for i=1:N) + sum(βRoot[i] * dL[i][I[i]] for i=1:N)) for I in CI],dL,GR.flambda)
+    return isft(GR) * conj(divPhase)
+end
 
 
 end # module OTHelpers
