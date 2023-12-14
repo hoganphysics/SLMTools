@@ -3,7 +3,7 @@ module OTHelpers
 using ..LatticeTools
 using ..Misc
 
-export getCostMatrix, pdCostMatrix, pdotPhase, pdotBeamEstimate, mapify, scalarPotentialN, otPhase
+export getCostMatrix, pdCostMatrix, pdotPhase, pdotBeamEstimate, mapify, scalarPotentialN, otPhase, pdotPhase, pdotBeamEstimate
 
 """
     getCostMatrix(L::Lattice{N}; normalization=maximum) where N
