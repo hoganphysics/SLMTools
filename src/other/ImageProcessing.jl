@@ -2,6 +2,7 @@ module ImageProcessing
 using FileIO: load
 using Images: Gray, RGB, Colorant
 using ..LatticeTools
+using Interpolations: cubic_spline_interpolation, interpolation
 
 export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parseFileName, parseStringToNum, getOrientation, dualate, linearFit, centroid, collapse, clip
 
