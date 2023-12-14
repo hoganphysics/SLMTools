@@ -15,7 +15,7 @@ export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid, sweepCoords, 
     transformed image, the specified lattice `L`, and a wavelength parameter `flambda`.
 
     # Arguments
-    - `T::DataType`: The data type to which the image should be cast.
+    - `T::DataType`: The FieldVal type to which the image should be cast.
     - `img::Matrix{<:Colorant}`: A matrix representing the image, where each element is a colorant (e.g., an RGB value).
     - `L::Lattice{2}`: A 2-dimensional lattice that defines the spatial properties of the resulting LatticeField.
     - `flambda::Real`: A real number representing the wavelength parameter for the LatticeField.
@@ -25,10 +25,10 @@ export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid, sweepCoords, 
 
     # Example
     ```julia
-    julia> img = load("path/to/image.png") # Assume this returns a Matrix{RGB}
-    julia> L = Lattice((10, 10)) # Define a 2D lattice
-    julia> flambda = 500.0 # Wavelength parameter
-    julia> transformed_img = castImage(Float64, img, L, flambda)
+    julia> img = load("path/to/image.png") # Assume this returns a 100x100 Matrix{RGB}
+    julia> L = Lattice((100, 100)) # Define a 2D lattice
+    julia> flambda = 1.064e5 # Scale factor for a 10 cm lens and 1064 nm wavelength. 
+    julia> transformed_img = castImage(Intensity, img, L, flambda)
     """
 function castImage(T::DataType, img::Matrix{<:Colorant}, L::Lattice{2}, flambda::Real)
     return LF{T}(itfa(img), L, flambda)
@@ -81,11 +81,11 @@ itfa = imageToFloatArray;
     # Arguments
     - `dir::String`: The directory from which to load images.
     - `extension::String`: The file extension of images to load (e.g., ".png", ".jpg").
-    - `T::DataType`: The data type of the original image data (default: `Intensity`).
-    - `outType::DataType`: The output data type of the LatticeFields (default: `Float64`).
+    - `T::DataType`: The FieldVal type to assign the imported images (default: `Intensity`).
+    - `outType::DataType`: The numerical data type of the output LatticeField arrays (default: `Float64`).
     - `L::Union{Lattice{2},Nothing,Real,Tuple{Real,Real}}`: Lattice defining spatial properties. If `Real` or `Tuple`, it's interpreted as pixel spacing.
     - `flambda::Real`: Wavelength parameter for the LatticeFields (default: 1.0).
-    - `cue::Union{String,Char,Nothing}`: Optional string or character used as a cue to parse filenames (default: `nothing`).
+    - `cue::Union{String,Char,Nothing}`: Optional string or character used as a cue to parse filenames (default: `nothing`).  If `nothing`, then the entire filename (except the extension) is parsed. 
     - `look::Union{Symbol,String,Char}`: Determines where to look for `cue` in the filename (default: `:after`).
 
     # Returns

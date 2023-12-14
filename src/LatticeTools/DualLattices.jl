@@ -16,11 +16,11 @@ export subfield, wrap, square, sublattice
 """
     dualLattice(L::Lattice{N}, flambda::Number=1) where N
 
-    Create the dual lattice of a given lattice `L`. The parameter `flambda` represents the product of the wavelength and the lens used in the Fourier transform. The step size of the dual lattice is `flambda / (N * dx)`, with `N` being the size of the original lattice and `dx` its step size. The periodicity of the dual lattice is approximately twice the Nyquist frequency.
+    Generally this is not the function you want--you probably want "dualShiftLattice".  This function creates the dual lattice of a given lattice `L` with all positive frequencies.  "dualShiftLattice" creates the corresponding dual lattice with the latter half of the frequencies aliased to negative values, which is the form in which the FFT approximates the continuous Fourier transform. The parameter `flambda` represents the product of the wavelength and the lens focal length used in the Fourier transform. The step size of the dual lattice is `flambda / (N * dx)`, with `N` being the size of the original lattice and `dx` its step size. The periodicity of the dual lattice is approximately twice the Nyquist frequency.
 
     Arguments:
     - L::Lattice{N}: The original lattice.
-    - flambda::Number: A product of the wavelength and lens factor (default is 1).
+    - flambda::Number: Product of the wavelength and lens focal length (default is 1).
 
     Returns:
     - Tuple: A tuple representing the dual lattice.
@@ -34,14 +34,14 @@ end
 """
     dualShiftLattice(L::Lattice{N}, flambda::Number=1) where N
 
-    Create a frequency-shifted dual lattice of a given lattice `L`. The `flambda` parameter is the product of the wavelength and the lens used in the Fourier transform. This function generates a lattice akin to the `fftshift` of the regular dual lattice, with initial entries being negative.
+    Create a centered dual lattice of a given lattice `L`. The `flambda` parameter is the product of the wavelength and the lens focal length used in the Fourier transform. This function generates a lattice akin to the `fftshift` of dualLattice, with initial entries being negative.
 
     Arguments:
     - L::Lattice{N}: The original lattice.
     - flambda::Number: A product of the wavelength and lens factor (default is 1).
 
     Returns:
-    - Tuple: A tuple representing the frequency-shifted dual lattice.
+    - Tuple: A tuple representing the centered dual lattice.
     """
 function dualShiftLattice(L::Lattice{N}, flambda::Number=1) where {N}
     # These frequencies are equivalent to those of fftshift(dualLattice), but the initial entries are negative
@@ -53,7 +53,7 @@ LatticeCore.isft(v::LF{ComplexAmplitude}) = LF{ComplexAmplitude}(fftshift(ifft(i
 """
     ldq(L1::Lattice, L2::Lattice, flambda=1)
 
-    Check if two lattices, `L1` and `L2`, are duals of each other, considering a wavelength scaling factor `flambda`. The function computes the dual of `L1` using a shifted lattice approach and compares it with `L2`.
+    Check if two lattices, `L1` and `L2`, are duals of each other, considering a wavelength scaling factor `flambda`. The function computes the dual of `L1` using dualShiftLattice and compares it with `L2`.
 
     Arguments:
     - `L1::Lattice`: The first lattice.
@@ -71,7 +71,7 @@ ldq(L1::Lattice, L2::Lattice, flambda=1) = (all(isapprox.(dualShiftLattice(L1, f
 """
     ldq(f1::LF, f2::LF)
 
-    Check if two `LatticeField` instances, `f1` and `f2`, are duals of each other. It compares the dual of the lattice of `f1` with the lattice of `f2` and checks if their `flambda` values are the same.
+    Check if the lattices of two `LatticeField` instances, `f1` and `f2`, are dual to each other. Also checks that they have the same `flambda` value.
 
     Arguments:
     - `f1::LF`: The first LatticeField.
@@ -88,7 +88,7 @@ ldq(f1::LF, f2::LF) = (all(isapprox.(dualShiftLattice(f1.L, f1.flambda), f2.L)) 
 """
     dualPhase(L::Lattice{N}; dL = nothing) where N
 
-    Create a `LatticeField` representing the phase factors for a dual lattice. This function is used in Fourier optics and other applications involving wave propagation and interference. The phase factors are calculated based on the dual lattice of `L` (or a provided `dL`) and the lattice displacement.
+    Create a `LatticeField` representing the phase shift required to make an FFT map fields on the dual lattice of L to L itself. 
 
     Arguments:
     - `L::Lattice{N}`: The original lattice.

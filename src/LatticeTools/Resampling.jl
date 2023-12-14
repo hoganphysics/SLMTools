@@ -12,9 +12,6 @@ cubic_spline_interpolation = CubicSplineInterpolation
     downsample(r::AbstractRange, n::Int)
 
     Downsample a range `r` by merging every `n` points into one, centered at the mean of the original points.
-    This function is particularly useful in reducing the resolution of a dataset in a controlled manner,
-    which can be important in optical trapping simulations when dealing with large datasets or when a lower
-    resolution is sufficient for certain analyses.
 
     # Arguments
     - `r::AbstractRange`: The original range to be downsampled.
@@ -39,8 +36,6 @@ end
     downsample(L::Lattice{N}, n::Int) where N
 
     Downsample a lattice `L` by merging every `n^N` points into one, centered at the mean of the original points.
-    This function is key in simulations where reducing the resolution of a lattice structure can lead to more
-    efficient computations without significantly compromising the accuracy of the simulation results.
 
     # Arguments
     - `L::Lattice{N}`: The original lattice to be downsampled.
@@ -62,8 +57,7 @@ end
     downsample(L::Lattice{N}, ns::NTuple{N,Int}) where N
 
     Downsample a lattice `L` with different downsampling factors for each dimension, merging `ns[1]×ns[2]×...×ns[N]` 
-    points into one, centered at the mean of the original points. This allows for non-uniform downsampling of a lattice, 
-    which can be crucial in optical trapping simulations where different resolutions are needed across different dimensions.
+    points into one, centered at the mean of the original points. This allows for non-uniform downsampling of a lattice.
 
     # Arguments
     - `L::Lattice{N}`: The original lattice to be downsampled.
@@ -88,7 +82,7 @@ end
 """
     downsample(x::AbstractArray{T,N}, Lu::Lattice{N}, Ld::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
 
-    Downsample an `AbstractArray` from a fine lattice `Ld` to a coarse lattice `Lu`. This function does not require any specific relationship between the lattices; it simply interpolates `x` from one lattice to the other. It's particularly useful in optical trapping simulations where adjusting the resolution of data is necessary for different analysis scales.
+    Downsample an `AbstractArray` from a fine lattice `Ld` to a coarse lattice `Lu`. This function does not require any specific relationship between the lattices; it simply interpolates `x` from one lattice to the other.
 
     # Arguments
     - `x::AbstractArray{T,N}`: The original array on lattice `Ld`.
@@ -116,7 +110,7 @@ end
 """
     downsample(x::AbstractArray{T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
 
-    Downsample an `AbstractArray` to a grid that is `n` times coarser. This is achieved by interpolating the array from its original lattice to a coarser lattice with a downsample factor of `n`. This function is valuable in scenarios where reducing data resolution is needed without losing significant information, like in certain phases of optical trapping simulations.
+    Downsample an `AbstractArray` to a grid that is `n` times coarser. This is achieved by interpolating the array from its original lattice to a coarser lattice with a downsample factor of `n`.
 
     # Arguments
     - `x::AbstractArray{T,N}`: The original array to be downsampled.
@@ -137,7 +131,7 @@ end
 """
     downsample(x::AbstractArray{T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
 
-Downsample an `AbstractArray` to a grid with different coarsening factors for each dimension, specified by `ns`. This allows for tailored resolution reduction in multidimensional data, useful in complex optical trapping simulations where different dimensions may require different levels of detail.
+Downsample an `AbstractArray` to a grid with different coarsening factors for each dimension, specified by `ns`.
 
 # Arguments
 - `x::AbstractArray{T,N}`: The original array to be downsampled.
@@ -162,7 +156,7 @@ end
 """
     downsample(f::LatticeField{S,T,N}, Ld::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
 
-    Downsample a `LatticeField` to a specified lattice `Ld`. This function interpolates the field data from its original lattice to the new lattice `Ld`. It is useful in scenarios where a reduction in lattice field resolution is necessary, such as simplifying the complexity of a simulation without significant loss of essential information.
+    Downsample a `LatticeField` to a specified lattice `Ld`. This function interpolates the field data from its original lattice to the new lattice `Ld`.
 
     # Arguments
     - `f::LatticeField{S,T,N}`: The original lattice field to be downsampled.
@@ -184,7 +178,7 @@ vandyfooo=0
 """
     downsample(f::LatticeField{S,T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
 
-    Downsample a `LatticeField` to a grid that is `n` times coarser. This function decreases the resolution of the lattice field uniformly across all dimensions, making it suitable for applications where lower resolution is sufficient or where computational efficiency is a priority.
+    Downsample a `LatticeField` to a grid that is `n` times coarser in each dimension.
 
     # Arguments
     - `f::LatticeField{S,T,N}`: The original lattice field to be downsampled.
@@ -204,7 +198,7 @@ end
 """
     downsample(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
 
-    Downsample a `LatticeField` to a grid with different coarsening factors for each dimension, specified by `ns`. This approach allows for a tailored reduction in resolution of the lattice field, which can be important in simulations or analyses where different dimensions may not require the same level of detail.
+    Downsample a `LatticeField` to a grid with different coarsening factors for each dimension, specified by `ns`. 
 
     # Arguments
     - `f::LatticeField{S,T,N}`: The original lattice field to be downsampled.
@@ -228,8 +222,8 @@ end
 """
     coarsen(x::AbstractArray{T,N}, ns::NTuple{N,Int}; reducer=(x::AbstractArray -> sum(x)/length(x[:]))) where {T<:Number,N}
 
-    Coarsen (downsample) an `AbstractArray` to a grid that is `ns[i]` times coarser in dimension `i`, using a reduction function over superpixels. Unlike interpolation-based downsampling, this method averages over blocks (superpixels) of the array. It's useful in optical trapping simulations for reducing data resolution while preserving essential information through averaging.
-
+    Coarsen (downsample) an `AbstractArray` to a grid that is `ns[i]` times coarser in dimension `i`, using a reduction function over superpixels. Unlike interpolation-based downsampling, this method averages over blocks (superpixels) of the array.
+	
     # Arguments
     - `x::AbstractArray{T,N}`: The original array to be coarsened.
     - `ns::NTuple{N,Int}`: A tuple specifying the coarsening factor for each dimension.
@@ -257,7 +251,7 @@ end
 """
     coarsen(x::AbstractArray{T,N}, n::Int; reducer=(x::AbstractArray -> sum(x)/length(x[:]))) where {T<:Number,N}
 
-    Coarsen (downsample) an `AbstractArray` to a grid that is uniformly `n` times coarser in each dimension, using a reduction function over superpixels. This function is a specialized form of the `coarsen` method for cases where a uniform downsampling across all dimensions is desired. It is particularly effective in scenarios where a simple, uniform reduction in data resolution is required.
+    Coarsen (downsample) an `AbstractArray` to a grid that is uniformly `n` times coarser in each dimension, using a reduction function over superpixels. This function is a specialized form of the `coarsen` method for cases where a uniform downsampling across all dimensions is desired. 
 
     # Arguments
     - `x::AbstractArray{T,N}`: The original array to be coarsened.
@@ -275,7 +269,7 @@ end
 """
     coarsen(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; reducer=(x::AbstractArray -> sum(x)/length(x[:]))) where {S<:FieldVal,T<:Number,N}
 
-    Coarsen (downsample) a `LatticeField` to a grid that is `ns[i]` times coarser in dimension `i`, using a reduction function over superpixels. This method differs from interpolation-based downsampling by averaging over blocks (superpixels) of the lattice field. It's particularly useful in optical trapping simulations for reducing data resolution while preserving important information through averaging.
+    Coarsen (downsample) a `LatticeField` to a grid that is `ns[i]` times coarser in dimension `i`, using a reduction function over superpixels. This method differs from interpolation-based downsampling by averaging over blocks (superpixels) of the lattice field. 
 
     # Arguments
     - `f::LatticeField{S,T,N}`: The original lattice field to be coarsened.
@@ -295,7 +289,7 @@ end
 """
     coarsen(f::LatticeField{S,T,N}, n::Int; reducer=(x::AbstractArray -> sum(x)/length(x[:]))) where {S<:FieldVal,T<:Number,N}
 
-    Coarsen (downsample) a `LatticeField` to a grid that is uniformly `n` times coarser in each dimension, using a reduction function over superpixels. This function provides a way to uniformly reduce the resolution of a lattice field, which can be beneficial in scenarios where a simple, uniform reduction in data resolution is required.
+    Coarsen (downsample) a `LatticeField` to a grid that is uniformly `n` times coarser in each dimension, using a reduction function over superpixels. 
 
     # Arguments
     - `f::LatticeField{S,T,N}`: The original lattice field to be coarsened.
@@ -320,8 +314,7 @@ end
     upsample(r::AbstractRange, n::Int)
 
     Upsample a range `r`, effectively replacing each original point in the range with `n` points,
-    centered around the original point. Useful in scenarios where higher resolution of a range is needed, 
-    such as in optical trapping simulations for fine-grained spatial control.
+    centered around the original point.
 
     # Arguments
     - `r::AbstractRange`: The original range to be upsampled.
@@ -338,9 +331,7 @@ end
 """
     upsample(L::Lattice{N}, n::Int) where {N}
 
-    Upsample a lattice `L`, replacing each original pixel by `n^N` pixels. Particularly useful in 
-    optical trapping simulations involving lattice structures, where higher resolution is required for 
-    accurate modeling.
+    Upsample a lattice `L`, replacing each original pixel by `n^N` pixels.
 
     # Arguments
     - `L::Lattice{N}`: The original lattice to be upsampled.
@@ -357,8 +348,7 @@ end
 """
     upsample(L::Lattice{N}, ns::NTuple{N,Int}) where {N}
 
-    Upsample a lattice `L` with different scaling factors for each dimension. Allows for non-uniform 
-    upscaling, critical in simulating asymmetrical optical trapping setups.
+    Upsample a lattice `L` with different scaling factors for each dimension. 
 
     # Arguments
     - `L::Lattice{N}`: The original lattice to be upsampled.
@@ -390,10 +380,6 @@ end
 
     # Returns
     A new `LatticeField` instance with data upsampled to the lattice `Lu`.
-
-    The `upsample` function is versatile, allowing for the interpolation of `f` onto any lattice `Lu`, regardless of the 
-    relationship between the original and new lattices. It is particularly useful in applications where adjusting the 
-    resolution or grid spacing of data is required, such as in image processing or numerical simulations in optical trapping.
     """
 function upsample(x::AbstractArray{T,N}, Ld::Lattice{N}, Lu::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
     # Upsamples an array from coarse lattice Ld to fine lattice Lu.  Actually, there doesn't need to be any relationship
@@ -407,7 +393,7 @@ end
 """
     upsample(x::AbstractArray{T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
 
-    Upsample an `AbstractArray` to a grid that is `n` times finer. This is particularly useful in scenarios like optical trapping simulations where you might need to increase the resolution of a dataset for more detailed analysis or for better simulation accuracy. The function uses cubic spline interpolation by default, but this can be adjusted as needed.
+    Upsample an `AbstractArray` to a grid that is `n` times finer. 
 
     # Arguments
     - `x::AbstractArray{T,N}`: The original array to be upsampled.
@@ -429,7 +415,7 @@ end
 """
     upsample(x::AbstractArray{T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
 
-    Upsample an `AbstractArray` to a grid with different upscaling factors for each dimension, allowing for non-uniform upscaling. This function can be essential in optical trapping simulations where different dimensions may require different levels of detail. It defaults to cubic spline interpolation, but this can be customized as needed.
+    Upsample an `AbstractArray` to a grid with different upscaling factors for each dimension, allowing for non-uniform upscaling. 
 
     # Arguments
     - `x::AbstractArray{T,N}`: The original array to be upsampled.
@@ -453,7 +439,7 @@ end
 """
     upsample(f::LatticeField{S,T,N}, Lu::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
 
-    Upsample a `LatticeField` to a specified lattice `Lu`. This function interpolates the field data from its original lattice to the new lattice `Lu`. It's useful in scenarios like optical trapping simulations where field data needs to be represented on a different lattice scale, regardless of the original lattice configuration.
+    Upsample a `LatticeField` to a specified lattice `Lu`. This function interpolates the field data from its original lattice to the new lattice `Lu`. 
 
     # Arguments
     - `f::LatticeField{S,T,N}`: The original lattice field to be upsampled.
@@ -473,7 +459,7 @@ end
 """
     upsample(f::LatticeField{S,T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
 
-    Upsample a `LatticeField` to a grid that is `n` times finer. This function increases the resolution of the lattice field uniformly across all dimensions, suitable for applications requiring higher precision in lattice field simulations.
+    Upsample a `LatticeField` to a grid that is `n` times finer. 
 
     # Arguments
     - `f::LatticeField{S,T,N}`: The original lattice field to be upsampled.
@@ -493,7 +479,7 @@ end
 """
     upsample(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
 
-    Upsample a `LatticeField` to a grid with different upscaling factors for each dimension, specified by `ns`. This allows for a tailored increase in resolution of the lattice field, which can be critical in simulations or analyses where different dimensions require different levels of detail.
+    Upsample a `LatticeField` to a grid with different upscaling factors for each dimension, specified by `ns`. 
 
     # Arguments
     - `f::LatticeField{S,T,N}`: The original lattice field to be upsampled.

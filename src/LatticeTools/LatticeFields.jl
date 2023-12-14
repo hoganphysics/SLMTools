@@ -20,9 +20,9 @@ const Lattice{N} = NTuple{N,AbstractRange} where {N}
 """
     FieldVal
 
-    Abstract type representing the general category of field values in spatial light modulator (SLM) fields. 
-    It serves as a base type for various specific types of field values such as phase, intensity, and amplitude values. 
-    Subtypes of `FieldVal` are used to define and work with different properties of SLM fields in a structured manner.
+    Abstract supertype for all types used in a LatticeField. 
+    It serves as a parent type for various other abstract types like Phase, Intensity, Modulus, etc. 
+    Subtypes of `FieldVal` are used to provide customized dispatch depending on what a LatticeField represents.
 
     # Examples
     - `Phase <: FieldVal`
@@ -34,12 +34,7 @@ abstract type FieldVal end
 """
     Generic <: FieldVal
 
-    A subtype of `FieldVal`, representing a generic field value. This type can be used as a placeholder or 
-    for cases where the specific nature of the field value is not critical to the operation or function being performed. 
-    It allows for flexibility and can be replaced or specified further in more detailed implementations.
-
-    # Usage
-    - Useful in functions or algorithms where the specific type of field value is not a primary concern.
+    A subtype of `FieldVal`, representing a generic field value. Placeholder type most for testing.
     """
 abstract type Generic <: FieldVal end
 
@@ -47,8 +42,7 @@ abstract type Generic <: FieldVal end
     Phase <: FieldVal
 
     Abstract type representing phase values in SLM fields. `Phase` is a subtype of `FieldVal` and acts as 
-    a parent type for different kinds of phase representations like real and complex phases. It is central 
-    to operations and calculations involving phase modulation and manipulation in optical systems.
+    a parent type for RealPhase and ComplexPhase. 
 
     # Subtypes
     - `RealPhase <: Phase`
@@ -59,69 +53,48 @@ abstract type Phase <: FieldVal end
 """
     RealPhase <: Phase
 
-    A subtype of `Phase`, representing real phase values in SLM fields. `RealPhase` is used for scenarios 
-    where the phase values are real numbers. This is commonly encountered in various optical applications 
-    where phase modulation does not involve complex numbers.
+    A subtype of `Phase`, representing an "unwrapped" real-valued phase.
 
     # See Also
-    - `ComplexPhase <: Phase` for complex phase values.
+    - `ComplexPhase <: Phase` for "wrapped" complex-valued phases.
     """
 abstract type RealPhase <: Phase end
 
 """
     const UPhase = RealPhase
 
-    Type alias for `RealPhase`, representing a specific kind of real phase value in SLM fields. `UPhase` is typically 
-    used to denote a standard real phase, possibly indicating a certain format or representation used in the system.
-    It inherits all properties and characteristics of `RealPhase`.
-
-    # Usage
-    - Use `UPhase` in place of `RealPhase` for clearer code semantics or when referring to a standard format of real phase.
+    Type alias for `RealPhase`, short for "unwrapped phase".
     """
 const UPhase = RealPhase
 
 """
     const UnwrappedPhase = RealPhase
 
-    Type alias for `RealPhase`, specifically used to represent real phase values that have been unwrapped. 
-    `UnwrappedPhase` indicates that the phase values are processed to remove discontinuities, a common procedure 
-    in phase analysis. This alias helps in explicitly indicating the nature of the phase data being handled.
-
-    # Usage
-    - Use `UnwrappedPhase` to signify that the phase values have undergone unwrapping.
+    Type alias for `RealPhase`.
     """
 const UnwrappedPhase = RealPhase
 
 """
     ComplexPhase <: Phase
 
-    Abstract type representing complex phase values in SLM fields. `ComplexPhase` is a subtype of `Phase` and is used 
-    in contexts where phase values are complex numbers. This type is essential for operations that involve complex 
-    phase modulation, such as in certain advanced optical trapping setups.
+    Abstract type representing "wrapped" complex-valued phases. 
 
     # See Also
-    - `RealPhase <: Phase` for real phase values.
+    - `RealPhase <: Phase` for "unwrapped" real-valued phases.
     """
 abstract type ComplexPhase <: Phase end
 
 """
     const S1Phase = ComplexPhase
 
-    Type alias for `ComplexPhase`, representing a specific format or representation of complex phase values in SLM fields. 
-    `S1Phase` might indicate a certain standard or convention in complex phase handling. It is used to provide clarity 
-    and specificity in code where complex phases are used in a particular context or format.
-
-    # Usage
-    - Use `S1Phase` to specify the use of a particular format or standard of complex phase values.
+    Type alias for `ComplexPhase`, "S1" referring to the complex unit circle where these phases live.
     """
 const S1Phase = ComplexPhase
 
 """
     Intensity <: FieldVal
 
-    Abstract type representing intensity values in SLM fields. `Intensity` is a subtype of `FieldVal` and 
-    is specifically used for operations and representations involving the intensity of light in optical trapping 
-    applications. This type is central to tasks where light intensity manipulation is crucial.
+    Abstract type representing intensity values in SLM fields.
 
     # Usage
     - Use `Intensity` as a base type for defining various forms of light intensity data.
@@ -131,9 +104,8 @@ abstract type Intensity <: FieldVal end
 """
     Amplitude <: FieldVal
 
-    Abstract type representing amplitude values in SLM fields. `Amplitude` is a subtype of `FieldVal` and is 
-    used to define and work with the amplitude properties of light waves. It forms a foundation for both 
-    real and complex amplitude representations in optical systems.
+    Abstract type representing amplitude values. Parent type to Modulus and ComplexAmplitude, the difference between the two
+	being that the latter includes phase information while the former does not. 
 
     # Subtypes
     - `Modulus <: Amplitude` for non-negative real amplitudes.
@@ -144,10 +116,7 @@ abstract type Amplitude <: FieldVal end
 """
     Modulus <: Amplitude
 
-    Abstract type representing non-negative real amplitude values, typically used in the context of 
-    optical field amplitudes in SLM fields. `Modulus`, as a subtype of `Amplitude`, is crucial for scenarios 
-    where the amplitude of the light wave is represented as a non-negative real number, which is common in 
-    various optical trapping and manipulation applications.
+    Abstract type representing non-negative real amplitude values.  Subtype of Amplitude.
 
     # See Also
     - `ComplexAmplitude <: Amplitude` for complex amplitude representations.
@@ -157,33 +126,22 @@ abstract type Modulus <: Amplitude end
 """
     const RealAmplitude = Modulus
 
-    Type alias for `Modulus`, specifically representing real amplitude values in SLM fields. `RealAmplitude` 
-    is used to indicate that the amplitude values are real and non-negative, conforming to the properties 
-    defined by `Modulus`. It's a convenient alias for clarity in code where real amplitude values are a focus.
-
-    # Usage
-    - Use `RealAmplitude` to explicitly denote non-negative real amplitude values in optical field representations.
+    Type alias for `Modulus`.
     """
 const RealAmplitude = Modulus
 
 """
     const RealAmp = Modulus
 
-    Type alias for `Modulus`, serving the same purpose as `RealAmplitude` but offering a more concise naming option. 
-    `RealAmp` is used in contexts where amplitude values are real and non-negative, aligning with the properties 
-    of `Modulus`. It provides a succinct alternative for code readability and ease of use.
-
-    # Usage
-    - Use `RealAmp` as a shorter, more convenient alias for non-negative real amplitude values.
+    Type alias for `Modulus`.
     """
 const RealAmp = Modulus
 
 """
     ComplexAmplitude <: Amplitude
 
-    Abstract type representing complex amplitude values in SLM fields. `ComplexAmplitude` is a subtype of `Amplitude` 
-    and is crucial for scenarios involving complex representations of optical field amplitudes. This type is 
-    particularly important in advanced optical applications where amplitude modulation involves complex values.
+    Abstract type representing complex amplitude values.  Subtype of `Amplitude`.  Incorporates both phase and magnitude information.  
+	Must be used in conjunction with a Complex numerical data type. 
 
     # See Also
     - `Modulus <: Amplitude` for non-negative real amplitude representations.
@@ -193,13 +151,7 @@ abstract type ComplexAmplitude <: Amplitude end
 """
         const ComplexAmp = ComplexAmplitude
 
-    Type alias for `ComplexAmplitude`, used to represent complex amplitude values in SLM fields. `ComplexAmp` 
-    provides a concise naming option for cases where amplitude values are complex, aligning with the properties 
-    defined by `ComplexAmplitude`. This alias is useful for enhancing code clarity and conciseness in contexts 
-    where complex amplitudes are used.
-
-    # Usage
-    - Use `ComplexAmp` for a compact representation of complex amplitude values in optical field manipulations.
+    Type alias for `ComplexAmplitude`.
     """
 const ComplexAmp = ComplexAmplitude
 #endregion
@@ -209,16 +161,15 @@ const ComplexAmp = ComplexAmplitude
 """
     LatticeField{S<:FieldVal,T,N}
 
-    A struct representing a field defined on a lattice in spatial light modulator (SLM) systems. It encapsulates 
-    the field data along with its lattice structure and an optional scaling factor for the wavelength.
+    A struct representing a field defined on a lattice. It encapsulates the field data along with its lattice structure and an optional scaling factor for the wavelength*focal length product.
 
     # Fields
     - `data::AbstractArray{T,N}`: The field data, stored as an N-dimensional array.
     - `L::Lattice{N}`: The lattice structure, defined as an N-tuple of ranges.
-    - `flambda::Real`: A scaling factor for the wavelength, with a default value of 1.0.
+    - `flambda::Real`: A scaling factor for the wavelength*focal length product, with a default value of 1.0.
 
     # Parameters
-    - `S`: The subtype of `FieldVal` representing the type of field value (e.g., phase, intensity).
+    - `S`: The subtype of `FieldVal` representing the type of field value (e.g., RealPhase, Intensity).
     - `T`: The element type of the field data array.
     - `N`: The dimensionality of the lattice and data array.
 
@@ -227,13 +178,13 @@ const ComplexAmp = ComplexAmplitude
     a `DimensionMismatch` error is thrown.
 
     # Examples
-    data = rand(ComplexF64, 10, 10)
-    lattice = ((1:10, 1:10),)
+    data = exp.(2*pi*im*rand(Float64, 10, 10))
+    lattice = (1:10, 1:10)
     lf = LatticeField{ComplexPhase}(data, lattice)
     This will create a LatticeField instance with complex phase values on a 10x10 lattice.
 
     """
-struct LatticeField{S<:FieldVal,T,N} #<: AbstractArray{T,N}
+struct LatticeField{S<:FieldVal,T,N}
     data::AbstractArray{T,N}
     L::Lattice{N}
     flambda::Real
@@ -256,7 +207,7 @@ end
     # Parameters
     - `array`: The field data as an N-dimensional array.
     - `L`: The lattice structure, represented as an N-tuple of ranges.
-    - `flambda`: An optional real number to scale the wavelength.
+    - `flambda`: Wavelength*focal length scale factor (optional).  Default value == 1.0.
     - `S`: A subtype of `FieldVal` representing the field value type.
     - `T`: Inferred from the element type of `array`.
     - `N`: Inferred from the dimensionality of `array`.
@@ -268,13 +219,7 @@ LatticeField{S}(array::AbstractArray{T,N}, L::Lattice{N}, flambda::Real=1.0) whe
 """
     const LF = LatticeField
 
-    Type alias for the `LatticeField` struct. `LF` provides a concise way to refer to the `LatticeField` type in code, 
-    enhancing readability and ease of use.
-
-    # Usage
-    `LF` is used in the same way as `LatticeField` but offers a shorthand notation.
-
-    This alias is particularly handy in contexts where `LatticeField` is used frequently, reducing the verbosity of the code.
+    Type alias for the `LatticeField` struct.
     """
 const LF = LatticeField
 
@@ -289,8 +234,7 @@ elq(x::Lattice{N}, y::Lattice{N}) where {N} = (all(isapprox.(x, y)) || throw(Dom
 elq(x::LF, y::LF) = (all(isapprox.(x.L, y.L)) || throw(DomainError((x.L, y.L), "Unequal lattices.")); return nothing)
 
 
-# Minimal methods to make these types function as arrays.  
-# All arithmetic works on a LatticeField, though the output will be some sort of array, and not a LatticeField. 
+# Minimal methods to make a LatticeField function similarly to an array.
 Base.size(f::LatticeField) = size(f.data)
 Base.getindex(f::LatticeField, i::Int) = getindex(f.data, i)
 Base.setindex!(f::LatticeField, v, i::Int) = setindex!(f.data, v, i)
@@ -346,7 +290,7 @@ end
 """
     sublattice(L::Lattice{N}, x::Union{I,AbstractRange{I}}...) where {N,I<:Integer}
 
-    Create a sublattice from a given lattice `L` by specifying indices or ranges in each dimension. This function is particularly useful in optical trapping simulations when a smaller section of a larger lattice structure needs to be isolated for detailed analysis or for applying specific operations.
+    Create a sublattice from a given lattice `L` by specifying indices or ranges in each dimension. 
 
     # Arguments
     - `L::Lattice{N}`: The original lattice from which the sublattice is to be created.
@@ -434,7 +378,7 @@ function subfield(f::LatticeField{S,T,N}, x::Union{I,AbstractRange{I}}...) where
 end
 #endregion
 
-#region -------------------- Lattice overloading more Base stuff -------------------------------
+#region -------------------- Basic arithmetic for LatticeFields -------------------------------
 
 # Default behavior is to throw an undefined method error.
 Base.:(*)(args::LF...) = error("Behavior undefined for this combination of inputs: ", *((string(i) * ", " for i in typeof.(args))...))
@@ -484,8 +428,6 @@ Base.conj(x::LF{ComplexPhase}) = LF{ComplexPhase}(conj.(x.data), x.L, x.flambda)
     # Returns
     A new `LatticeField` instance with the `Intensity` type, where each data point is the square of the absolute value 
     of the corresponding point in the input `LatticeField`.
-
-    This function is commonly used in optics and photonics to convert amplitude information into intensity information.
     """
 square(x::LF{<:Amplitude}) = LF{Intensity}(abs.(x.data) .^ 2, x.L, x.flambda)
 
@@ -501,8 +443,6 @@ square(x::LF{<:Amplitude}) = LF{Intensity}(abs.(x.data) .^ 2, x.L, x.flambda)
     # Returns
     A new `LatticeField` instance with `ComplexPhase`, where each data point is the result of `exp(2πi * data)` 
     of the corresponding point in the input `LatticeField`.
-
-    This function is useful in scenarios where phase information needs to be represented in a complex exponential form.
     """
 wrap(x::LF{RealPhase}) = LF{ComplexPhase}(exp.(2pi * im * x.data), x.L, x.flambda)
 

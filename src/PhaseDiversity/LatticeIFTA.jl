@@ -10,8 +10,6 @@ export phasor, gs, gsIter, pdgs, pdgsIter, oneShot
 
     Compute the phasor (unit vector in the complex plane) of a given complex number `z`. The phasor is calculated as `z` divided by its absolute value, which normalizes `z` to have a magnitude of 1. If `z` is zero, the function returns 1.0 (represented as a complex number).
 
-    This function is useful in applications involving complex numbers where only the direction (phase) of the number is relevant, and its magnitude can be normalized.
-
     Arguments:
     - `z::ComplexF64`: A complex number.
 
@@ -27,8 +25,6 @@ phasor(z::ComplexF64) = iszero(z) ? one(ComplexF64) : z / abs(z)
 
     Perform the Gerchberg-Saxton (GS) algorithm iterations on two distributions specified by `U` and `V` for `nit` number of iterations. The `Φ0` parameter is used as the starting phase guess. The function first checks for lattice compatibility between `U`, `V`, and `Φ0`.
 
-    The GS algorithm is used in optics and image processing to iteratively find a phase distribution that, when Fourier transformed, matches a given amplitude distribution.
-
     Arguments:
     - `U::LF{Modulus,<:Real,N}`: A `LatticeField` representing the first amplitude distribution.
     - `V::LF{Modulus,<:Real,N}`: A `LatticeField` representing the second amplitude distribution.
@@ -37,8 +33,6 @@ phasor(z::ComplexF64) = iszero(z) ? one(ComplexF64) : z / abs(z)
 
     Returns:
     - `LF{ComplexPhase}`: A `LatticeField` representing the complex phase after `nit` iterations of the GS algorithm.
-
-    This function is essential in simulations and calculations where phase retrieval or phase distribution optimization is required.
     """
 function gs(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, nit::Integer, Φ0::LF{ComplexPhase,<:Complex,N}) where {N}
     # Runs nit number of iterations of Gerchberg-Saxton on the distributions specified by U and V.  Φ0 is a starting phase guess.
@@ -188,7 +182,7 @@ end
 """
     oneShot(img::LF{Intensity,<:Real,N}, alpha::Real, beta::NTuple{N,Real}, sc::Real) where N
 
-    Perform a one-shot phase retrieval process on an image `img` using specified parameters `alpha`, `beta`, and `sc`. This function is designed for applications in optics and image processing where quick and efficient phase retrieval from a single intensity image is required.
+    Perform a one-shot phase retrieval process on an image `img` using specified parameters `alpha`, `beta`, and `sc`.
 
     Arguments:
     - `img`: A `LatticeField` representing the intensity distribution of the image.
@@ -197,9 +191,7 @@ end
     - `sc`: A scaling factor used in the phase retrieval process.
 
     Returns:
-    - `LF{ComplexAmp}`: A `LatticeField` representing the complex amplitude after the phase retrieval process.
-
-    The function works by first calculating a dual lattice and then applying a series of transformations to retrieve the phase information from the intensity image. The result is a complex amplitude field that approximates the original field of the image.
+    - `LF{ComplexAmp}`: A `LatticeField` representing the input beam estimate. 
     """
 function oneShot(img::LF{Intensity,<:Real,N}, alpha::Real, beta::NTuple{N,Real}, sc::Real) where {N}
     dL = dualShiftLattice(img.L, img.flambda)

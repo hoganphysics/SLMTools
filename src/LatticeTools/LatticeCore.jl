@@ -14,10 +14,8 @@ export natlat, padout, sft, isft, latticeDisplacement, toDim, naturalize
 #region -----------------------natlat------------------------
 """ 
     natlat(n::Int) 
-    Create a "natural" lattice for a given integer n.
-    This funnction generates a 1D lattice with n points, ranging from -floor(n/2) to floor((n-1)/2),
-    and scales it by 1/sqrt(n) to normalize.
-    The natural lattice is often used in FFT problems to represent the discrete points in real space."""
+    Create a "natural" 1D lattice for a given integer n, i.e. a lattice which is self-dual under DFT.
+	"""
 function natlat(n::Int)
     return (-floor(n / 2):floor((n - 1) / 2)) ./ sqrt(n)
 end
@@ -34,18 +32,13 @@ end
 
     Convert a LatticeField to be defined on its natural lattice.
 
-    This function takes a `LF{S,T,N}` object and converts it to be defined on the natural lattice that corresponds to its size. 
-    The natural lattice is a lattice with unit steps and origin at the first index for each dimension.
+    This function takes a `LF{S,T,N}` object and converts it to be defined on the natural lattice that corresponds to its size.
 
     # Arguments
     - `f::LF{S,T,N}`: A LatticeField object to be naturalized.
 
     # Returns
     - A `LF{S}` object with the same data as `f`, but defined on its natural lattice.
-
-    The function maintains the data of the original LatticeField but changes its lattice definition to the natural lattice. 
-    This is particularly useful for standardizing the lattice structure or for operations that assume a regular, 
-    unit-stepped lattice.
     """
 function naturalize(f::LF{S,T,N}) where {S<:FieldVal,T,N}
     # Converts LatticeField to be difined on the natural lattice of the same size. 
@@ -99,10 +92,6 @@ padout(A::Array{T,N}, p::Int, filler=zero(T)) where {T,N} = padout(A, ((p for i 
 
     # Returns
     A new `LatticeField` instance with the data field padded as specified and the lattice adjusted accordingly.
-
-    This function is particularly useful for operations that require modifying the size of the `LatticeField` data 
-    while maintaining its structural integrity, such as in image processing or spatial analysis tasks in optical 
-    trapping applications.
     """
 padout(f::LF{S,T,N}, p::NTuple{N,Int}, filler=zero(T)) where {S<:FieldVal,T,N} = LF{S,T,N}(padout(f.data, p, filler), padout(f.L, p), f.flambda)
 
@@ -123,7 +112,7 @@ sft(v) = fftshift(fft(ifftshift(v)))
 
 """
     isft(v)
-    Performs an inverse shifted Fourier transform on the input vector `v`. This function first applies an inverse shift (using `ifftshift`), then performs an inverse Fourier transform (`ifft`), and finally applies a forward shift (`fftshift`).
+    Performs an shifted inverse Fourier transform on the input vector `v`. This function first applies an inverse shift (using `ifftshift`), then performs an inverse Fourier transform (`ifft`), and finally applies a forward shift (`fftshift`).
     # Arguments
     - `v`: An array to be transformed.
     # Returns
