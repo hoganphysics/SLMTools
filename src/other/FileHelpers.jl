@@ -96,7 +96,7 @@ function saveAs8BitBMP(image_data::Array{Int64,2}, output_filename::String)
     py_executable_path = PyCall.python
     ENV["PYTHON"] = py_executable_path
     # Read the entire Python script as a string    
-    python_script = read("toBbmp.py", String)
+    python_script = read("to8Bbmp.py", String)
 
     # Execute the Python script
     py"exec($python_script)"
@@ -105,5 +105,5 @@ function saveAs8BitBMP(image_data::Array{Int64,2}, output_filename::String)
     py_image_data = PyObject(image_data)
 
     # Call the Python function with the image data and output filename
-    py"save_as_bmp($py_image_data, output_filename)"
+    py"save_as_bmp($py_image_data, $output_filename)"
 end

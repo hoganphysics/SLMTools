@@ -42,7 +42,6 @@ end
 nabs(v) = abs.(v) ./ sqrt(sum(abs.(v) .^ 2))
 
 
-
 """
     window(img::Array{T,N}, w::Int) where {T,N}
 
