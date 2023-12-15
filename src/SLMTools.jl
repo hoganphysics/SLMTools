@@ -39,5 +39,4 @@ export look
 include("other/FileHelpers.jl")
 export savePhase, saveBeam, saveAs8BitBMP
 
-
 end # module SLMTools
