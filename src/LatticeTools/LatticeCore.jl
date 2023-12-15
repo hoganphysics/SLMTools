@@ -6,7 +6,7 @@ export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, 
 export Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF
 export subfield, wrap, square, sublattice
 
-export natlat, padout, sft, isft, latticeDisplacement, toDim, naturalize
+export natlat, padout, sft, isft, latticeDisplacement, toDim, naturalize, r2, ldot
 
 
 
