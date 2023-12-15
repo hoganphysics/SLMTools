@@ -30,6 +30,7 @@ using .LatticeIFTA
 export phasor, gs, gsIter, pdgs, pdgsIter, oneShot
 
 include("PhaseDiversity/OTHelpers.jl")
+using .OTHelpers
 export getCostMatrix, pdCostMatrix, pdotBeamEstimate,  mapify, scalarPotentialN, otPhase, pdotPhase, pdotBeamEstimate
 
 include("other/VisualizationHelpers.jl")
