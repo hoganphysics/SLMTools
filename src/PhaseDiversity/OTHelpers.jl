@@ -88,6 +88,7 @@ function mapify(plan::AbstractArray{<:Number,2}, Lμ::Lattice{N}, Lv::Lattice{N}
     vf = zeros(lμ, N)    # Vector field output.  Last coordinate indexes the vector components. 
     for i = 1:N
         x = reshape(sum(p, dims=[(2:i)..., (i+2:N+1)...]), (lμ, sv[i]))
+		println(size(x),size(Lv[i]),size(safeInverse.(sum(x, dims=2))))
         vf[:, i] = x * Lv[i] .* safeInverse.(sum(x, dims=2))
     end
     return reshape(vf, (sμ..., N))
