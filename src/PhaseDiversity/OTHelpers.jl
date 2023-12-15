@@ -66,88 +66,6 @@ end
 
 
 """
-    pdotPhase(G2Root::LatticeField{Intensity,<:Real,N},
-              G2Target::LatticeField{Intensity,<:Real,N},
-              αRoot::Real,
-              αTarget::Real,
-              βRoot::Vector,
-              βTarget::Vector,
-              ε::Real; options...) where N
-
-    Compute the phase difference using optimal transport theory between two distributions with penalty terms.
-
-    The function computes the scalar potential of the optimal transport map between two distributions `G2Root` and `G2Target`,
-    considering additional penalty terms defined by αRoot, αTarget, βRoot, and βTarget.
-
-    # Arguments
-    - `G2Root::LatticeField{Intensity,<:Real,N}`: The source lattice field distribution.
-    - `G2Target::LatticeField{Intensity,<:Real,N}`: The target lattice field distribution.
-    - `αRoot::Real`: The penalty coefficient for the source distribution.
-    - `αTarget::Real`: The penalty coefficient for the target distribution.
-    - `βRoot::Vector`: The offset vector for the source distribution.
-    - `βTarget::Vector`: The offset vector for the target distribution.
-    - `ε::Real`: The regularization parameter for the Sinkhorn algorithm.
-    - `options...`: Additional options passed to the Sinkhorn algorithm.
-
-    # Returns
-    - `LatticeField{RealPhase}`: A lattice field representing the phase difference between the two distributions.
-
-    # Errors
-    - An error is thrown if `sinkhorn` returns `NaN`, suggesting a change in the value of `ε`.
-
-    The function normalizes the distributions, computes a cost matrix with penalty terms, and then
-    applies the Sinkhorn algorithm to find the optimal transport plan. The plan is then used to compute
-    the scalar potential, considering the penalty terms in the phase computation.
-    """
-function pdotPhase(G2Root::LatticeField{Intensity,<:Real,N}, G2Target::LatticeField{Intensity,<:Real,N}, αRoot::Real, αTarget::Real, βRoot::Vector, βTarget::Vector, ε::Real; options...) where {N}
-    u, v = normalizeDistribution(G2Root.data), normalizeDistribution(G2Target.data)
-    C = pdCostMatrix(G2Root.L, G2Target.L, αRoot, αTarget)
-    γ = sinkhorn(u[:], v[:], C, ε; options...)
-    any(isnan, γ) && error("sinkhorn returned nan.  Try changing epsilon.")
-    Γ = mapify(γ, G2Root.L, G2Target.L) ./ (αRoot - αTarget)
-    Φ = scalarPotentialN(Γ, G2Root.L)
-    CI = CartesianIndices(length.(G2Root.L))
-    dβ = βRoot .- βTarget
-    Φ .-= [sum((G2Root.L[i][I[i]] - dβ[i])^2 for i = 1:N) / (2 * (αRoot - αTarget)) for I in CI]
-    return LF{RealPhase}(Φ, G2Root.L)
-end
-
-"""
-    pdotBeamEstimate(G2Root::LatticeField{Intensity,<:Real,N},
-                     G2Target::LatticeField{Intensity,<:Real,N},
-                     αRoot::Real,
-                     αTarget::Real,
-                     βRoot::Vector,
-                     βTarget::Vector,
-                     ε::Real; options...) where N
-
-    Estimate the beam transformation using phase difference computed by optimal transport.
-
-    This function estimates the beam transformation from a source distribution `G2Root` to a target distribution `G2Target`
-    by first computing the phase difference using `pdotPhase` and then applying the transformation to the source beam.
-
-    # Arguments
-    - `G2Root::LatticeField{Intensity,<:Real,N}`: The source lattice field distribution.
-    - `G2Target::LatticeField{Intensity,<:Real,N}`: The target lattice field distribution.
-    - `αRoot::Real`, `αTarget::Real`: Penalty coefficients for the source and target distributions.
-    - `βRoot::Vector`, `βTarget::Vector`: Offset vectors for the source and target distributions.
-    - `ε::Real`: The regularization parameter for the Sinkhorn algorithm.
-    - `options...`: Additional options passed to the Sinkhorn algorithm.
-
-    # Returns
-    - `LatticeField{ComplexAmplitude}`: A lattice field representing the transformed beam.
-
-    The function leverages the phase difference computed by `pdotPhase` to estimate the beam transformation,
-    taking into account the penalty terms and the shift lattice.
-    """
-function pdotBeamEstimate(G2Root::LatticeField{Intensity,<:Real,N}, G2Target::LatticeField{Intensity,<:Real,N}, αRoot::Real, αTarget::Real, βRoot::Vector, βTarget::Vector, ε::Real; options...) where {N}
-    Φ = pdotPhase(G2Root, G2Target, αRoot, αTarget, βRoot, βTarget, ε; options...)
-    dL = dualShiftLattice(G2Root.L)
-    beam = isft(sqrt.(G2Root.data) .* exp.(2π * im * Φ)) .* [exp(-2π * im * αRoot / 2 * sum(dL[i][I[i]]^2 for i = 1:N)) for I in CI]
-    return LF{ComplexAmplitude}(beam, dL)
-end
-
-"""
     mapify(plan::AbstractArray{<:Number,2}, Lμ::Lattice{N}, Lν::Lattice{N}) where N
 
     Transform a transportation plan into a vector field.
@@ -200,6 +118,13 @@ function scalarPotentialN(A::AbstractArray{T,M}, L::Lattice{N}; idx=nothing, dim
     return .+((hyperSum(A[CI, dimOrder[i]], idx, dimOrder[i], dimOrder[1:(i-1)]) * step(L[dimOrder[i]]) for i = 1:N)...)
 end
 
+
+function normalizeDistribution(U::AbstractArray{T,N}) where {T<:Number,N}
+    # Makes an arbitrary array into a positive real array with sum 1, i.e. a probability distribution. 
+    U = abs.(U)
+    return U ./ sum(U)
+end
+
 """
     otPhase(U::LatticeField{Intensity,<:Real,N}, V::LatticeField{Intensity,<:Number,N}, ε::Real; options...) where {N}
 
@@ -242,6 +167,22 @@ function otPhase(U::LatticeField{Intensity,<:Real,N},V::LatticeField{Intensity,<
 end
 
 
+"""
+    pdotPhase(G2Root::LatticeField{Intensity,<:Real,N},
+              G2Target::LatticeField{Intensity,<:Real,N},
+              αRoot::Real,
+              αTarget::Real,
+              βRoot::Vector,
+              βTarget::Vector,
+              ε::Real; options...) where N
+	
+    # Returns
+    - `LatticeField{RealPhase}`: A lattice field representing the phase associated with the LatticeField G2Root.
+
+    # Errors
+    - An error is thrown if `sinkhorn` returns `NaN`, suggesting a change in the value of `ε`.
+    """
+
 function pdotPhase(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeField{Intensity,<:Real,N},αRoot::Real,αTarget::Real, βRoot::Vector, βTarget::Vector, ε::Real;options...) where N
     u,v = normalizeDistribution(G2Root.data), normalizeDistribution(G2Target.data)
     C = pdCostMatrix(G2Root.L,G2Target.L,αRoot,αTarget)
@@ -254,6 +195,14 @@ function pdotPhase(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeFie
     Φ .-= [ sum( (G2Root.L[i][I[i]] - dβ[i])^2 for i=1:N)/(2*(αRoot-αTarget)) for I in CI ]
     return LF{RealPhase}(Φ,G2Root.L,G2Root.flambda)
 end
+
+"""
+    pdotBeamEstimate(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeField{Intensity,<:Real,N}, αRoot::Real,αTarget::Real, βRoot::Vector, βTarget::Vector, ε::Real; LFine::Union{Nothing,Lattice{N}}=nothing, options...) where N
+    Φ = pdotPhase(G2Root,G2Target,αRoot,αTarget,βRoot,βTarget,ε;options...) where N
+
+    # Returns
+    - `LatticeField{ComplexAmplitude}`: A lattice field representing the inferred beam.
+    """
 
 function pdotBeamEstimate(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeField{Intensity,<:Real,N}, αRoot::Real,αTarget::Real, βRoot::Vector, βTarget::Vector, ε::Real; LFine::Union{Nothing,Lattice{N}}=nothing, options...) where N
     Φ = pdotPhase(G2Root,G2Target,αRoot,αTarget,βRoot,βTarget,ε;options...)
