@@ -6,12 +6,12 @@ using .LatticeTools
 export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF, subfield, wrap, square, sublattice
 export natlat, sft, isft, padout, naturalize, latticeDisplacement, toDim
 export downsample, upsample, coarsen, sublattice
-export dualLattice, dualShiftLattice, dualate, ldq, dualPhase
+export dualLattice, dualShiftLattice, ldq, dualPhase
 
 
 include("other/ImageProcessing.jl")
 using .ImageProcessing
-export getImagesAndFilenames, imageToFloatArray, itfa, getCamGrid, sweepCoords, findCOM, lineFit, castImage, loadDir, parseFileName, parseStringToNum, getOrientation
+export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parseFileName, parseStringToNum, getOrientation, dualate, centroid, clip, collapse, linearFit
 
 include("other/PhaseIntensityMasks.jl")
 using .PhaseIntensityMasks
@@ -30,7 +30,7 @@ using .LatticeIFTA
 export phasor, gs, gsIter, pdgs, pdgsIter, oneShot
 
 include("PhaseDiversity/OTHelpers.jl")
-export getCostMatrix, pdCostMatrix, pdotBeamEstimate,  mapify, scalarPotentialN,  OTphase, pdotPhase
+export getCostMatrix, pdCostMatrix, pdotBeamEstimate,  mapify, scalarPotentialN, otPhase, pdotPhase, pdotBeamEstimate
 
 include("other/VisualizationHelpers.jl")
 using .VisualizationHelpers
