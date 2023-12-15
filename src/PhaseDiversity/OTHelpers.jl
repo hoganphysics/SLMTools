@@ -27,16 +27,16 @@ function getCostMatrix(L::Lattice{N}; normalization=maximum) where {N}
 end
 
 """
-    getCostMatrix(Lμ::Lattice{N}, Lν::Lattice{N}; normalization=maximum) where N
+    getCostMatrix(Lμ::Lattice{N}, Lv::Lattice{N}; normalization=maximum) where N
 
-    Calculate a cost matrix between two lattices `Lμ` and `Lν`.
+    Calculate a cost matrix between two lattices `Lμ` and `Lv`.
 
     # Arguments
-    - `Lμ::Lattice{N}`, `Lν::Lattice{N}`: Two lattices represented as multi-dimensional arrays.
+    - `Lμ::Lattice{N}`, `Lv::Lattice{N}`: Two lattices represented as multi-dimensional arrays.
     - `normalization`: A function used for normalizing the cost matrix.
 
     # Returns
-    - A normalized cost matrix representing the cost between points in `Lμ` and `Lν`.
+    - A normalized cost matrix representing the cost between points in `Lμ` and `Lv`.
 
     This function computes the cost matrix based on the Euclidean distance squared between corresponding points in the two lattices.
     """
@@ -67,31 +67,30 @@ end
 
 
 """
-    mapify(plan::AbstractArray{<:Number,2}, Lμ::Lattice{N}, Lν::Lattice{N}) where N
+    mapify(plan::AbstractArray{<:Number,2}, Lμ::Lattice{N}, Lv::Lattice{N}) where N
 
     Transform a transportation plan into a vector field.
 
     # Arguments
     - `plan::AbstractArray{<:Number,2}`: A matrix representing the transportation plan between two distributions.
     - `Lμ::Lattice{N}`: The source lattice.
-    - `Lν::Lattice{N}`: The target lattice.
+    - `Lv::Lattice{N}`: The target lattice.
 
     # Returns
-    - A vector field representing the transportation from `Lμ` to `Lν` as prescribed by `plan`.
+    - A vector field representing the transportation from `Lμ` to `Lv` as prescribed by `plan`.
 
     This function reshapes the transportation plan into a higher-dimensional array to align with the lattices. It then computes the vector field by accumulating the plan over the target lattice and normalizing it by the sum over the corresponding dimensions.
     """
-function mapify(plan::AbstractArray{<:Number,2}, Lμ::Lattice{N}, Lv::Lattice{N}) where {N}
+function mapify(plan::AbstractArray{<:Number,2},Lμ::Lattice{N},Lv::Lattice{N}) where N
     sμ, sv = length.(Lμ), length.(Lv)
-    lμ, Lv = size(plan)
-    p = reshape(plan, (lμ, sv...))
-    vf = zeros(lμ, N)    # Vector field output.  Last coordinate indexes the vector components. 
-    for i = 1:N
-        x = reshape(sum(p, dims=[(2:i)..., (i+2:N+1)...]), (lμ, sv[i]))
-		println(size(x),size(Lv[i]),size(safeInverse.(sum(x, dims=2))))
-        vf[:, i] = x * Lv[i] .* safeInverse.(sum(x, dims=2))
+    lμ, lv = size(plan)
+    p = reshape(plan,(lμ,sv...))
+    vf = zeros(lμ,N)    # Vector field output.  Last coordinate indexes the vector components. 
+    for i=1:N
+        x = reshape(sum(p,dims=[(2:i)...,(i+2:N+1)...]),(lμ,sv[i]))
+        vf[:,i] = x * Lv[i] .* safeInverse.(sum(x,dims=2))
     end
-    return reshape(vf, (sμ..., N))
+    return reshape(vf,(sμ...,N))
 end
 
 """
