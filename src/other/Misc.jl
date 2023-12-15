@@ -57,7 +57,7 @@ function window(img::Array{T,N}, w::NTuple{N,Int}) where {T,N}
     c = CartesianIndex(round.(Int,centroid(img))...)
     return CartesianIndices(((1:w[i] for i=1:N)...,)) .- CartesianIndex(floor.(Int,w./2)...) .+ c
 end
-function window(f::LF{F,T,N},w::NTuple{N,Int}) where {F<:FieldVal,T,N}
+function window(f::LF{F,T,N},w::Union{Int,NTuple{N,Int}}) where {F<:FieldVal,T,N}
     return window(f.data,w)
 end
 
