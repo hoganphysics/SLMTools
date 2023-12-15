@@ -465,7 +465,7 @@ wrap(x::LF{RealPhase}) = LF{ComplexPhase}(exp.(2pi * im * x.data), x.L, x.flambd
     This function ensures compatibility and ease of use in code where the exact phase type of a `LatticeField` might not 
     be known in advance.
     """
-wrap(x::LF{ComplexPhase}) = copy(x)
+wrap(x::LF{ComplexPhase}) = LF{ComplexPhase}(x.data,x.L,x.flambda)
 
 #endregion
 
