@@ -3,6 +3,7 @@ module OTHelpers
 using ..LatticeTools
 using ..Misc
 using OptimalTransport: sinkhorn
+using Interpolations: Linear
 
 export getCostMatrix, pdCostMatrix, pdotPhase, pdotBeamEstimate, mapify, scalarPotentialN, otPhase
 
