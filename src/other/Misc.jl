@@ -1,7 +1,12 @@
 module Misc
 using ..LatticeTools
-export ramp, nabs, centroid, window, normalizeDistribution, safeInverse, hyperSum, collapse, clip, collapse, clip, getOrientation
+export  testing, ramp, nabs, window, normalizeDistribution, safeInverse, hyperSum, centroid, clip, collapse, clip
 
+#= Vandy's idea for this submodule is that functions which are likely to be of general use, but not necessarily specific to SLMs, should go here.
+mostly mathematical functions, but also some image processing functions, etc.
+I personally view the clip, centroid, collapse, and normalizeDistribution functions as being generall functions on arrays, not as image processing, since they seem 
+to work, at least conceptually, on arrays that aren't two dimensional. 
+getOrientation on the other hand does seem specific to aligning images =#
 
 """
     ramp(x::T) where {T<:Number}
@@ -205,6 +210,9 @@ function centroid(img::LF{Intensity,T,N}, threshold::Real=0.1) where {T,N}
 end
 centroid(img::Array{T,N}) where {T,N} = [sum((1:size(img)[j]) .* sum(img, dims=delete!(Set(1:N), j))[:]) for j = 1:N] ./ sum(img)
 
+function testing(x::Number)
+    return x
+end
 
 
 end # module Misc

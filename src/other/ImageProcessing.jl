@@ -2,9 +2,10 @@ module ImageProcessing
 using FileIO: load
 using Images: Gray, RGB, Colorant
 using ..LatticeTools
+using ..Misc
 using Interpolations: cubic_spline_interpolation
 
-export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parseFileName, parseStringToNum, getOrientation, dualate, linearFit, centroid, collapse, clip
+export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parseFileName, parseStringToNum, getOrientation, dualate, linearFit #centroid, collapse, clip
 
 """
     castImage(T::DataType, img::Matrix{<:Colorant}, L::Lattice{2}, flambda::Real)
@@ -238,38 +239,39 @@ function linearFit(xs::Vector{<:Number},ys::Vector{<:Number})
     ((hcat(xs, ones(length(xs))) \ ys)...,)
 end
 
-"""
-	collapse(x::AbstractArray{T,N},i::Int) where {T<:Number,N}
+# """
+# 	collapse(x::AbstractArray{T,N},i::Int) where {T<:Number,N}
 	
-	Sums all dimensions of x except the i-th. 
-	"""
-function collapse(x::AbstractArray{T,N},i::Int) where {T<:Number,N}
-    # Sums all dimensions of x except the i-th.  
-    return sum(x,dims=(1:i-1...,i+1:N...))[:]
-end
+# 	Sums all dimensions of x except the i-th. 
+# 	"""
+# function collapse(x::AbstractArray{T,N},i::Int) where {T<:Number,N}
+#     # Sums all dimensions of x except the i-th.  
+#     return sum(x,dims=(1:i-1...,i+1:N...))[:]
+# end
 
-"""
-	clip(x::Number,threshold::Number)
+# """
+# 	clip(x::Number,threshold::Number)
 	
-	Clips a number `x` to zero if it's below `threshold`. 
-	"""
-function clip(x::Number,threshold::Number)
-    # Clips a number to zero if it's below the threshold. 
-    x>threshold ? x : zero(x)
-end
+# 	Clips a number `x` to zero if it's below `threshold`. 
+# 	"""
+# function clip(x::Number,threshold::Number)
+#     # Clips a number to zero if it's below the threshold. 
+#     x>threshold ? x : zero(x)
+# end
 
-"""
-	centroid(img::LF{Intensity,T,N},threshold::Real=0.1) where {T,N}
+# """
+# 	centroid(img::LF{Intensity,T,N},threshold::Real=0.1) where {T,N}
 	
-	Centroid of a LatticeField, in its own coordinates as given by its lattice.
-	"""
-function centroid(img::LF{Intensity,T,N},threshold::Real=0.1) where {T,N}
-    # Centroid of a LatticeField, in its own coordinates. 
-    clipped = clip.(img.data,threshold)
-    s = sum(clipped)
-    (s > 0) || error("Black image.  Can't normalize")
-    return [(sum(collapse(clipped,i) .* img.L[i]) for i=1:N)...] ./ s
-end
+# 	Centroid of a LatticeField, in its own coordinates as given by its lattice.
+# 	"""
+# function centroid(img::LF{Intensity,T,N},threshold::Real=0.1) where {T,N}
+#     # Centroid of a LatticeField, in its own coordinates. 
+#     clipped = clip.(img.data,threshold)
+#     s = sum(clipped)
+#     (s > 0) || error("Black image.  Can't normalize")
+#     return [(sum(collapse(clipped,i) .* img.L[i]) for i=1:N)...] ./ s
+# end
+# centroid(img::Array{T,N}) where {T,N} = [sum((1:size(img)[j]) .* sum(img, dims=delete!(Set(1:N), j))[:]) for j = 1:N] ./ sum(img)
 
 """
     getOrientation(linImgs::Vector{LF{Intensity,T,2}}, idxs::Vector{<:Number}; 
