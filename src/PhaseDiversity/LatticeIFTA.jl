@@ -107,7 +107,7 @@ function gs(U::LF{Intensity,<:Real,N}, V::LF{Intensity,<:Real,N}, nit::Integer, 
     return gs(sqrt(U), sqrt(V), nit, Φ0)
 end
 #endregion
-
+# add method to compensate for given phase
 #region ----------------Phase Diversity --------------------
 
 

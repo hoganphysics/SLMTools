@@ -1,5 +1,3 @@
-function myfun(x)
-    return [1,2],3
-end
+using Plots
 
-((a,b), c)=myfun(4)
+# plot(1:10)
