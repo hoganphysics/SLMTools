@@ -201,6 +201,16 @@ end
     pdotBeamEstimate(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeField{Intensity,<:Real,N}, αRoot::Real,αTarget::Real, βRoot::Vector, βTarget::Vector, ε::Real; LFine::Union{Nothing,Lattice{N}}=nothing, options...) where N
     Φ = pdotPhase(G2Root,G2Target,αRoot,αTarget,βRoot,βTarget,ε;options...) where N
 
+    # Arguments
+    - `G2Root::LatticeField{Intensity,<:Real,N}`: The larger of two diversity images
+    - `G2Target::LatticeField{Intensity,<:Real,N}`: The smaller of two diversity images
+    - `αRoot::Real`: The curvature (from file name ) of the larger diversity image
+    - `αTarget::Real`: The curvature (from file name ) of the smaller diversity image
+    - `βRoot::Vector`: The offset of the larger diversity image (linear phase)
+    - `βTarget::Vector`: The offset of the smaller diversity image (linear phase)
+    - `ε::Real`: The regularization parameter for the Sinkhorn algorithm.
+    - `LFine::Union{Nothing,Lattice{N}}=nothing`: An optional lattice to upsample the result to. in the SLM plane.
+
     # Returns
     - `LatticeField{ComplexAmplitude}`: A lattice field representing the inferred beam.
     """
