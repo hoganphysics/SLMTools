@@ -13,7 +13,7 @@ Pkg.activate(".")
 # Pkg.add("OptimalTransport") # add the package
 # Pkg.add("PyCall")
 # Pkg.add("ImageMagick")
-
+# "StochasticOptimalTransport"
 Pkg.add(["Images", "Interpolations", "FileIO", "Plots", "FFTW", "Statistics",
     "FreeTypeAbstraction", "OptimalTransport", "PyCall", "ImageMagick"])
 

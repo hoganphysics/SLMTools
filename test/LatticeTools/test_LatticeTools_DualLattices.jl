@@ -89,17 +89,15 @@ end
 
 
 
-@testset "Dual Phase Tests" begin
-    @testset "dualPhase without specifying dL" begin
-        dpField = dualPhase(L1)
-        @test isa(dpField, LF{ComplexPhase})
-        @test dpField.L == dualShiftLattice(L1)
-    end
+@testset "dualPhase without specifying dL" begin
+    dpField = dualPhase(L1)
+    @test isa(dpField, LF{RealPhase})
+    @test dpField.L == dualShiftLattice(L1)
+end
 
-    @testset "dualPhase with specifying dL" begin
-        dL = dualShiftLattice(L1)
-        dpField = dualPhase(L1, dL)
-        @test isa(dpField, LF{ComplexPhase})
-        @test dpField.L == dL
-    end
+@testset "dualPhase with specifying dL" begin
+    dL = dualShiftLattice(L1)
+    dpField = dualPhase(L1, dL=dL)
+    @test isa(dpField, LF{RealPhase})
+    @test dpField.L == dL
 end

@@ -8,18 +8,18 @@ export natlat, sft, isft, padout, naturalize, latticeDisplacement, toDim, r2, ld
 export downsample, upsample, coarsen, sublattice
 export dualLattice, dualShiftLattice, ldq, dualPhase
 
+include("other/Misc.jl")
+using .Misc
+export ramp, nabs, window, normalizeDistribution, safeInverse, hyperSum, centroid, clip, collapse
 
 include("other/ImageProcessing.jl")
 using .ImageProcessing
-export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parseFileName, parseStringToNum, getOrientation, dualate, centroid, clip, collapse, linearFit
+export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parseFileName, parseStringToNum, getOrientation, dualate, linearFit, savePhase, saveBeam, saveAs8BitBMP
 
 include("other/PhaseIntensityMasks.jl")
 using .PhaseIntensityMasks
 export lfRampedParabola, lfGaussian, lfRing
 
-include("other/Misc.jl")
-using .Misc
-export ramp, nabs, centroid, window, normalizeDistribution, safeInverse, hyperSum
 
 include("other/HoganParameters.jl")
 using .HoganParameters
@@ -37,7 +37,10 @@ include("other/VisualizationHelpers.jl")
 using .VisualizationHelpers
 export look
 
-include("other/FileHelpers.jl")
-export savePhase, saveBeam, saveAs8BitBMP
+# include("other/FileHelpers.jl")
+# export savePhase, saveBeam, saveAs8BitBMP
 
+
+
+export testing
 end # module SLMTools
