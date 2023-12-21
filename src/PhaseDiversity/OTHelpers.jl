@@ -4,9 +4,12 @@ using ..LatticeTools
 using ..Misc
 using OptimalTransport: sinkhorn
 using Interpolations: Linear
+using Images: Gray
 
 export getCostMatrix, pdCostMatrix, pdotPhase, pdotBeamEstimate, mapify, scalarPotentialN, otPhase
-
+function look(f::AbstractArray{T,N}) where {T<:Real,N}
+    return Gray.(f ./ maximum(f))
+end
 """
     getCostMatrix(L::Lattice{N}; normalization=maximum) where N
 
@@ -79,7 +82,8 @@ end
     # Returns
     - A vector field representing the transportation from `Lμ` to `Lv` as prescribed by `plan`.
 
-    This function reshapes the transportation plan into a higher-dimensional array to align with the lattices. It then computes the vector field by accumulating the plan over the target lattice and normalizing it by the sum over the corresponding dimensions.
+    This function reshapes the transportation plan into a higher-dimensional array to align with the lattices. 
+        It then computes the vector field by accumulating the plan over the target lattice and normalizing it by the sum over the corresponding dimensions.
     """
 function mapify(plan::AbstractArray{<:Number,2},Lμ::Lattice{N},Lv::Lattice{N}) where N
     sμ, sv = length.(Lμ), length.(Lv)
@@ -159,6 +163,8 @@ function otPhase(U::LatticeField{Intensity,<:Real,N},V::LatticeField{Intensity,<
     # Solves the optimal transport problem between distributions U and V, returning a LatticeField{RealPhase} representing
     # the scalar potential of the transport map. 
     u,v = normalizeDistribution(U.data), normalizeDistribution(V.data)
+    # if the total number of elements in u and v is above 130^4, then error out because of insufficient memory
+    length(u[:])+length(v[:]) > 130^4 && error("The total number of elements in u and v is above 130^4, which too much, dont go beyond size = (128, 128) for each.")
     C = getCostMatrix(U.L,V.L)
     γ = sinkhorn(u[:],v[:],C,ε; options...)
     any(isnan,γ) && error("sinkhorn returned nan.  Try changing epsilon.")

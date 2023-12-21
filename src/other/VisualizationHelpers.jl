@@ -42,5 +42,7 @@ end
 function look(x::LF...)
     return hcat((look(y) for y in x)...)
 end
-
+function look(f::AbstractArray{T,N}) where {T<:Real,N}
+    return Gray.(f ./ maximum(f))
+end
 end # module VisualizationHelpers
