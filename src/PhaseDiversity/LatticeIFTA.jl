@@ -136,6 +136,25 @@ function gsLog(U::LF{Intensity,<:Real,N}, V::LF{Intensity,<:Real,N}, nit::Intege
     return gsLog(sqrt(U), sqrt(V), nit, Φ0; every=every)
 end
 
+"""
+    gsError(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, Φ::LF{<:Phase,<:Number,N}) where N -> Float64
+
+    Computes the L2 error between `abs(sft(U*Φ))` and `V`, i.e. the beam reshaping error. 
+
+    Arguments:
+    - `U::LF{Modulus,<:Real,N}`: A `LatticeField` representing the input amplitude distribution.
+    - `V::LF{Modulus,<:Real,N}`: A `LatticeField` representing the output amplitude distribution.
+    - `Φ0::LF{<:Phase,<:Complex,N}`: A `LatticeField` phase.
+
+    Returns:
+    - `err`: The error in the beam reshaping.
+    """
+function gsError(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, Φ::LF{<:Phase,<:Number,N}) where N
+    return sum((normalizeLF(abs(sft(U*Φ))).data - normalizeLF(V).data).^2)
+end
+function gsError(U::LF{Intensity,<:Real,N}, V::LF{Intensity,<:Real,N}, Φ::LF{<:Phase,<:Number,N}) where N
+    return gsError(sqrt(U),sqrt(V),Φ)
+end
 
 #endregion
 
