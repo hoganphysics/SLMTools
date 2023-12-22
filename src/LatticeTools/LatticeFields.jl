@@ -220,6 +220,18 @@ ramp(x::T) where {T<:Number} = (x < 0 ? zero(T) : x)
 LatticeField{Intensity}(array::AbstractArray{T,N},L::Lattice{N},flambda::Real=1.0) where {T,N} = LatticeField{Intensity,T,N}(ramp.(array),L,flambda)
 
 """
+    LatticeField{S}(array::AbstractArray{T1,N},f::LatticeField{S,T2,N}) where {S<:FieldVal,T1,T2,N}
+
+    Convenience constructor for `LatticeField`. Makes a `LatticeField` with data from `array` and 
+	Lattice and flambda from f. 
+
+    # Parameters
+    - `array`: The field data as an N-dimensional array.
+    - `f`: A `LatticeField` from which to get the Lattice and flambda. 
+    """
+LatticeField(array::AbstractArray{T1,N},f::LatticeField{S,T2,N}) where {S<:FieldVal,T1,T2,N} = LatticeField{S,T1,N}(array,f.L,f.lambda)
+
+"""
     const LF = LatticeField
 
     Type alias for the `LatticeField` struct.
