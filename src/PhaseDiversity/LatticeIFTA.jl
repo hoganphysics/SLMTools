@@ -263,6 +263,26 @@ function pdgsLog(imgs::NTuple{M,LF{Modulus,<:Number,N}},divPhases::NTuple{M,LF{<
     return LF{ComplexAmp}(fftshift(guess),beamGuess.L,beamGuess.flambda), errs
 end
 
+"""
+    pdgsError(divMods::NTuple{M,LF{Modulus,<:Number,N}}, divPhases::NTuple{M,LF{<:Phase,<:Number,N}}, beamGuess::LF{ComplexAmp,<:Complex,N}) where {M,N}
+
+    Error metric for phase diversity.  average L2 norm difference squared between divMods[i] and sft(beamGuess*phis[i]).
+
+    Arguments:
+    - `imgs`: A tuple of `LatticeField` instances representing the modulus of the beam distributions.
+    - `divPhases`: A tuple of `LatticeField` instances representing phase diversities.
+    - `beamGuess`: Estimate for the complex amplitude of the beam.
+
+    Returns:
+	- `err`: Error metric for the beam estimate. 
+    """
+function pdgsError(divMods::NTuple{M,LF{Modulus,<:Number,N}},divPhases::NTuple{M,LF{<:Phase,<:Number,N}},beamGuess::LF{ComplexAmp,<:Complex,N}) where {M,N}
+    [elq(d,beamGuess) for d in divPhases], [ldq(m,beamGuess) for m in divMods]
+    divMods = Tuple(normalizeLF(m) for m in divMods)
+    reconstructions = Tuple(normalizeLF(sft(beamGuess*p)) for p in divPhases)
+    return sum(sum((abs.(divMods[i].data) - abs.(reconstructions[i].data)).^2) for i=1:M) / M
+end
+
 #endregion
 
 

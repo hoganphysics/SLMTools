@@ -501,7 +501,7 @@ end
     # Returns
     A normalized intensity `LatticeField`.
     """
-function normalizeLF(f::LF{S,T,N}) where {S<:Amplitude,T<:Real,N}
+function normalizeLF(f::LF{S,T,N}) where {S<:Amplitude,T<:Number,N}
     # Normalizes an LF{<:Amplitude} so that the corresponding intensity has sum 1, i.e. the intensity is a probability distribution. 
     return LF{S,T,N}(f.data ./ sqrt(sum(abs.(f.data).^2)), f.L,f.flambda)
 end
