@@ -4,7 +4,7 @@ include("LatticeFields.jl")
 using .LatticeFields
 export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase
 export Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF
-export subfield, wrap, square, sublattice, normalizeLF
+export subfield, wrap, square, sublattice, normalizeLF, phasor
 
 export natlat, padout, sft, isft, latticeDisplacement, toDim, naturalize, r2, ldot
 

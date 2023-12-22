@@ -3,21 +3,7 @@ module LatticeIFTA
 using FFTW
 using ..LatticeTools
 using ..Misc
-export phasor, gs, gsIter, gsLog, pdgs, pdgsIter, pdgsLog, oneShot
-
-"""
-    phasor(z::ComplexF64) -> ComplexF64
-
-    Compute the phasor (unit vector in the complex plane) of a given complex number `z`. The phasor is calculated as `z` divided by its absolute value, which normalizes `z` to have a magnitude of 1. If `z` is zero, the function returns 1.0 (represented as a complex number).
-
-    Arguments:
-    - `z::ComplexF64`: A complex number.
-
-    Returns:
-    - `ComplexF64`: The phasor of `z`, which is a complex number with the same phase as `z` but with a magnitude of 1. Returns `1.0 + 0.0im` if `z` is zero.
-
-    """
-phasor(z::ComplexF64) = iszero(z) ? one(ComplexF64) : z / abs(z)
+export gs, gsIter, gsLog, pdgs, pdgsIter, pdgsLog, oneShot
 
 #region -------------------Gerchberg-Saxton------------------------------
 """

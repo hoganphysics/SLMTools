@@ -1,6 +1,6 @@
 module LatticeFields
 
-export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF, normalizeLF
+export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF, normalizeLF, phasor
 export subfield, wrap, square, sublattice
 
 #region ---------------------------Abstract Types and aliases--------------------------------------------
@@ -516,6 +516,35 @@ function normalizeLF(f::LF{S,T,N}) where {S<:Amplitude,T<:Number,N}
     # Normalizes an LF{<:Amplitude} so that the corresponding intensity has sum 1, i.e. the intensity is a probability distribution. 
     return LF{S,T,N}(f.data ./ sqrt(sum(abs.(f.data).^2)), f.L,f.flambda)
 end
+
+"""
+    phasor(z::ComplexF64) -> ComplexF64
+
+    Compute the phasor (unit vector in the complex plane) of a given complex number `z`. The phasor is calculated as `z` divided by its absolute value, which normalizes `z` to have a magnitude of 1. If `z` is zero, the function returns 1.0 (represented as a complex number).
+
+    Arguments:
+    - `z::ComplexF64`: A complex number.
+
+    Returns:
+    - `ComplexF64`: The phasor of `z`, which is a complex number with the same phase as `z` but with a magnitude of 1. Returns `1.0 + 0.0im` if `z` is zero.
+
+    """
+phasor(z::ComplexF64) = iszero(z) ? one(ComplexF64) : z / abs(z)
+
+"""
+    phasor(f::LF{ComplexAmp}) -> LF{ComplexPhase}
+
+    Compute the LF{ComplexPhase} associated with a given LF{ComplexAmp}. Calls phasor(z::ComplexF64) on each data point. 
+
+    Arguments:
+    - `f::LF{ComplexAmp}`: A complex amplitude field. 
+
+    Returns:
+    - `LF{ComplexPhase}`: The complex phase field associated to the input. 
+
+    """
+phasor(f::LF{ComplexAmp}) = LF{ComplexPhase}(phasor.(f.data),f.L,f.flambda)
+
 
 #endregion
 
