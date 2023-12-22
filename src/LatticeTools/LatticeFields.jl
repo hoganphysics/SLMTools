@@ -1,6 +1,6 @@
 module LatticeFields
 
-export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF
+export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF, normalizeLF
 export subfield, wrap, square, sublattice
 
 #region ---------------------------Abstract Types and aliases--------------------------------------------
@@ -416,9 +416,16 @@ Base.abs(x::LF{ComplexAmp}) = LF{Modulus}(abs.(x.data), x.L, x.flambda)
 Base.conj(x::LF{RealPhase}) = LF{RealPhase}(-x.data, x.L, x.flambda)
 Base.conj(x::LF{ComplexPhase}) = LF{ComplexPhase}(conj.(x.data), x.L, x.flambda)
 
+# Scalar operations
+Base.:(*)(x::T, f::LF{S,T,N}) where {S,T,N} = LF{S,T,N}(f.data .* x, f.L, f.flambda)
+Base.:(*)(f::LF{S,T,N}, x::T) where {S,T,N} = LF{S,T,N}(f.data .* x, f.L, f.flambda)
+Base.:(+)(x::T, f::LF{S,T,N}) where {S,T,N} = LF{S,T,N}(f.data .+ x, f.L, f.flambda)
+Base.:(+)(f::LF{S,T,N}, x::T) where {S,T,N} = LF{S,T,N}(f.data .+ x, f.L, f.flambda)
+Base.:(/)(f::LF{S,T,N}, x::T) where {S,T,N} = LF{S,T,N}(f.data ./ x, f.L, f.flambda)
+
 #endregion
 
-#region ---------------------------wrap and square--------------------------------------------
+#region --------------------------- wrap, square, normalizeLF --------------------------------------------
 """
     square(x::LF{<:Amplitude})
 
@@ -466,6 +473,38 @@ wrap(x::LF{RealPhase}) = LF{ComplexPhase}(exp.(2pi * im * x.data), x.L, x.flambd
     be known in advance.
     """
 wrap(x::LF{ComplexPhase}) = LF{ComplexPhase}(x.data,x.L,x.flambda)
+
+
+"""
+    normalizeLF(f::LF{Intensity,T,N})
+
+    Normalizes an LF{Intensity} to have sum 1, i.e. to be a probability distribution. 
+
+    # Parameters
+    - `f`: An intensity `LatticeField`.
+
+    # Returns
+    A normalized intensity `LatticeField`.
+    """
+function normalizeLF(f::LF{Intensity,T,N}) where {T<:Real,N}
+    # Normalizes an LF{Intensity} to have sum 1, i.e. to be a probability distribution. 
+    return LF{Intensity,T,N}(abs.(f.data ./ sum(f.data)), f.L,f.flambda)
+end
+"""
+    normalizeLF(f::LF{<:Amplitude,T,N})
+
+    Normalizes an LF{<:Amplitude} so that the corresponding intensity has sum 1, i.e. the intensity is a probability distribution. 
+
+    # Parameters
+    - `f`: An intensity `LatticeField`.
+
+    # Returns
+    A normalized intensity `LatticeField`.
+    """
+function normalizeLF(f::LF{S,T,N}) where {S<:Amplitude,T<:Real,N}
+    # Normalizes an LF{<:Amplitude} so that the corresponding intensity has sum 1, i.e. the intensity is a probability distribution. 
+    return LF{S,T,N}(f.data ./ sqrt(sum(abs.(f.data).^2)), f.L,f.flambda)
+end
 
 #endregion
 
