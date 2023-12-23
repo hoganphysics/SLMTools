@@ -2,7 +2,7 @@ module PhaseIntensityMasks
 
 using ..LatticeTools
 
-export lfRampedParabola, lfGaussian, lfRing
+export lfRampedParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText
 
 """
     lfRampedParabola(T::DataType, imSize::NTuple{N,Integer}, pixelScale::Real, center::NTuple{N,Real}, 
@@ -83,6 +83,105 @@ function lfRing(T::DataType, sz::NTuple{N,Integer}, r::Number, w::Number; L::Uni
     end
     return LF{T}([exp(-(sqrt(sum(L[i][I[i]]^2 for i = 1:N)) - r)^2 / (2 * w^2)) for I in CartesianIndices(length.(L))], L, flambda)
 end
+
+"""
+    lfParabolaCap(T::DataType, L::Lattice{N}, curvature::Real, height::Real, flambda::Real=1.0; center::Union{Nothing,Vector{<:Real}}=nothing) where N
+
+    Create a LatticeField representing a parabolic cap, i.e. an inverted parabola truncated at zero.  
+	The formula is `ramp.(height .- curvature*r2(L)/2)`.  
+	Can be recentered to any location via the optional `center` kwarg. 
+
+    # Arguments
+    - `T::DataType`: The data type of the LatticeField.
+    - `L::Lattice{N}`: Lattice.
+    - `curvature::Real`: The quadratic coefficient of the parabola, defined such that the parabola is `curvature*x^2/2`. 
+    - `height::Real`: Cap height. 
+    - `flambda::Real=1.0`: Scale factor.
+    - `center::Union{Nothing,Vector{<:Real}}=nothing`: Center of the cap.
+
+    # Returns
+    - `LF{T}`: A LatticeField with the parabolic cap distribution.
+    """
+function lfParabolaCap(T::DataType, L::Lattice{N}, curvature::Real, height::Real, flambda::Real=1.0; center::Union{Nothing,Vector{<:Real}}=nothing) where N
+    if isnothing(center)
+        center = zeros(N)
+    end
+    L = Tuple(L[i] .- center[i] for i=1:N)
+    return LF{T}(ramp.(height .- curvature*r2(L)/2),L,flambda)
+end
+
+"""
+    ftaText(str::String,sz::Tuple{Int,Int}; fnt = "arial bold",pixelsize::Union{Int,Nothing}=nothing,halign=:hcenter,valign=:vcenter,options...)
+
+    Make text string `str` into a float array of size `sz`.  The letter size is set with optional kwarg pixelsize. 
+
+    # Arguments
+    - `str::String`: Text string.
+    - `sz::NTuple{N,Integer}`: Desired array size.
+    - `fnt = "arial bold"`: Font.
+    - `pixelsize::Union{Int,Nothing}=nothing`: Text size parameter.
+    - Various other options: You should know what you're doing to set these. 
+
+    # Returns
+    - An array displaying the text.
+    """
+function ftaText(str::String,sz::Tuple{Int,Int}; fnt = "arial bold",pixelsize::Union{Int,Nothing}=nothing,halign=:hcenter,valign=:vcenter,options...)
+    if isnothing(pixelsize)
+        pixelsize = sz[2] ÷ length(str)
+    end
+    face = findfont(fnt)
+    x0, y0 = sz .÷ 2
+    arr = zeros(UInt8,sz...)    # Text will go here
+    renderstring!(arr,str,face,pixelsize, x0, y0; halign=halign, valign=valign, options...)
+    return convert.(Float64,arr)./255
+end
+
+"""
+    lfText(S::DataType,str::String,sz::Union{Nothing,Tuple{Int,Int}}=nothing; T::DataType=Float64,
+        L::Union{Lattice,Nothing}=nothing, flambda::Union{Real,Nothing}=nothing, lfTemplate::Union{LF,Nothing}=nothing,
+        pixelsize::Union{Int,Nothing}=nothing, fnt = "arial bold", halign=:hcenter, valign=:vcenter, options...)
+
+    Make text string `str` into LatticeField of type `S`.  The letter size is set with optional kwarg pixelsize. 
+	You must set the output size either via the positional arg sz, the kwarg L (setting the lattice explicitly),
+	or the kwarg lfTemplate, which provides an existing LF from which to get the lattice and flambda. 
+
+    # Arguments
+    - `str::String`: Text string.
+    - `sz::NTuple{N,Integer}`: Desired array size.
+    - `fnt = "arial bold"`: Font.
+    - `pixelsize::Union{Int,Nothing}=nothing`: Text size parameter.
+	- `L`: A lattice.
+	- `flambda`: Scale factor.
+	- `lfTemplate`: A LF from which to get the lattice and flambda.  This overrides L and flambda kwargs. 
+    - Various other options: You should know what you're doing to set these. 
+
+    # Returns
+    - An array displaying the text.
+    """
+function lfText(S::DataType,str::String,sz::Union{Nothing,Tuple{Int,Int}}=nothing; T::DataType=Float64,
+        L::Union{Lattice,Nothing}=nothing, flambda::Union{Real,Nothing}=nothing, lfTemplate::Union{LF,Nothing}=nothing,
+        pixelsize::Union{Int,Nothing}=nothing, fnt = "arial bold", halign=:hcenter, valign=:vcenter, options...)
+    if !isnothing(lfTemplate)
+        flambda = lfTemplate.flambda
+        L = lfTemplate.L
+    end
+    if isnothing(sz) && isnothing(L)
+        error("Must specify text size either via sz or a lattice L")
+    end
+    if isnothing(sz)
+        sz = length.(L)
+    end
+    if isnothing(L)
+        L = natlat(sz)
+    end
+    if isnothing(flambda)
+        flambda = 1
+    end
+    txt = convert.(T,ftaText(str,sz;pixelsize=pixelsize,fnt=fnt,halign=halign,valign=valign, options...))
+    return LF{S}(txt,L,flambda)
+end
+
+
 
 # TODO these are older functions, need to be updated to use LatticeFields
 """

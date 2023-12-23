@@ -15,7 +15,7 @@ export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parse
 
 include("other/PhaseIntensityMasks.jl")
 using .PhaseIntensityMasks
-export lfRampedParabola, lfGaussian, lfRing
+export lfRampedParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText
 
 include("other/Misc.jl")
 using .Misc
