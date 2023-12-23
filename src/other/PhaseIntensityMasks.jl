@@ -1,6 +1,7 @@
 module PhaseIntensityMasks
 
 using ..LatticeTools
+using FreeTypeAbstraction: findfont, renderstring!
 
 export lfRampedParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText
 
@@ -83,6 +84,8 @@ function lfRing(T::DataType, sz::NTuple{N,Integer}, r::Number, w::Number; L::Uni
     end
     return LF{T}([exp(-(sqrt(sum(L[i][I[i]]^2 for i = 1:N)) - r)^2 / (2 * w^2)) for I in CartesianIndices(length.(L))], L, flambda)
 end
+
+ramp(x::T) where {T<:Number} = (x < 0 ? zero(T) : x)
 
 """
     lfParabolaCap(T::DataType, L::Lattice{N}, curvature::Real, height::Real, flambda::Real=1.0; center::Union{Nothing,Vector{<:Real}}=nothing) where N
@@ -181,7 +184,7 @@ function lfText(S::DataType,str::String,sz::Union{Nothing,Tuple{Int,Int}}=nothin
     return LF{S}(txt,L,flambda)
 end
 
-
+#--------------- Deprecated text functions --------------------------------------------
 
 # TODO these are older functions, need to be updated to use LatticeFields
 """
