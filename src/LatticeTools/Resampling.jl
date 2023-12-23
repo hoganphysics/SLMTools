@@ -80,7 +80,7 @@ end
 #region -------------------downsample arrays -------------------------------
 
 """
-    downsample(x::AbstractArray{T,N}, Lu::Lattice{N}, Ld::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+    downsample(x::AbstractArray{T,N}, Lu::Lattice{N}, Ld::Lattice{N}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {T<:Number,N}
 
     Downsample an `AbstractArray` from a fine lattice `Ld` to a coarse lattice `Lu`. This function does not require any specific relationship between the lattices; it simply interpolates `x` from one lattice to the other.
 
@@ -89,7 +89,7 @@ end
     - `Lu::Lattice{N}`: The coarse lattice to downsample to.
     - `Ld::Lattice{N}`: The fine lattice representing the original array's grid.
     - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
-    - `bc`: Boundary conditions to use (default is periodic).
+    - `bc`: Boundary conditions to use (default is zero).
 
     # Returns
     - `AbstractArray`: The downsampled array.
@@ -97,7 +97,7 @@ end
     # Errors
     Throws `DomainError` if the size of `x` does not match the size of `Lu`.
     """
-function downsample(x::AbstractArray{T,N}, Lu::Lattice{N}, Ld::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+function downsample(x::AbstractArray{T,N}, Lu::Lattice{N}, Ld::Lattice{N}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {T<:Number,N}
     # This lattice downsampler is basically the same as the upsampler with the roles of Lu and Ld reversed. 
     # Downsamples an array from fine lattice Ld to coarse lattice Lu.  Actually, there doesn't need to be any relationship
     # between the lattices at all--this function just interpolates x from one lattice to the other. 
@@ -108,7 +108,7 @@ function downsample(x::AbstractArray{T,N}, Lu::Lattice{N}, Ld::Lattice{N}; inter
 end
 
 """
-    downsample(x::AbstractArray{T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+    downsample(x::AbstractArray{T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=zero(T)) where {T<:Number,N}
 
     Downsample an `AbstractArray` to a grid that is `n` times coarser. This is achieved by interpolating the array from its original lattice to a coarser lattice with a downsample factor of `n`.
 
@@ -116,12 +116,12 @@ end
     - `x::AbstractArray{T,N}`: The original array to be downsampled.
     - `n::Int`: The downsample factor.
     - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
-    - `bc`: Boundary conditions to use (default is periodic).
+    - `bc`: Boundary conditions to use (default is zero).
 
     # Returns
     - `AbstractArray`: The downsampled array.
 """
-function downsample(x::AbstractArray{T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+function downsample(x::AbstractArray{T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=zero(T)) where {T<:Number,N}
     # Downsamples an array from to a grid that is n times coarser, i.e. a grid downsampled by n.
     Lu = ((1:s for s in size(x))...,)
     Ld = downsample(Lu, n)
@@ -129,7 +129,7 @@ function downsample(x::AbstractArray{T,N}, n::Int; interpolation=cubic_spline_in
 end
 
 """
-    downsample(x::AbstractArray{T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+    downsample(x::AbstractArray{T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {T<:Number,N}
 
 Downsample an `AbstractArray` to a grid with different coarsening factors for each dimension, specified by `ns`.
 
@@ -137,12 +137,12 @@ Downsample an `AbstractArray` to a grid with different coarsening factors for ea
 - `x::AbstractArray{T,N}`: The original array to be downsampled.
 - `ns::NTuple{N,Int}`: A tuple specifying the downsample factor for each dimension of the array.
 - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
-- `bc`: Boundary conditions to use (default is periodic).
+- `bc`: Boundary conditions to use (default is zero).
 
 # Returns
 - `AbstractArray`: The downsampled array.
 """
-function downsample(x::AbstractArray{T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+function downsample(x::AbstractArray{T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {T<:Number,N}
     # Downsamples an array from to a grid that is n times coarser, i.e. a grid downsampled by n.
     Lu = ((1:s for s in size(x))...,)
     Ld = downsample(Lu, ns)
@@ -154,7 +154,7 @@ end
 #region -------------------downsample fields -------------------------------
 
 """
-    downsample(f::LatticeField{S,T,N}, Ld::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+    downsample(f::LatticeField{S,T,N}, Ld::Lattice{N}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {S<:FieldVal,T<:Number,N}
 
     Downsample a `LatticeField` to a specified lattice `Ld`. This function interpolates the field data from its original lattice to the new lattice `Ld`.
 
@@ -162,12 +162,12 @@ end
     - `f::LatticeField{S,T,N}`: The original lattice field to be downsampled.
     - `Ld::Lattice{N}`: The target lattice for downsampling.
     - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
-    - `bc`: Boundary conditions to use (default is periodic).
+    - `bc`: Boundary conditions to use (default is zero).
 
     # Returns
     - `LatticeField{S}`: The downsampled lattice field.
     """
-function downsample(f::LatticeField{S,T,N}, Ld::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+function downsample(f::LatticeField{S,T,N}, Ld::Lattice{N}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {S<:FieldVal,T<:Number,N}
     # Downsamples field f to lattice Lu.  Actually, there doesn't need to be any relationship
     # between the lattices at all--this function just interpolates x from one lattice to the other. 
     return LatticeField{S}(downsample(f.data, f.L, Ld; interpolation=interpolation, bc=bc), Ld, f.flambda)
@@ -176,7 +176,7 @@ vandyfooo=0
 
 
 """
-    downsample(f::LatticeField{S,T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+    downsample(f::LatticeField{S,T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=zero(T)) where {S<:FieldVal,T<:Number,N}
 
     Downsample a `LatticeField` to a grid that is `n` times coarser in each dimension.
 
@@ -184,19 +184,19 @@ vandyfooo=0
     - `f::LatticeField{S,T,N}`: The original lattice field to be downsampled.
     - `n::Int`: The uniform downscaling factor.
     - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
-    - `bc`: Boundary conditions to use (default is periodic).
+    - `bc`: Boundary conditions to use (default is zero).
 
     # Returns
     - `LatticeField{S}`: The downsampled lattice field.
     """
-function downsample(f::LatticeField{S,T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+function downsample(f::LatticeField{S,T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=zero(T)) where {S<:FieldVal,T<:Number,N}
     # Downsamples field f to a grid that is n times coarser, i.e. a grid downsampled by n.
     Ld = downsample(f.L, n)
     return LatticeField{S}(downsample(f.data, f.L, Ld; interpolation=interpolation, bc=bc), Ld, f.flambda)
 end
 
 """
-    downsample(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+    downsample(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {S<:FieldVal,T<:Number,N}
 
     Downsample a `LatticeField` to a grid with different coarsening factors for each dimension, specified by `ns`. 
 
@@ -204,12 +204,12 @@ end
     - `f::LatticeField{S,T,N}`: The original lattice field to be downsampled.
     - `ns::NTuple{N,Int}`: A tuple specifying the downscaling factor for each dimension of the lattice field.
     - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
-    - `bc`: Boundary conditions to use (default is periodic).
+    - `bc`: Boundary conditions to use (default is zero).
 
     # Returns
     - `LatticeField{S}`: The downsampled lattice field.
     """
-function downsample(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+function downsample(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {S<:FieldVal,T<:Number,N}
     # Downsamples an array to a grid that is ns[i] times coarser in dimension i, i.e. a grid downsampled by n.
     Ld = downsample(f.L, ns)
     return LatticeField{S}(downsample(f.data, f.L, Ld; interpolation=interpolation, bc=bc), Ld, f.flambda)
@@ -367,7 +367,7 @@ end
 
 #region ---------------------upsample array--------------------------------
 """
-    upsample(f::LatticeField{S,T,N}, Lu::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+    upsample(f::LatticeField{S,T,N}, Lu::Lattice{N}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {S<:FieldVal,T<:Number,N}
 
     Upsamples a `LatticeField` instance to a new lattice `Lu`. This function interpolates the data from the 
     original lattice of `f` to the new lattice `Lu` using the specified interpolation method and boundary conditions.
@@ -376,12 +376,12 @@ end
     - `f`: An instance of `LatticeField` to be upsampled.
     - `Lu`: The new lattice to which the field will be upsampled.
     - `interpolation`: The interpolation method used for upsampling. Defaults to `cubic_spline_interpolation`.
-    - `bc`: Boundary conditions for the interpolation. Defaults to `Periodic()`.
+    - `bc`: Boundary conditions for the interpolation. Defaults to `zero(T)`, where T is the relevant numerical type.
 
     # Returns
     A new `LatticeField` instance with data upsampled to the lattice `Lu`.
     """
-function upsample(x::AbstractArray{T,N}, Ld::Lattice{N}, Lu::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+function upsample(x::AbstractArray{T,N}, Ld::Lattice{N}, Lu::Lattice{N}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {T<:Number,N}
     # Upsamples an array from coarse lattice Ld to fine lattice Lu.  Actually, there doesn't need to be any relationship
     # between the lattices at all--this function just interpolates x from one lattice to the other. 
     if size(x) != length.(Ld)
@@ -391,7 +391,7 @@ function upsample(x::AbstractArray{T,N}, Ld::Lattice{N}, Lu::Lattice{N}; interpo
 end
 
 """
-    upsample(x::AbstractArray{T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+    upsample(x::AbstractArray{T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=zero(T)) where {T<:Number,N}
 
     Upsample an `AbstractArray` to a grid that is `n` times finer. 
 
@@ -399,12 +399,12 @@ end
     - `x::AbstractArray{T,N}`: The original array to be upsampled.
     - `n::Int`: The factor by which the grid resolution is increased.
     - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
-    - `bc`: Boundary conditions to use (default is periodic).
+    - `bc`: Boundary conditions to use (default is zero).
 
     # Returns
     - `AbstractArray`: The upsampled array.
     """
-function upsample(x::AbstractArray{T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+function upsample(x::AbstractArray{T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=zero(T)) where {T<:Number,N}
     # Upsamples an array from to a grid that is n times finer, i.e. a grid upsampled by n.
     Ld = ((1:s for s in size(x))...,)
     Lu = upsample(Ld, n)
@@ -413,7 +413,7 @@ end
 
 
 """
-    upsample(x::AbstractArray{T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+    upsample(x::AbstractArray{T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {T<:Number,N}
 
     Upsample an `AbstractArray` to a grid with different upscaling factors for each dimension, allowing for non-uniform upscaling. 
 
@@ -421,12 +421,12 @@ end
     - `x::AbstractArray{T,N}`: The original array to be upsampled.
     - `ns::NTuple{N,Int}`: A tuple specifying the upscaling factor for each dimension of the array.
     - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
-    - `bc`: Boundary conditions to use (default is periodic).
+    - `bc`: Boundary conditions to use (default is zero).
 
     # Returns
     - `AbstractArray`: The upsampled array.
     """
-function upsample(x::AbstractArray{T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {T<:Number,N}
+function upsample(x::AbstractArray{T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {T<:Number,N}
     # Upsamples an array from to a grid that is n times finer, i.e. a grid upsampled by n.
     Ld = ((1:s for s in size(x))...,)
     Lu = upsample(Ld, ns)
@@ -437,7 +437,7 @@ end
 #region -------------------upsample fields -------------------------------
 
 """
-    upsample(f::LatticeField{S,T,N}, Lu::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+    upsample(f::LatticeField{S,T,N}, Lu::Lattice{N}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {S<:FieldVal,T<:Number,N}
 
     Upsample a `LatticeField` to a specified lattice `Lu`. This function interpolates the field data from its original lattice to the new lattice `Lu`. 
 
@@ -445,19 +445,19 @@ end
     - `f::LatticeField{S,T,N}`: The original lattice field to be upsampled.
     - `Lu::Lattice{N}`: The target lattice for upsampling.
     - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
-    - `bc`: Boundary conditions to use (default is periodic).
+    - `bc`: Boundary conditions to use (default is zero).
 
     # Returns
     - `LatticeField{S}`: The upsampled lattice field.
     """
-function upsample(f::LatticeField{S,T,N}, Lu::Lattice{N}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+function upsample(f::LatticeField{S,T,N}, Lu::Lattice{N}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {S<:FieldVal,T<:Number,N}
     # Upsamples field f to lattice Lu.  Actually, there doesn't need to be any relationship
     # between the lattices at all--this function just interpolates x from one lattice to the other. 
     return LatticeField{S}(upsample(f.data, f.L, Lu; interpolation=interpolation, bc=bc), Lu, f.flambda)
 end
 
 """
-    upsample(f::LatticeField{S,T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+    upsample(f::LatticeField{S,T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=zero(T)) where {S<:FieldVal,T<:Number,N}
 
     Upsample a `LatticeField` to a grid that is `n` times finer. 
 
@@ -465,19 +465,19 @@ end
     - `f::LatticeField{S,T,N}`: The original lattice field to be upsampled.
     - `n::Int`: The uniform upscaling factor.
     - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
-    - `bc`: Boundary conditions to use (default is periodic).
+    - `bc`: Boundary conditions to use (default is zero).
 
     # Returns
     - `LatticeField{S}`: The upsampled lattice field.
     """
-function upsample(f::LatticeField{S,T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+function upsample(f::LatticeField{S,T,N}, n::Int; interpolation=cubic_spline_interpolation, bc=zero(T)) where {S<:FieldVal,T<:Number,N}
     # Upsamples field f to a grid that is n times finer, i.e. a grid upsampled by n.
     Lu = upsample(f.L, n)
     return upsample(f, Lu; interpolation=interpolation, bc=bc)
 end
 
 """
-    upsample(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+    upsample(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {S<:FieldVal,T<:Number,N}
 
     Upsample a `LatticeField` to a grid with different upscaling factors for each dimension, specified by `ns`. 
 
@@ -485,12 +485,12 @@ end
     - `f::LatticeField{S,T,N}`: The original lattice field to be upsampled.
     - `ns::NTuple{N,Int}`: A tuple specifying the upscaling factor for each dimension of the lattice field.
     - `interpolation`: The interpolation method to use (default is cubic spline interpolation).
-    - `bc`: Boundary conditions to use (default is periodic).
+    - `bc`: Boundary conditions to use (default is zero).
 
     # Returns
     - `LatticeField{S}`: The upsampled lattice field.
     """
-function upsample(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=Periodic()) where {S<:FieldVal,T<:Number,N}
+function upsample(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {S<:FieldVal,T<:Number,N}
     # Upsamples an array from to a grid that is ns[i] times finer in dimension i, i.e. a grid upsampled by n.
     Lu = upsample(f.L, ns)
     return upsample(f, Lu; interpolation=interpolation, bc=bc)
