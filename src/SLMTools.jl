@@ -3,7 +3,7 @@ module SLMTools
 
 include("LatticeTools/LatticeTools.jl")
 using .LatticeTools
-export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF, subfield, wrap, square, sublattice
+export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF, subfield, wrap, square, sublattice, normalizeLF, phasor
 export natlat, sft, isft, padout, naturalize, latticeDisplacement, toDim, r2, ldot
 export downsample, upsample, coarsen, sublattice
 export dualLattice, dualShiftLattice, ldq, dualPhase
@@ -18,7 +18,7 @@ export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parse
 
 include("other/PhaseIntensityMasks.jl")
 using .PhaseIntensityMasks
-export lfRampedParabola, lfGaussian, lfRing
+export lfRampedParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText
 
 
 include("other/HoganParameters.jl")
@@ -27,7 +27,7 @@ export dxcam, dxslm, nslm, flambda, dXslm, Lslm, dL, LslmE, dLE
 
 include("PhaseDiversity/LatticeIFTA.jl")
 using .LatticeIFTA
-export phasor, gs, gsIter, pdgs, pdgsIter, oneShot
+export gs, gsLog, gsIter, pdgs, pdgsIter, pdgsLog, oneShot
 
 include("PhaseDiversity/OTHelpers.jl")
 using .OTHelpers

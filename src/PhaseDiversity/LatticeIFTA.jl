@@ -3,25 +3,11 @@ module LatticeIFTA
 using FFTW
 using ..LatticeTools
 using ..Misc
-export phasor, gs, gsIter, pdgs, pdgsIter, oneShot
-
-"""
-    phasor(z::ComplexF64) -> ComplexF64
-
-    Compute the phasor (unit vector in the complex plane) of a given complex number `z`. The phasor is calculated as `z` divided by its absolute value, which normalizes `z` to have a magnitude of 1. If `z` is zero, the function returns 1.0 (represented as a complex number).
-
-    Arguments:
-    - `z::ComplexF64`: A complex number.
-
-    Returns:
-    - `ComplexF64`: The phasor of `z`, which is a complex number with the same phase as `z` but with a magnitude of 1. Returns `1.0 + 0.0im` if `z` is zero.
-
-    """
-phasor(z::ComplexF64) = iszero(z) ? one(ComplexF64) : z / abs(z)
+export gs, gsIter, gsLog, pdgs, pdgsIter, pdgsLog, oneShot
 
 #region -------------------Gerchberg-Saxton------------------------------
 """
-    gs(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, nit::Integer, Φ0::LF{ComplexPhase,<:Complex,N}) where N -> LF{ComplexPhase}
+    gs(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, nit::Integer, Φ0::LF{<:Phase,<:Number,N}) where N -> LF{ComplexPhase}
 
     Perform the Gerchberg-Saxton (GS) algorithm iterations on two distributions specified by `U` and `V` for `nit` number of iterations. The `Φ0` parameter is used as the starting phase guess. The function first checks for lattice compatibility between `U`, `V`, and `Φ0`.
 
@@ -29,24 +15,24 @@ phasor(z::ComplexF64) = iszero(z) ? one(ComplexF64) : z / abs(z)
     - `U::LF{Modulus,<:Real,N}`: A `LatticeField` representing the first amplitude distribution.
     - `V::LF{Modulus,<:Real,N}`: A `LatticeField` representing the second amplitude distribution.
     - `nit::Integer`: The number of iterations to run the GS algorithm.
-    - `Φ0::LF{ComplexPhase,<:Complex,N}`: A `LatticeField` representing the initial phase guess.
+    - `Φ0::LF{<:Phase,<:Complex,N}`: A `LatticeField` representing the initial phase guess.
 
     Returns:
-    - `LF{ComplexPhase}`: A `LatticeField` representing the complex phase after `nit` iterations of the GS algorithm.
+    - `Φ::LF{ComplexPhase}`: A `LatticeField` representing the complex phase after `nit` iterations of the GS algorithm.
     """
-function gs(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, nit::Integer, Φ0::LF{ComplexPhase,<:Complex,N}) where {N}
+function gs(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, nit::Integer, Φ0::LF{<:Phase,<:Number,N}) where {N}
     # Runs nit number of iterations of Gerchberg-Saxton on the distributions specified by U and V.  Φ0 is a starting phase guess.
     ldq(U, V), elq(U, Φ0)                              # Check for compatibility of the lattices
     ft = plan_fft(zeros(ComplexF64, size(U)))
     ift = plan_ifft(zeros(ComplexF64, size(V)))
 
-    guess = ifftshift(U.data .* phasor.(Φ0.data))
+    guess = ifftshift(U.data .* phasor.(wrap(Φ0).data))
     ushift = ifftshift(U.data)
     vshift = ifftshift(V.data)
     for i = 1:nit
         guess = gsIter(guess, ushift, vshift, ft, ift)
     end
-    return LF{ComplexPhase}(fftshift(phasor.(guess)), U.L)
+    return LF{ComplexPhase}(fftshift(phasor.(guess)), U.L, U.flambda)
 end
 
 """
@@ -64,20 +50,6 @@ end
 function gsIter(guess::Array{Complex{Float64},N}, u::Array{Float64,N}, v::Array{Float64,N}, ft::FFTW.cFFTWPlan, ift::AbstractFFTs.ScaledPlan) where {N}
     # Single iteration of Gerchberg-Saxton using provided Fourier operators
     return u .* phasor.(ift * (phasor.(ft * guess) .* v))
-end
-
-"""
-    gs(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, nit::Integer, Φ0::LF{RealPhase,<:Real,N}) where N
-
-    Gerchberg-Saxton algorithm for `LatticeField` with `RealPhase`. It wraps the `RealPhase` to `ComplexPhase` before running the algorithm.
-
-    Arguments:
-    - `U`, `V`: `LatticeField` instances representing amplitude distributions.
-    - `nit`: Number of iterations.
-    - `Φ0`: Initial phase guess as `RealPhase`.
-    """
-function gs(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, nit::Integer, Φ0::LF{RealPhase,<:Real,N}) where {N}
-    return gs(U, V, nit, wrap(Φ0))
 end
 
 """
@@ -103,9 +75,73 @@ end
     - `nit`: Number of iterations.
     - `Φ0`: Optional initial phase guess.
     """
-function gs(U::LF{Intensity,<:Real,N}, V::LF{Intensity,<:Real,N}, nit::Integer, Φ0::Union{Nothing,LF{ComplexPhase,<:Complex,N},LF{RealPhase,<:Real,N}}=nothing) where {N}
+function gs(U::LF{Intensity,<:Real,N}, V::LF{Intensity,<:Real,N}, nit::Integer, Φ0::Union{Nothing,LF{<:Phase,<:Number,N}}=nothing) where {N}
     return gs(sqrt(U), sqrt(V), nit, Φ0)
 end
+
+
+"""
+    gsLog(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, nit::Integer, Φ0::LF{<:Phase,<:Number,N}) where N -> LF{ComplexPhase}
+
+    Same as `gs`, but logs error at every `every`-th iteration. 
+
+    Arguments:
+    - `U::LF{Modulus,<:Real,N}`: A `LatticeField` representing the first amplitude distribution.
+    - `V::LF{Modulus,<:Real,N}`: A `LatticeField` representing the second amplitude distribution.
+    - `nit::Integer`: The number of iterations to run the GS algorithm.
+    - `Φ0::LF{<:Phase,<:Complex,N}`: A `LatticeField` representing the initial phase guess.
+
+    Returns:
+    - `Φ::LF{ComplexPhase}`: A `LatticeField` representing the complex phase after `nit` iterations of the GS algorithm.
+    """
+function gsLog(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, nit::Integer, Φ0::LF{<:Phase,<:Number,N}; every::Int=1) where {N}
+    # Runs nit number of iterations of Gerchberg-Saxton on the distributions specified by U and V.  Φ0 is a starting phase guess.
+    ldq(U, V), elq(U, Φ0)                              # Check for compatibility of the lattices
+    ft = plan_fft(zeros(ComplexF64, size(U)))
+    ift = plan_ifft(zeros(ComplexF64, size(V)))
+
+    guess = ifftshift(U.data .* phasor.(wrap(Φ0).data))
+    ushift = ifftshift(U.data) ./ sqrt(sum(U.data.^2))
+    vshift = ifftshift(V.data) ./ sqrt(sum(V.data.^2))
+    errs = []
+    for i = 1:nit
+        update = ift * (phasor.(ft * guess) .* vshift)
+        if (i-1)%every == 0
+            update ./= sqrt(sum(abs.(update).^2))
+            err = sum( (abs.(ushift) - abs.(update)).^2 )
+            push!(errs,err)
+        end
+        guess = ushift .* phasor.(update)
+    end
+    return LF{ComplexPhase}(fftshift(phasor.(guess)), U.L, U.flambda), errs
+end
+function gsLog(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, nit::Integer; every::Int=1) where {N}
+    return gsLog(U, V, nit, LF{RealPhase}(rand(size(U)...), U.L, U.flambda); every=every)
+end
+function gsLog(U::LF{Intensity,<:Real,N}, V::LF{Intensity,<:Real,N}, nit::Integer, Φ0::Union{Nothing,LF{<:Phase,<:Number,N}}=nothing; every::Int=1) where {N}
+    return gsLog(sqrt(U), sqrt(V), nit, Φ0; every=every)
+end
+
+"""
+    gsError(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, Φ::LF{<:Phase,<:Number,N}) where N -> Float64
+
+    Computes the L2 error between `abs(sft(U*Φ))` and `V`, i.e. the beam reshaping error. 
+
+    Arguments:
+    - `U::LF{Modulus,<:Real,N}`: A `LatticeField` representing the input amplitude distribution.
+    - `V::LF{Modulus,<:Real,N}`: A `LatticeField` representing the output amplitude distribution.
+    - `Φ0::LF{<:Phase,<:Complex,N}`: A `LatticeField` phase.
+
+    Returns:
+    - `err`: The error in the beam reshaping.
+    """
+function gsError(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, Φ::LF{<:Phase,<:Number,N}) where N
+    return sum((normalizeLF(abs(sft(U*Φ))).data - normalizeLF(V).data).^2)
+end
+function gsError(U::LF{Intensity,<:Real,N}, V::LF{Intensity,<:Real,N}, Φ::LF{<:Phase,<:Number,N}) where N
+    return gsError(sqrt(U),sqrt(V),Φ)
+end
+
 #endregion
 # add method to compensate for given phase
 #region ----------------Phase Diversity --------------------
@@ -123,7 +159,7 @@ end
     - `beamGuess`: Initial guess for the complex amplitude of the beam.
 
     Returns:
-    - `LF{ComplexAmp}`: Refined complex amplitude of the beam after PDGS iterations.
+    - `beam`: Refined complex amplitude of the beam after PDGS iterations.
     """
 function pdgs(imgs::NTuple{M,LF{Modulus,<:Number,N}},divPhases::NTuple{M,LF{<:Phase,<:Number,N}},nit::Integer,beamGuess::LF{ComplexAmp,<:Complex,N}) where {M,N}
     s = size(imgs[1])
@@ -152,7 +188,7 @@ end
     - `beamGuess`: Initial guess for the complex amplitude of the beam.
 
     Returns:
-    - `LF{ComplexAmp}`: Refined complex amplitude of the beam after PDGS iterations.
+    - `beam`: Refined complex amplitude of the beam after PDGS iterations.
     """
 function pdgs(imgs::NTuple{M,LF{Intensity,<:Number,N}}, divPhases::NTuple{M,LF{<:Phase,<:Number,N}}, nit::Integer, beamGuess::LF{ComplexAmp,<:Complex,N}) where {M,N}
     return pdgs(Tuple(sqrt(i) for i in imgs), divPhases, nit, beamGuess)
@@ -174,6 +210,63 @@ function pdgsIter(guess::Array{Complex{Float64},N}, phis::NTuple{M,Array{Complex
     ft::FFTW.cFFTWPlan, ift::AbstractFFTs.ScaledPlan) where {M,N}
     # Single iteration of Gerchberg-Saxton phase diversity using provided Fourier operators
     return +((ift * (mods[i] .* phasor.(ft * (guess .* phis[i]))) .* conj.(phis[i]) for i = 1:M)...) ./ M
+end
+
+
+"""
+    pdgsLog(imgs::NTuple{M,LF{Modulus,<:Number,N}}, divPhases::NTuple{M,LF{<:Phase,<:Number,N}}, nit::Integer, beamGuess::LF{ComplexAmp,<:Complex,N}; every::Int=1) where {M,N}
+
+    Same as pdgs, but logs error every `every` steps so you can check for convergence.  
+
+    Arguments:
+    - `imgs`: A tuple of `LatticeField` instances representing the modulus of the beam distributions.
+    - `divPhases`: A tuple of `LatticeField` instances representing phase diversities.
+    - `nit`: Number of iterations.
+    - `beamGuess`: Initial guess for the complex amplitude of the beam.
+
+    Returns:
+    - `beam`: Refined complex amplitude of the beam after PDGS iterations.
+	- `errs`: A vector of errors computed at subsequent iterations of the algorithm. 
+    """
+function pdgsLog(imgs::NTuple{M,LF{Modulus,<:Number,N}},divPhases::NTuple{M,LF{<:Phase,<:Number,N}},nit::Integer,beamGuess::LF{ComplexAmp,<:Complex,N}; every::Int=1) where {M,N}
+    s = size(imgs[1])
+    all(size(i)==s for i in imgs) && all(size(i)==size(beamGuess) for i in divPhases) || error("Input size mismatch.")
+    [elq(d,beamGuess) for d in divPhases], [ldq(i,beamGuess) for i in imgs]
+    ft = plan_fft(zeros(s))
+    ift = plan_ifft(zeros(s))
+    guess = ifftshift(beamGuess.data)
+    phis = ((ifftshift(wrap(wrap(divPhases[i]) * dualPhase(imgs[i].L,imgs[i].flambda)).data) for i=1:M)...,)::NTuple{M,Array{ComplexF64,N}}
+    mods = ((ifftshift(i.data)*1.0 for i in imgs)...,)::NTuple{M,Array{Float64,N}}
+    errs = []
+    for j=1:nit
+        updates = ((ift * (mods[i] .* phasor.(ft * (guess .* phis[i]))) .* conj.(phis[i]) for i = 1:M)...,)
+        guess = +(updates...) ./ M
+        if (j-1)%every == 0 
+            err = sqrt(sum(sum(abs.(u-guess).^2) for u in updates)) / M
+            push!(errs,err)
+        end
+    end
+    return LF{ComplexAmp}(fftshift(guess),beamGuess.L,beamGuess.flambda), errs
+end
+
+"""
+    pdgsError(divMods::NTuple{M,LF{Modulus,<:Number,N}}, divPhases::NTuple{M,LF{<:Phase,<:Number,N}}, beamGuess::LF{ComplexAmp,<:Complex,N}) where {M,N}
+
+    Error metric for phase diversity.  average L2 norm difference squared between divMods[i] and sft(beamGuess*phis[i]).
+
+    Arguments:
+    - `imgs`: A tuple of `LatticeField` instances representing the modulus of the beam distributions.
+    - `divPhases`: A tuple of `LatticeField` instances representing phase diversities.
+    - `beamGuess`: Estimate for the complex amplitude of the beam.
+
+    Returns:
+	- `err`: Error metric for the beam estimate. 
+    """
+function pdgsError(divMods::NTuple{M,LF{Modulus,<:Number,N}},divPhases::NTuple{M,LF{<:Phase,<:Number,N}},beamGuess::LF{ComplexAmp,<:Complex,N}) where {M,N}
+    [elq(d,beamGuess) for d in divPhases], [ldq(m,beamGuess) for m in divMods]
+    divMods = Tuple(normalizeLF(m) for m in divMods)
+    reconstructions = Tuple(normalizeLF(sft(beamGuess*p)) for p in divPhases)
+    return sum(sum((abs.(divMods[i].data) - abs.(reconstructions[i].data)).^2) for i=1:M) / M
 end
 
 #endregion
