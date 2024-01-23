@@ -196,7 +196,7 @@ function pdotPhase(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeFie
     CI = CartesianIndices(length.(G2Root.L))
     dβ = βRoot .- βTarget
     Φ .-= [ sum( (G2Root.L[i][I[i]] - dβ[i])^2 for i=1:N)/(2*(αRoot-αTarget)) for I in CI ]
-	Φ ./= G2Root.flambda
+	Φ ./= G2Root.flambda^2
     return LF{RealPhase}(Φ,G2Root.L,G2Root.flambda)
 end
 
