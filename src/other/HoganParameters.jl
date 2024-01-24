@@ -21,7 +21,7 @@ nslm = 1024
 
 """
     flambda
-    wavelength of light in ... tens of picometers?
+    wavelength of light times focal length for a f=100 mm lens 
 """
 flambda = 1.064 * 10^5
 

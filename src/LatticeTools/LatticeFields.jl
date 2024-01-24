@@ -427,12 +427,35 @@ Base.abs(x::LF{ComplexAmp}) = LF{Modulus}(abs.(x.data), x.L, x.flambda)
 Base.conj(x::LF{RealPhase}) = LF{RealPhase}(-x.data, x.L, x.flambda)
 Base.conj(x::LF{ComplexPhase}) = LF{ComplexPhase}(conj.(x.data), x.L, x.flambda)
 
-# Scalar operations
+# Sums of fields for which it makes sense to do so
+Base.:(+)(x::LF{Intensity}, y::LF{Intensity}) = (elq(x, y); LF{Intensity}(x.data .+ y.data, x.L, x.flambda))
+Base.:(+)(x::LF{ComplexAmp}, y::LF{ComplexAmp}) = (elq(x, y); LF{ComplexAmp}(x.data .+ y.data, x.L, x.flambda))
+
+# Scalar operations always allowed if the LF data type matches the scalar data type
 Base.:(*)(x::T, f::LF{S,T,N}) where {S,T,N} = LF{S,T,N}(f.data .* x, f.L, f.flambda)
 Base.:(*)(f::LF{S,T,N}, x::T) where {S,T,N} = LF{S,T,N}(f.data .* x, f.L, f.flambda)
 Base.:(+)(x::T, f::LF{S,T,N}) where {S,T,N} = LF{S,T,N}(f.data .+ x, f.L, f.flambda)
 Base.:(+)(f::LF{S,T,N}, x::T) where {S,T,N} = LF{S,T,N}(f.data .+ x, f.L, f.flambda)
+Base.:(-)(f::LF{S,T,N}, x::T) where {S,T,N} = LF{S,T,N}(f.data .- x, f.L, f.flambda)
 Base.:(/)(f::LF{S,T,N}, x::T) where {S,T,N} = LF{S,T,N}(f.data ./ x, f.L, f.flambda)
+
+# Scalar operations with real scalars are always allowed
+Base.:(*)(x::Real, f::LF{S,T,N}) where {S,T,N} = LF{S,T,N}(f.data .* x, f.L, f.flambda)
+Base.:(*)(f::LF{S,T,N}, x::Real) where {S,T,N} = LF{S,T,N}(f.data .* x, f.L, f.flambda)
+Base.:(+)(x::Real, f::LF{S,T,N}) where {S,T,N} = LF{S,T,N}(f.data .+ x, f.L, f.flambda)
+Base.:(+)(f::LF{S,T,N}, x::Real) where {S,T,N} = LF{S,T,N}(f.data .+ x, f.L, f.flambda)
+Base.:(-)(f::LF{S,T,N}, x::Real) where {S,T,N} = LF{S,T,N}(f.data .- x, f.L, f.flambda)
+Base.:(/)(f::LF{S,T,N}, x::Real) where {S,T,N} = LF{S,T,N}(f.data ./ x, f.L, f.flambda)
+
+# Allowed scalar operations with complex scalars
+Base.:(*)(x::Complex, f::LF{S,T,N}) where {S,T<:Complex,N} = LF{S,T,N}(f.data .* x, f.L, f.flambda)
+Base.:(*)(f::LF{S,T,N}, x::Complex) where {S,T<:Complex,N} = LF{S,T,N}(f.data .* x, f.L, f.flambda)
+Base.:(+)(x::Complex, f::LF{S,T,N}) where {S,T<:Complex,N} = LF{S,T,N}(f.data .+ x, f.L, f.flambda)
+Base.:(+)(f::LF{S,T,N}, x::Complex) where {S,T<:Complex,N} = LF{S,T,N}(f.data .+ x, f.L, f.flambda)
+Base.:(-)(f::LF{S,T,N}, x::Complex) where {S,T<:Complex,N} = LF{S,T,N}(f.data .- x, f.L, f.flambda)
+Base.:(/)(f::LF{S,T,N}, x::Complex) where {S,T<:Complex,N} = LF{S,T,N}(f.data ./ x, f.L, f.flambda)
+
+
 
 #endregion
 

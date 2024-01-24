@@ -10,7 +10,7 @@ export dualLattice, dualShiftLattice, ldq, dualPhase
 
 include("other/Misc.jl")
 using .Misc
-export ramp, nabs, window, normalizeDistribution, safeInverse, hyperSum, centroid, clip, collapse
+export ramp, nabs, window, normalizeDistribution, safeInverse, hyperSum, centroid, clip, collapse, SchroffError
 
 include("other/ImageProcessing.jl")
 using .ImageProcessing
@@ -18,7 +18,7 @@ export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parse
 
 include("other/PhaseIntensityMasks.jl")
 using .PhaseIntensityMasks
-export lfRampedParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText
+export lfRampedParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText, lfRect, lfRand
 
 
 include("other/HoganParameters.jl")
