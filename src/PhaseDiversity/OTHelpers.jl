@@ -59,8 +59,8 @@ end
     # Returns
     - `M`: The normalized cost matrix.
     """
-function pdCostMatrix(LRoot::Lattice{N}, LTarget::Lattice{N}, αRoot::Real, αTarget::Real; normalization=maximum) where {N}
-    Δ = αRoot - αTarget
+function pdCostMatrix(LRoot::Lattice{N}, LTarget::Lattice{N}, αRoot::Real, αTarget::Real; normalization=maximum, flambda::Real=1.0) where {N}
+    Δ = (αRoot - αTarget)*flambda
     M = [sum((LRoot[k][I[k]] - LTarget[k][J[k]] / Δ)^2 for k = 1:N) for I in CartesianIndices(length.(LRoot))[:], J in CartesianIndices(length.(LTarget))[:]]
     return M ./ normalization(M)
 end
@@ -188,7 +188,7 @@ end
 function pdotPhase(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeField{Intensity,<:Real,N},αRoot::Real,αTarget::Real, βRoot::Vector, βTarget::Vector, ε::Real;options...) where N
 	G2Root.flambda == G2Target.flambda || error("Unequal flambdas.")
     u,v = normalizeDistribution(G2Root.data), normalizeDistribution(G2Target.data)
-    C = pdCostMatrix(G2Root.L,G2Target.L,αRoot,αTarget)
+    C = pdCostMatrix(G2Root.L,G2Target.L,αRoot,αTarget;flambda=G2Root.flambda)
     γ = sinkhorn(u[:], v[:], C, ε; options...)
     any(isnan,γ) && error("sinkhorn returned nan.  Try changing epsilon.")
     Γ = mapify(γ,G2Root.L,G2Target.L) ./ (αRoot-αTarget)
@@ -196,7 +196,7 @@ function pdotPhase(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeFie
     CI = CartesianIndices(length.(G2Root.L))
     dβ = βRoot .- βTarget
     Φ .-= [ sum( (G2Root.L[i][I[i]] - dβ[i])^2 for i=1:N)/(2*(αRoot-αTarget)) for I in CI ]
-	Φ ./= G2Root.flambda
+	Φ ./= G2Root.flambda^2
     return LF{RealPhase}(Φ,G2Root.L,G2Root.flambda)
 end
 
@@ -212,12 +212,11 @@ end
     - `βRoot::Vector`: The offset of the larger diversity image (linear phase)
     - `βTarget::Vector`: The offset of the smaller diversity image (linear phase)
     - `ε::Real`: The regularization parameter for the Sinkhorn algorithm.
-    - `LFine::Union{Nothing,Lattice{N}}=nothing`: An optional lattice to upsample the result to. in the SLM plane.
+    - `LFine::Union{Nothing,Lattice{N}}=nothing`: An optional lattice to upsample the result to (in the camera plane).
 
     # Returns
     - `LatticeField{ComplexAmplitude}`: A lattice field representing the inferred beam.
     """
-
 function pdotBeamEstimate(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeField{Intensity,<:Real,N}, αRoot::Real,αTarget::Real, βRoot::Vector, βTarget::Vector, ε::Real; LFine::Union{Nothing,Lattice{N}}=nothing, options...) where N
     Φ = pdotPhase(G2Root,G2Target,αRoot,αTarget,βRoot,βTarget,ε;options...)
     GR = sqrt(G2Root)

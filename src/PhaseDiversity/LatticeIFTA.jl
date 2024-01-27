@@ -273,26 +273,27 @@ end
 
 
 """
-    oneShot(img::LF{Intensity,<:Real,N}, alpha::Real, beta::NTuple{N,Real}, sc::Real) where N
+    oneShot4(img::LF{Intensity,<:Real,N}, alpha::Real, beta::NTuple{N,Real}) where {N}
 
-    Perform a one-shot phase retrieval process on an image `img` using specified parameters `alpha`, `beta`, and `sc`.
+    Perform a one-shot phase retrieval process on an image `img` using known diversity phase curvature `alpha` and 
+	linear ramp gradient `beta`.  Both `alpha` and `beta` should be in units consistent with the lattice of `img`.
 
     Arguments:
     - `img`: A `LatticeField` representing the intensity distribution of the image.
-    - `alpha`: A real number parameter used in the phase retrieval process.
-    - `beta`: An `N`-tuple of real numbers representing additional parameters for each dimension.
-    - `sc`: A scaling factor used in the phase retrieval process.
+    - `alpha`: Diversity phase curvature coefficient.
+    - `beta`: An `N`-tuple of real numbers representing linear ramp gradient.
 
     Returns:
     - `LF{ComplexAmp}`: A `LatticeField` representing the input beam estimate. 
     """
-function oneShot(img::LF{Intensity,<:Real,N}, alpha::Real, beta::NTuple{N,Real}, sc::Real) where {N}
-    dL = dualShiftLattice(img.L, img.flambda)
-    xc = beta .* (img.flambda / sc)
-    divPhase = LF{RealPhase}([alpha / (2 * sc^2) * sum(dL[j][I[j]]^2 for j = 1:N) + sum(beta[j] * dL[j][I[j]] for j = 1:N) / sc for I in CartesianIndices(size(b))])
-    dualDivPhase = LF{RealPhase}([sc^2 / (2 * alpha * flambda^2) * sum((L[j][I[j]] - xc[j])^2 for j = 1:N) for I in CartesianIndices(size(img))], img.L, img.flambda)
-    x = sqrt(img) * dualDivPhase
-    return LF{ComplexAmp}(x.data |> ifftshift |> ifft |> fftshift, dL, x.flambda) * conj(divPhase)
+function oneShot(img::LF{Intensity,<:Real,N}, alpha::Real, beta::NTuple{N,Real}) where {N}
+    L = img.L
+    flam = img.flambda
+    dL = dualShiftLattice(img.L, flam)
+    xc = beta .* flam
+    divPhase = LF{RealPhase}(alpha / 2 * r2(dL) + ldot(beta,dL) ,dL,flam)
+    dualDivPhase = LF{RealPhase}(-1 / (2 * alpha * flam^2) * (r2(L) - 2*ldot(L,xc) .+ sum(xc.^2)), L, flam)
+    return isft(sqrt(img) * dualDivPhase) * conj(divPhase)
 end
 
 

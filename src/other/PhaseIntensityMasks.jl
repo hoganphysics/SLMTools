@@ -3,7 +3,7 @@ module PhaseIntensityMasks
 using ..LatticeTools
 using FreeTypeAbstraction: findfont, renderstring!
 
-export lfRampedParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText
+export lfRampedParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText, lfRect, lfRand
 
 """
     lfRampedParabola(T::DataType, imSize::NTuple{N,Integer}, pixelScale::Real, center::NTuple{N,Real}, 
@@ -183,6 +183,57 @@ function lfText(S::DataType,str::String,sz::Union{Nothing,Tuple{Int,Int}}=nothin
     txt = convert.(T,ftaText(str,sz;pixelsize=pixelsize,fnt=fnt,halign=halign,valign=valign, options...))
     return LF{S}(txt,L,flambda)
 end
+
+"""
+    lfRect(lft::LF{S,T,N},s::NTuple{N,Real},c::NTuple{N,Real}=Tuple(zeros(N))) where {S,T,N}
+
+    Make LatticeField in the shape of a rectangle.  `s` specifies the side length in each direction, and
+	`c` specifies the center.  `lft` is a template from which to infer the lattice and flambda. 
+
+    # Arguments
+    - `lft`: Template LatticeField.
+    - `s::NTuple{N,Real}`: Rectangle side lengths.
+    - `c::NTuple{N,Real}`: Rectangle center.
+
+    # Returns
+    - A LatticeField{S} with rectangular field profile.
+    """
+function lfRect(lft::LF{S,T,N},s::NTuple{N,Real},c::NTuple{N,Real}=Tuple(zeros(N))) where {S,T,N}
+	x=zeros(T,size(lft))
+	x[(abs.(lft.L[i].-c[i]) .< s[i] for i=1:N)...] .= 1
+    return LF{S}( x, lft.L,lft.flambda )
+end
+
+
+"""
+    lfRand(S::DataType,T::DataType,L::Lattice{N},flambda::Real) where N
+
+    Make LatticeField with random data.
+
+    # Arguments
+    - `S::DataType`: LatticeField FieldVal.
+    - `T::DataType`: Data type (i.e. Float64, ComplexF64, etc.).
+    - `L::Lattice{N}`: Lattice.
+	- `flambda::Real`: flambda value. 
+
+    # Returns
+    - A LatticeField{S} with random field profile.
+	"""
+lfRand(S::DataType,T::DataType,L::Lattice{N},flambda::Real) where N = LF{S}(rand(T,length.(L)),L,flambda)
+
+"""
+    lfRand(lft::LatticeField{S,T,N}) where {S,T,N}
+
+    Make LatticeField with random data from LF template.  The output inherits FieldVal, lattice, and flambda
+	from the template. 
+
+    # Arguments
+    - `lft::LatticeField{S,T,N}`: LatticeField template.
+
+    # Returns
+    - A LatticeField{S,T,N} with random field profile.
+	"""
+lfRand(lft::LatticeField{S,T,N}) where {S,T,N} = LF{S}(rand(T,size(lft)),lft.L,lft.flambda)
 
 #--------------- Deprecated text functions --------------------------------------------
 

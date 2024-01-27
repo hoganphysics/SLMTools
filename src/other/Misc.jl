@@ -1,6 +1,6 @@
 module Misc
 using ..LatticeTools
-export  testing, ramp, nabs, window, normalizeDistribution, safeInverse, hyperSum, centroid, clip, collapse, clip
+export  testing, ramp, nabs, window, normalizeDistribution, safeInverse, hyperSum, centroid, clip, collapse, clip, SchroffError
 
 #= Vandy's idea for this submodule is that functions which are likely to be of general use, but not necessarily specific to SLMs, should go here.
 mostly mathematical functions, but also some image processing functions, etc.
@@ -208,6 +208,30 @@ function centroid(img::LF{Intensity,T,N}, threshold::Real=0.1) where {T,N}
     return [(sum(collapse(clipped, i) .* img.L[i]) for i = 1:N)...] ./ s
 end
 centroid(img::Array{T,N}) where {T,N} = [sum((1:size(img)[j]) .* sum(img, dims=delete!(Set(1:N), j))[:]) for j = 1:N] ./ sum(img)
+
+"""
+    SchroffError(target::LF{Intensity},reality::LF{Intensity},threshold=0.5)
+
+    Calculate the RMS error from the Schroff (2023) paper for a given target and reality image.
+
+    # Arguments
+    - `target::LF{Intensity}`: A LatticeField representing the target intensity distribution.
+    - `reality::LF{Intensity}`: A LatticeField representing the realized intensity distribution.
+    - `threshold::Real`: A threshold value for comparison between the two images.  Only pixels where the target value is
+							at least `threshold*maximum(target.data)` will be used for comparison. 
+
+    # Returns
+    - RMS error.
+    """
+function SchroffError(target::LF{Intensity},reality::LF{Intensity},threshold=0.5)
+    mask = (target.data .> threshold*maximum(target.data))
+    x = target.data[mask]
+    x ./= sum(x)
+    y = reality.data[mask]
+    y ./= sum(y)
+    nPixels = sum(mask)
+    return sqrt(sum( (x-y).^2/x.^2 )/nPixels)
+end
 
 function testing(x::Number)
     return x
