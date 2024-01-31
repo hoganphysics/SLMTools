@@ -27,7 +27,7 @@ export dxcam, dxslm, nslm, flambda, dXslm, Lslm, dL, LslmE, dLE
 
 include("PhaseDiversity/LatticeIFTA.jl")
 using .LatticeIFTA
-export gs, gsLog, gsIter, pdgs, pdgsIter, pdgsLog, oneShot
+export gs, gsLog, gsIter, pdgs, pdgsIter, pdgsLog, oneShot, pdgsError
 
 include("PhaseDiversity/OTHelpers.jl")
 using .OTHelpers
