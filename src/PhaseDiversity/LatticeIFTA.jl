@@ -3,7 +3,7 @@ module LatticeIFTA
 using FFTW
 using ..LatticeTools
 using ..Misc
-export gs, gsIter, gsLog, pdgs, pdgsIter, pdgsLog, oneShot
+export gs, gsIter, gsLog, pdgs, pdgsIter, pdgsLog, oneShot, pdgsError
 
 #region -------------------Gerchberg-Saxton------------------------------
 """
