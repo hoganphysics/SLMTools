@@ -49,7 +49,7 @@ end
     # Returns
     - `LF{T}`: A LatticeField with the ramped parabolic distribution.
     """
-function lfRampedParabola(T::DataType, L::Lattice{N}, pAmp::Real, rAmps::NTuple{N,Real}, offset::Real=0.0; lambda::Real=1.0) where N
+function lfRampedParabola(T::DataType, L::Lattice{N}, pAmp::Real, rAmps::NTuple{N,Real}, offset::Real=0.0; flambda::Real=1.0) where N
     im = pAmp*r2(L)/2 .+ ldot(rAmps,L) .+ offset
     return LF{T}(im, L, flambda)
 end
