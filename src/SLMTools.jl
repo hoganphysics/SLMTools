@@ -23,7 +23,7 @@ export lfRampedParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText, lfR
 
 include("other/HoganParameters.jl")
 using .HoganParameters
-export dxcam, dxslm, nslm, flambda, dXslm, Lslm, dL, LslmE, dLE
+#export dxcam, dxslm, nslm, flambda, dXslm, Lslm, dL, LslmE, dLE     # These are probably a bad idea for now.  Can lead to bugs. 
 
 include("PhaseDiversity/LatticeIFTA.jl")
 using .LatticeIFTA
