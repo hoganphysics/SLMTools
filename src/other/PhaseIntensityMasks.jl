@@ -9,9 +9,7 @@ export lfRampedParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText, lfR
     lfRampedParabola(T::DataType, imSize::NTuple{N,Integer}, pixelScale::Real, center::NTuple{N,Real}, 
                      pAmp::Real, rAmps::NTuple{N,Real}; L::Union{Nothing, Lattice{N}}=nothing, flambda::Real=1) where N
 
-    Create a LatticeField representing a ramped parabolic distribution.
-
-    This function generates a parabolic intensity distribution with additional linear ramps. The distribution is 
+    Create a LatticeField representing a ramped parabolic distribution.  The distribution is 
     defined on a lattice and wrapped to be within [0,1).
 
     # Arguments
@@ -33,6 +31,26 @@ function lfRampedParabola(T::DataType, imSize::NTuple{N,Integer}, pixelScale::Re
     end
     im = ([pAmp * sum((Tuple(I) .- center) .^ 2) / (2 * pixelScale^2) for I in CartesianIndices(imSize)] .+
           [sum((Tuple(I) .- center) .* rAmps) / pixelScale for I in CartesianIndices(imSize)]) |> (x -> mod.(x, 1))
+    return LF{T}(im, L, flambda)
+end
+
+"""
+    lfRampedParabola(T::DataType, L::Lattice{N}, pAmp::Real, rAmps::NTuple{N,Real}, offset::Real=0.0; lambda::Real=1.0) where N
+
+    Create a LatticeField representing a ramped parabolic distribution.  Accepts input lattice and polynomial coefficients. 
+	
+    # Arguments
+    - `T::DataType`: The data type of the LatticeField.
+    - `L::Lattice{N}`: Lattice for the LF. 
+    - `pAmp::Real`: The amplitude of the parabola.
+    - `rAmps::NTuple{N,Real}`: The linear coefficients in each dimension.
+    - `flambda::Real`: Scaling factor for the wavelength (default: 1).
+
+    # Returns
+    - `LF{T}`: A LatticeField with the ramped parabolic distribution.
+    """
+function lfRampedParabola(T::DataType, L::Lattice{N}, pAmp::Real, rAmps::NTuple{N,Real}, offset::Real=0.0; lambda::Real=1.0) where N
+    im = pAmp*r2(L)/2 .+ ldot(rAmps,L) .+ offset
     return LF{T}(im, L, flambda)
 end
 
