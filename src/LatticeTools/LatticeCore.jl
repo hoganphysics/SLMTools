@@ -5,7 +5,7 @@ using .LatticeFields
 export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase
 export Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF
 export subfield, wrap, square, sublattice, normalizeLF, phasor
-export natlat, padout, sft, isft, latticeDisplacement, toDim, naturalize, r2, ldot, Nyquist
+export natrange, natlat, padout, sft, isft, latticeDisplacement, toDim, naturalize, r2, ldot, Nyquist
 
 
 
@@ -15,15 +15,15 @@ export natlat, padout, sft, isft, latticeDisplacement, toDim, naturalize, r2, ld
     natlat(n::Int) 
     Create a "natural" 1D lattice for a given integer n, i.e. a lattice which is self-dual under DFT.
 	"""
-function natlat(n::Int)
-    return ((-floor(n / 2):floor((n - 1) / 2)) ./ sqrt(n),)
+function natrange(n::Int)
+    return (-floor(n / 2):floor((n - 1) / 2)) ./ sqrt(n)
 end
 
 """
     natlat(ns::NTuple{N,Integer}) 
     Make a natlat for an N-dimensional lattice specified by a tuple of integers."""
 function natlat(ns::NTuple{N,Integer}) where {N}
-    return ((natlat(n) for n in ns)...,)
+    return ((natrange(n) for n in ns)...,)
 end
 
 """

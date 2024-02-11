@@ -4,7 +4,7 @@ module SLMTools
 include("LatticeTools/LatticeTools.jl")
 using .LatticeTools
 export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF, subfield, wrap, square, sublattice, normalizeLF, phasor
-export natlat, sft, isft, padout, naturalize, latticeDisplacement, toDim, r2, ldot, Nyquist
+export natrange, natlat, sft, isft, padout, naturalize, latticeDisplacement, toDim, r2, ldot, Nyquist
 export downsample, upsample, coarsen, sublattice
 export dualLattice, dualShiftLattice, ldq, dualPhase
 
