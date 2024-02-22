@@ -14,7 +14,8 @@ export ramp, nabs, window, normalizeDistribution, safeInverse, hyperSum, centroi
 
 include("other/ImageProcessing.jl")
 using .ImageProcessing
-export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parseFileName, parseStringToNum, getOrientation, dualate, linearFit, savePhase, saveBeam, saveAs8BitBMP
+export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parseFileName, parseStringToNum, getOrientation, dualate, linearFit, savePhase, saveBeam
+# saveAs8BitBMP
 
 include("other/PhaseIntensityMasks.jl")
 using .PhaseIntensityMasks
