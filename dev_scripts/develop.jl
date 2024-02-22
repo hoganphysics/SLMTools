@@ -1,5 +1,5 @@
 using Pkg
-
+# what is this for? 
 base_dir ="Z:\\home\\Vandy\\code\\julia"
 cd(base_dir)
 # Package name

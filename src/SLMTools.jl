@@ -37,10 +37,6 @@ include("other/VisualizationHelpers.jl")
 using .VisualizationHelpers
 export look
 
-# include("other/FileHelpers.jl")
-# export savePhase, saveBeam, saveAs8BitBMP
-
-
 
 export testing
 end # module SLMTools
