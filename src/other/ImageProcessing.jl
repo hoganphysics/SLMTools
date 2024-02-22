@@ -143,7 +143,7 @@ end
     The function provides a convenient way to parse numeric strings from various formats, especially useful in data processing where numeric values might be represented as strings with different formatting.
     """
 function parseStringToNum(s::String; outType=nothing)
-    # Converts a numeric string to a number.  Numeric strings can only contain numerals and commas. 
+    # Converts a numeric string to a number.  Numeric strings can only contain numerals, commas, and minus signs. 
     # By default, if there is a comma, then the string is converted to a float.  Otherwise it 
     # is converted to an integer. 
     if isnothing(outType)
@@ -187,7 +187,7 @@ function parseFileName(name::String, cue::Union{String,Char}, look::Union{Symbol
     # substring or character called "cue".  "look" indicates whether the string follows or precedes the cue.
     # look may be any of :before,:b,"before","b",'b',:after,:a,"after","a",'a'.  All the values starting with a indicate 
     # that the string is after the cue. 
-    # The numeric string can only contain numerals and possibly a comma, which stands in for a decimal point.
+    # The numeric string can only contain numerals, a minus sign, and a comma, which stands in for a decimal point.
     # By default, if there's a comma the numeric string is converted to a float, and otherwise it is converted
     # to an integer.  
     look in [:before, :b, "before", "b", 'b', :after, :a, "after", "a", 'a'] || throw(ValueError("Unrecognized look value."))
@@ -196,11 +196,11 @@ function parseFileName(name::String, cue::Union{String,Char}, look::Union{Symbol
     name = '.' * name[1:ext-1] * '.'    # The periods are to simplify finding the beginning/end of the numeric string. 
     idx = findlast(cue, name)
     if look == :a
-        j = findfirst((x -> !(x in [" 0123456789"..., ','])), name[idx[end]+1:end]) + idx[end]
+        j = findfirst((x -> !(x in [" 0123456789,-"...])), name[idx[end]+1:end]) + idx[end]
         s = name[idx[end]+1:j-1]
         return parseStringToNum(s, outType=outType)
     else
-        j = findlast((x -> !(x in [" 0123456789"..., ','])), name[1:idx[1]-1])
+        j = findlast((x -> !(x in [" 0123456789,-"...])), name[1:idx[1]-1])
         s = name[j+1:idx[1]-1]
         return parseStringToNum(s, outType=outType)
     end

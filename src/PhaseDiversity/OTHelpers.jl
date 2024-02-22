@@ -62,8 +62,8 @@ end
     # Returns
     - `M`: The normalized cost matrix.
     """
-function pdCostMatrix(LRoot::Lattice{N}, LTarget::Lattice{N}, αRoot::Real, αTarget::Real; normalization=maximum) where {N}
-    Δ = αRoot - αTarget
+function pdCostMatrix(LRoot::Lattice{N}, LTarget::Lattice{N}, αRoot::Real, αTarget::Real; normalization=maximum, flambda::Real=1.0) where {N}
+    Δ = (αRoot - αTarget)*flambda
     M = [sum((LRoot[k][I[k]] - LTarget[k][J[k]] / Δ)^2 for k = 1:N) for I in CartesianIndices(length.(LRoot))[:], J in CartesianIndices(length.(LTarget))[:]]
     return M ./ normalization(M)
 end
@@ -162,14 +162,19 @@ end
 function otPhase(U::LatticeField{Intensity,<:Real,N},V::LatticeField{Intensity,<:Number,N},ε::Real;options...) where N
     # Solves the optimal transport problem between distributions U and V, returning a LatticeField{RealPhase} representing
     # the scalar potential of the transport map. 
+	U.flambda == V.flambda || error("Unequal flambdas.")
     u,v = normalizeDistribution(U.data), normalizeDistribution(V.data)
-    # if the total number of elements in u and v is above 130^4, then error out because of insufficient memory
+    L1 = natlat(size(U))
+    L2 = natlat(size(V))
+    L2 = Tuple(L2[i] .* (maximum(L1[i])/maximum(L2[i])) for i=1:N)
+    C = getCostMatrix(L1, L2)
+#    # if the total number of elements in u and v is above 130^4, then error out because of insufficient memory
     length(u[:])+length(v[:]) > 130^4 && error("The total number of elements in u and v is above 130^4, which too much, dont go beyond size = (128, 128) for each.")
     C = getCostMatrix(U.L,V.L)
     γ = sinkhorn(u[:],v[:],C,ε; options...)
     any(isnan,γ) && error("sinkhorn returned nan.  Try changing epsilon.")
     Γ = mapify(γ,U.L,V.L)
-    Φ = scalarPotentialN(Γ,U.L;dimOrder=N:-1:1) 
+    Φ = scalarPotentialN(Γ,U.L;dimOrder=N:-1:1) / U.flambda
     return LF{RealPhase}(Φ,U.L,U.flambda)
 end
 
@@ -191,8 +196,13 @@ end
     """
 
 function pdotPhase(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeField{Intensity,<:Real,N},αRoot::Real,αTarget::Real, βRoot::Vector, βTarget::Vector, ε::Real;options...) where N
+	G2Root.flambda == G2Target.flambda || error("Unequal flambdas.")
     u,v = normalizeDistribution(G2Root.data), normalizeDistribution(G2Target.data)
-    C = pdCostMatrix(G2Root.L,G2Target.L,αRoot,αTarget)
+    L1 = natlat(size(G2Root))
+    L2 = natlat(size(G2Target))
+    L2 = Tuple(L2[i] .* (maximum(L1[i])/maximum(L2[i])) for i=1:N)
+    C = getCostMatrix(L1, L2)
+#    C = pdCostMatrix(G2Root.L,G2Target.L,αRoot,αTarget;flambda=G2Root.flambda)
     γ = sinkhorn(u[:], v[:], C, ε; options...)
     any(isnan,γ) && error("sinkhorn returned nan.  Try changing epsilon.")
     Γ = mapify(γ,G2Root.L,G2Target.L) ./ (αRoot-αTarget)
@@ -200,6 +210,7 @@ function pdotPhase(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeFie
     CI = CartesianIndices(length.(G2Root.L))
     dβ = βRoot .- βTarget
     Φ .-= [ sum( (G2Root.L[i][I[i]] - dβ[i])^2 for i=1:N)/(2*(αRoot-αTarget)) for I in CI ]
+	Φ ./= G2Root.flambda^2
     return LF{RealPhase}(Φ,G2Root.L,G2Root.flambda)
 end
 
@@ -215,12 +226,11 @@ end
     - `βRoot::Vector`: The offset of the larger diversity image (linear phase)
     - `βTarget::Vector`: The offset of the smaller diversity image (linear phase)
     - `ε::Real`: The regularization parameter for the Sinkhorn algorithm.
-    - `LFine::Union{Nothing,Lattice{N}}=nothing`: An optional lattice to upsample the result to. in the SLM plane.
+    - `LFine::Union{Nothing,Lattice{N}}=nothing`: An optional lattice to upsample the result to (in the camera plane).
 
     # Returns
     - `LatticeField{ComplexAmplitude}`: A lattice field representing the inferred beam.
     """
-
 function pdotBeamEstimate(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeField{Intensity,<:Real,N}, αRoot::Real,αTarget::Real, βRoot::Vector, βTarget::Vector, ε::Real; LFine::Union{Nothing,Lattice{N}}=nothing, options...) where N
     Φ = pdotPhase(G2Root,G2Target,αRoot,αTarget,βRoot,βTarget,ε;options...)
     GR = sqrt(G2Root)
@@ -229,7 +239,7 @@ function pdotBeamEstimate(G2Root::LatticeField{Intensity,<:Real,N},G2Target::Lat
     else
         GR = GR * Φ
     end
-    dL = dualShiftLattice(GR.L)
+    dL = dualShiftLattice(GR.L,GR.flambda)
     CI = CartesianIndices(size(GR))
     divPhase = LF{RealPhase}([(αRoot/2 * sum(dL[i][I[i]]^2 for i=1:N) + sum(βRoot[i] * dL[i][I[i]] for i=1:N)) for I in CI],dL,GR.flambda)
     return isft(GR) * conj(divPhase)

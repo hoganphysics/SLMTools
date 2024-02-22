@@ -1,6 +1,6 @@
 module LatticeFields
 
-export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF
+export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF, normalizeLF, phasor
 export subfield, wrap, square, sublattice
 
 #region ---------------------------Abstract Types and aliases--------------------------------------------
@@ -220,6 +220,17 @@ ramp(x::T) where {T<:Number} = (x < 0 ? zero(T) : x)
 LatticeField{Intensity}(array::AbstractArray{T,N},L::Lattice{N},flambda::Real=1.0) where {T,N} = LatticeField{Intensity,T,N}(ramp.(array),L,flambda)
 
 """
+    LatticeField{S1}(array::AbstractArray{T1,N},f::LatticeField{S2,T2,N}) where {S1<:FieldVal,S2<:FieldVal,T1,T2,N}
+
+    Convenience constructor for `LatticeField`. Makes a `LatticeField` with data from `array` and 
+	Lattice and flambda from f. 
+
+    # Parameters
+    - `array`: The field data as an N-dimensional array.
+    - `f`: A `LatticeField` from which to get the Lattice and flambda. 
+    """
+LatticeField{S1}(array::AbstractArray{T1,N},f::LatticeField{S2,T2,N}) where {S1<:FieldVal,S2<:FieldVal,T1,T2,N} = LatticeField{S1,T1,N}(array,f.L,f.flambda)
+"""
     const LF = LatticeField
 
     Type alias for the `LatticeField` struct.
@@ -234,7 +245,7 @@ const LF = LatticeField
 elq(x::Lattice{N}, y::Lattice{N}) where {N} = (all(isapprox.(x, y)) || throw(DomainError((x, y), "Unequal lattices.")); return nothing)
 
 # Equal lattice query
-elq(x::LF, y::LF) = (all(isapprox.(x.L, y.L)) || throw(DomainError((x.L, y.L), "Unequal lattices.")); return nothing)
+elq(x::LF, y::LF) = (all(isapprox.(x.L, y.L)) && isapprox(x.flambda,y.flambda) || throw(DomainError((x.L, y.L), "Unequal lattices.")); return nothing)
 
 
 # Minimal methods to make a LatticeField function similarly to an array.
@@ -416,9 +427,39 @@ Base.abs(x::LF{ComplexAmp}) = LF{Modulus}(abs.(x.data), x.L, x.flambda)
 Base.conj(x::LF{RealPhase}) = LF{RealPhase}(-x.data, x.L, x.flambda)
 Base.conj(x::LF{ComplexPhase}) = LF{ComplexPhase}(conj.(x.data), x.L, x.flambda)
 
+# Sums of fields for which it makes sense to do so
+Base.:(+)(x::LF{Intensity}, y::LF{Intensity}) = (elq(x, y); LF{Intensity}(x.data .+ y.data, x.L, x.flambda))
+Base.:(+)(x::LF{ComplexAmp}, y::LF{ComplexAmp}) = (elq(x, y); LF{ComplexAmp}(x.data .+ y.data, x.L, x.flambda))
+
+# Scalar operations always allowed if the LF data type matches the scalar data type
+Base.:(*)(x::T, f::LF{S,T,N}) where {S,T,N} = LF{S,T,N}(f.data .* x, f.L, f.flambda)
+Base.:(*)(f::LF{S,T,N}, x::T) where {S,T,N} = LF{S,T,N}(f.data .* x, f.L, f.flambda)
+Base.:(+)(x::T, f::LF{S,T,N}) where {S,T,N} = LF{S,T,N}(f.data .+ x, f.L, f.flambda)
+Base.:(+)(f::LF{S,T,N}, x::T) where {S,T,N} = LF{S,T,N}(f.data .+ x, f.L, f.flambda)
+Base.:(-)(f::LF{S,T,N}, x::T) where {S,T,N} = LF{S,T,N}(f.data .- x, f.L, f.flambda)
+Base.:(/)(f::LF{S,T,N}, x::T) where {S,T,N} = LF{S,T,N}(f.data ./ x, f.L, f.flambda)
+
+# Scalar operations with real scalars are always allowed
+Base.:(*)(x::Real, f::LF{S,T,N}) where {S,T,N} = LF{S,T,N}(f.data .* x, f.L, f.flambda)
+Base.:(*)(f::LF{S,T,N}, x::Real) where {S,T,N} = LF{S,T,N}(f.data .* x, f.L, f.flambda)
+Base.:(+)(x::Real, f::LF{S,T,N}) where {S,T,N} = LF{S,T,N}(f.data .+ x, f.L, f.flambda)
+Base.:(+)(f::LF{S,T,N}, x::Real) where {S,T,N} = LF{S,T,N}(f.data .+ x, f.L, f.flambda)
+Base.:(-)(f::LF{S,T,N}, x::Real) where {S,T,N} = LF{S,T,N}(f.data .- x, f.L, f.flambda)
+Base.:(/)(f::LF{S,T,N}, x::Real) where {S,T,N} = LF{S,T,N}(f.data ./ x, f.L, f.flambda)
+
+# Allowed scalar operations with complex scalars
+Base.:(*)(x::Complex, f::LF{S,T,N}) where {S,T<:Complex,N} = LF{S,T,N}(f.data .* x, f.L, f.flambda)
+Base.:(*)(f::LF{S,T,N}, x::Complex) where {S,T<:Complex,N} = LF{S,T,N}(f.data .* x, f.L, f.flambda)
+Base.:(+)(x::Complex, f::LF{S,T,N}) where {S,T<:Complex,N} = LF{S,T,N}(f.data .+ x, f.L, f.flambda)
+Base.:(+)(f::LF{S,T,N}, x::Complex) where {S,T<:Complex,N} = LF{S,T,N}(f.data .+ x, f.L, f.flambda)
+Base.:(-)(f::LF{S,T,N}, x::Complex) where {S,T<:Complex,N} = LF{S,T,N}(f.data .- x, f.L, f.flambda)
+Base.:(/)(f::LF{S,T,N}, x::Complex) where {S,T<:Complex,N} = LF{S,T,N}(f.data ./ x, f.L, f.flambda)
+
+
+
 #endregion
 
-#region ---------------------------wrap and square--------------------------------------------
+#region --------------------------- wrap, square, normalizeLF --------------------------------------------
 """
     square(x::LF{<:Amplitude})
 
@@ -466,6 +507,67 @@ wrap(x::LF{RealPhase}) = LF{ComplexPhase}(exp.(2pi * im * x.data), x.L, x.flambd
     be known in advance.
     """
 wrap(x::LF{ComplexPhase}) = LF{ComplexPhase}(x.data,x.L,x.flambda)
+
+
+"""
+    normalizeLF(f::LF{Intensity,T,N})
+
+    Normalizes an LF{Intensity} to have sum 1, i.e. to be a probability distribution. 
+
+    # Parameters
+    - `f`: An intensity `LatticeField`.
+
+    # Returns
+    A normalized intensity `LatticeField`.
+    """
+function normalizeLF(f::LF{Intensity,T,N}) where {T<:Real,N}
+    # Normalizes an LF{Intensity} to have sum 1, i.e. to be a probability distribution. 
+    return LF{Intensity,T,N}(abs.(f.data ./ sum(f.data)), f.L,f.flambda)
+end
+"""
+    normalizeLF(f::LF{<:Amplitude,T,N})
+
+    Normalizes an LF{<:Amplitude} so that the corresponding intensity has sum 1, i.e. the intensity is a probability distribution. 
+
+    # Parameters
+    - `f`: An intensity `LatticeField`.
+
+    # Returns
+    A normalized intensity `LatticeField`.
+    """
+function normalizeLF(f::LF{S,T,N}) where {S<:Amplitude,T<:Number,N}
+    # Normalizes an LF{<:Amplitude} so that the corresponding intensity has sum 1, i.e. the intensity is a probability distribution. 
+    return LF{S,T,N}(f.data ./ sqrt(sum(abs.(f.data).^2)), f.L,f.flambda)
+end
+
+"""
+    phasor(z::ComplexF64) -> ComplexF64
+
+    Compute the phasor (unit vector in the complex plane) of a given complex number `z`. The phasor is calculated as `z` divided by its absolute value, which normalizes `z` to have a magnitude of 1. If `z` is zero, the function returns 1.0 (represented as a complex number).
+
+    Arguments:
+    - `z::ComplexF64`: A complex number.
+
+    Returns:
+    - `ComplexF64`: The phasor of `z`, which is a complex number with the same phase as `z` but with a magnitude of 1. Returns `1.0 + 0.0im` if `z` is zero.
+
+    """
+phasor(z::ComplexF64) = iszero(z) ? one(ComplexF64) : z / abs(z)
+
+"""
+    phasor(f::LF{ComplexAmp}) -> LF{ComplexPhase}
+
+    Compute the LF{ComplexPhase} associated with a given LF{ComplexAmp}. Calls phasor(z::ComplexF64) on each data point. 
+
+    Arguments:
+    - `f::LF{ComplexAmp}`: A complex amplitude field. 
+
+    Returns:
+    - `LF{ComplexPhase}`: The complex phase field associated to the input. 
+
+    """
+phasor(f::LF{ComplexAmp}) = LF{ComplexPhase}(phasor.(f.data),f.L,f.flambda)
+
 
 #endregion
 

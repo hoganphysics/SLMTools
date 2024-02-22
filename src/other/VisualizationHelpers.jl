@@ -40,7 +40,11 @@ function look(f::LF{Intensity})
     return Gray.(f.data ./ maximum(f.data))
 end
 function look(x::LF...)
-    return hcat((look(y) for y in x)...)
+	if length(x) == 1
+		error("Behavior of look not implemented for this input type: "*string(typeof(x[1])))
+	else
+		return hcat((look(y) for y in x)...)
+	end
 end
 function look(f::AbstractArray{T,N}) where {T<:Real,N}
     return Gray.(f ./ maximum(f))

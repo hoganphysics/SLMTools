@@ -1,16 +1,15 @@
 module PhaseIntensityMasks
 
 using ..LatticeTools
+using FreeTypeAbstraction: findfont, renderstring!
 
-export lfRampedParabola, lfGaussian, lfRing
+export lfRampedParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText, lfRect, lfRand
 
 """
     lfRampedParabola(T::DataType, imSize::NTuple{N,Integer}, pixelScale::Real, center::NTuple{N,Real}, 
                      pAmp::Real, rAmps::NTuple{N,Real}; L::Union{Nothing, Lattice{N}}=nothing, flambda::Real=1) where N
 
-    Create a LatticeField representing a ramped parabolic distribution.
-
-    This function generates a parabolic intensity distribution with additional linear ramps. The distribution is 
+    Create a LatticeField representing a ramped parabolic distribution.  The distribution is 
     defined on a lattice and wrapped to be within [0,1).
 
     # Arguments
@@ -32,6 +31,26 @@ function lfRampedParabola(T::DataType, imSize::NTuple{N,Integer}, pixelScale::Re
     end
     im = ([pAmp * sum((Tuple(I) .- center) .^ 2) / (2 * pixelScale^2) for I in CartesianIndices(imSize)] .+
           [sum((Tuple(I) .- center) .* rAmps) / pixelScale for I in CartesianIndices(imSize)]) |> (x -> mod.(x, 1))
+    return LF{T}(im, L, flambda)
+end
+
+"""
+    lfRampedParabola(T::DataType, L::Lattice{N}, pAmp::Real, rAmps::NTuple{N,Real}, offset::Real=0.0; lambda::Real=1.0) where N
+
+    Create a LatticeField representing a ramped parabolic distribution.  Accepts input lattice and polynomial coefficients. 
+	
+    # Arguments
+    - `T::DataType`: The data type of the LatticeField.
+    - `L::Lattice{N}`: Lattice for the LF. 
+    - `pAmp::Real`: The amplitude of the parabola.
+    - `rAmps::NTuple{N,Real}`: The linear coefficients in each dimension.
+    - `flambda::Real`: Scaling factor for the wavelength (default: 1).
+
+    # Returns
+    - `LF{T}`: A LatticeField with the ramped parabolic distribution.
+    """
+function lfRampedParabola(T::DataType, L::Lattice{N}, pAmp::Real, rAmps::NTuple{N,Real}, offset::Real=0.0; flambda::Real=1.0) where N
+    im = pAmp*r2(L)/2 .+ ldot(rAmps,L) .+ offset
     return LF{T}(im, L, flambda)
 end
 
@@ -83,6 +102,158 @@ function lfRing(T::DataType, sz::NTuple{N,Integer}, r::Number, w::Number; L::Uni
     end
     return LF{T}([exp(-(sqrt(sum(L[i][I[i]]^2 for i = 1:N)) - r)^2 / (2 * w^2)) for I in CartesianIndices(length.(L))], L, flambda)
 end
+
+ramp(x::T) where {T<:Number} = (x < 0 ? zero(T) : x)
+
+"""
+    lfParabolaCap(T::DataType, L::Lattice{N}, curvature::Real, height::Real, flambda::Real=1.0; center::Union{Nothing,Vector{<:Real}}=nothing) where N
+
+    Create a LatticeField representing a parabolic cap, i.e. an inverted parabola truncated at zero.  
+	The formula is `ramp.(height .- curvature*r2(L)/2)`.  
+	Can be recentered to any location via the optional `center` kwarg. 
+
+    # Arguments
+    - `T::DataType`: The data type of the LatticeField.
+    - `L::Lattice{N}`: Lattice.
+    - `curvature::Real`: The quadratic coefficient of the parabola, defined such that the parabola is `curvature*x^2/2`. 
+    - `height::Real`: Cap height. 
+    - `flambda::Real=1.0`: Scale factor.
+    - `center::Union{Nothing,Vector{<:Real}}=nothing`: Center of the cap.
+
+    # Returns
+    - `LF{T}`: A LatticeField with the parabolic cap distribution.
+    """
+function lfParabolaCap(T::DataType, L::Lattice{N}, curvature::Real, height::Real, flambda::Real=1.0; center::Union{Nothing,Vector{<:Real}}=nothing) where N
+    if isnothing(center)
+        center = zeros(N)
+    end
+    L = Tuple(L[i] .- center[i] for i=1:N)
+    return LF{T}(ramp.(height .- curvature*r2(L)/2),L,flambda)
+end
+
+"""
+    ftaText(str::String,sz::Tuple{Int,Int}; fnt = "arial bold",pixelsize::Union{Int,Nothing}=nothing,halign=:hcenter,valign=:vcenter,options...)
+
+    Make text string `str` into a float array of size `sz`.  The letter size is set with optional kwarg pixelsize. 
+
+    # Arguments
+    - `str::String`: Text string.
+    - `sz::NTuple{N,Integer}`: Desired array size.
+    - `fnt = "arial bold"`: Font.
+    - `pixelsize::Union{Int,Nothing}=nothing`: Text size parameter.
+    - Various other options: You should know what you're doing to set these. 
+
+    # Returns
+    - An array displaying the text.
+    """
+function ftaText(str::String,sz::Tuple{Int,Int}; fnt = "arial bold",pixelsize::Union{Int,Nothing}=nothing,halign=:hcenter,valign=:vcenter,options...)
+    if isnothing(pixelsize)
+        pixelsize = sz[2] ÷ length(str)
+    end
+    face = findfont(fnt)
+    x0, y0 = sz .÷ 2
+    arr = zeros(UInt8,sz...)    # Text will go here
+    renderstring!(arr,str,face,pixelsize, x0, y0; halign=halign, valign=valign, options...)
+    return convert.(Float64,arr)./255
+end
+
+"""
+    lfText(S::DataType,str::String,sz::Union{Nothing,Tuple{Int,Int}}=nothing; T::DataType=Float64,
+        L::Union{Lattice,Nothing}=nothing, flambda::Union{Real,Nothing}=nothing, lfTemplate::Union{LF,Nothing}=nothing,
+        pixelsize::Union{Int,Nothing}=nothing, fnt = "arial bold", halign=:hcenter, valign=:vcenter, options...)
+
+    Make text string `str` into LatticeField of type `S`.  The letter size is set with optional kwarg pixelsize. 
+	You must set the output size either via the positional arg sz, the kwarg L (setting the lattice explicitly),
+	or the kwarg lfTemplate, which provides an existing LF from which to get the lattice and flambda. 
+
+    # Arguments
+    - `str::String`: Text string.
+    - `sz::NTuple{N,Integer}`: Desired array size.
+    - `fnt = "arial bold"`: Font.
+    - `pixelsize::Union{Int,Nothing}=nothing`: Text size parameter.
+	- `L`: A lattice.
+	- `flambda`: Scale factor.
+	- `lfTemplate`: A LF from which to get the lattice and flambda.  This overrides L and flambda kwargs. 
+    - Various other options: You should know what you're doing to set these. 
+
+    # Returns
+    - An array displaying the text.
+    """
+function lfText(S::DataType,str::String,sz::Union{Nothing,Tuple{Int,Int}}=nothing; T::DataType=Float64,
+        L::Union{Lattice,Nothing}=nothing, flambda::Union{Real,Nothing}=nothing, lfTemplate::Union{LF,Nothing}=nothing,
+        pixelsize::Union{Int,Nothing}=nothing, fnt = "arial bold", halign=:hcenter, valign=:vcenter, options...)
+    if !isnothing(lfTemplate)
+        flambda = lfTemplate.flambda
+        L = lfTemplate.L
+    end
+    if isnothing(sz) && isnothing(L)
+        error("Must specify text size either via sz or a lattice L")
+    end
+    if isnothing(sz)
+        sz = length.(L)
+    end
+    if isnothing(L)
+        L = natlat(sz)
+    end
+    if isnothing(flambda)
+        flambda = 1
+    end
+    txt = convert.(T,ftaText(str,sz;pixelsize=pixelsize,fnt=fnt,halign=halign,valign=valign, options...))
+    return LF{S}(txt,L,flambda)
+end
+
+"""
+    lfRect(lft::LF{S,T,N},s::NTuple{N,Real},c::NTuple{N,Real}=Tuple(zeros(N))) where {S,T,N}
+
+    Make LatticeField in the shape of a rectangle.  `s` specifies the side length in each direction, and
+	`c` specifies the center.  `lft` is a template from which to infer the lattice and flambda. 
+
+    # Arguments
+    - `lft`: Template LatticeField.
+    - `s::NTuple{N,Real}`: Rectangle side lengths.
+    - `c::NTuple{N,Real}`: Rectangle center.
+
+    # Returns
+    - A LatticeField{S} with rectangular field profile.
+    """
+function lfRect(lft::LF{S,T,N},s::NTuple{N,Real},c::NTuple{N,Real}=Tuple(zeros(N))) where {S,T,N}
+	x=zeros(T,size(lft))
+	x[(abs.(lft.L[i].-c[i]) .< s[i] for i=1:N)...] .= 1
+    return LF{S}( x, lft.L,lft.flambda )
+end
+
+
+"""
+    lfRand(S::DataType,T::DataType,L::Lattice{N},flambda::Real) where N
+
+    Make LatticeField with random data.
+
+    # Arguments
+    - `S::DataType`: LatticeField FieldVal.
+    - `T::DataType`: Data type (i.e. Float64, ComplexF64, etc.).
+    - `L::Lattice{N}`: Lattice.
+	- `flambda::Real`: flambda value. 
+
+    # Returns
+    - A LatticeField{S} with random field profile.
+	"""
+lfRand(S::DataType,T::DataType,L::Lattice{N},flambda::Real) where N = LF{S}(rand(T,length.(L)),L,flambda)
+
+"""
+    lfRand(lft::LatticeField{S,T,N}) where {S,T,N}
+
+    Make LatticeField with random data from LF template.  The output inherits FieldVal, lattice, and flambda
+	from the template. 
+
+    # Arguments
+    - `lft::LatticeField{S,T,N}`: LatticeField template.
+
+    # Returns
+    - A LatticeField{S,T,N} with random field profile.
+	"""
+lfRand(lft::LatticeField{S,T,N}) where {S,T,N} = LF{S}(rand(T,size(lft)),lft.L,lft.flambda)
+
+#--------------- Deprecated text functions --------------------------------------------
 
 # TODO these are older functions, need to be updated to use LatticeFields
 """

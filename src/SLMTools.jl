@@ -3,14 +3,14 @@ module SLMTools
 
 include("LatticeTools/LatticeTools.jl")
 using .LatticeTools
-export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF, subfield, wrap, square, sublattice
-export natlat, sft, isft, padout, naturalize, latticeDisplacement, toDim, r2, ldot
+export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF, subfield, wrap, square, sublattice, normalizeLF, phasor
+export natrange, natlat, sft, isft, padout, naturalize, latticeDisplacement, toDim, r2, ldot, Nyquist
 export downsample, upsample, coarsen, sublattice
 export dualLattice, dualShiftLattice, ldq, dualPhase
 
 include("other/Misc.jl")
 using .Misc
-export ramp, nabs, window, normalizeDistribution, safeInverse, hyperSum, centroid, clip, collapse
+export ramp, nabs, window, normalizeDistribution, safeInverse, hyperSum, centroid, clip, collapse, SchroffError
 
 include("other/ImageProcessing.jl")
 using .ImageProcessing
@@ -18,16 +18,16 @@ export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parse
 
 include("other/PhaseIntensityMasks.jl")
 using .PhaseIntensityMasks
-export lfRampedParabola, lfGaussian, lfRing
+export lfRampedParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText, lfRect, lfRand
 
 
 include("other/HoganParameters.jl")
 using .HoganParameters
-export dxcam, dxslm, nslm, flambda, dXslm, Lslm, dL, LslmE, dLE
+#export dxcam, dxslm, nslm, flambda, dXslm, Lslm, dL, LslmE, dLE     # These are probably a bad idea for now.  Can lead to bugs. 
 
 include("PhaseDiversity/LatticeIFTA.jl")
 using .LatticeIFTA
-export phasor, gs, gsIter, pdgs, pdgsIter, oneShot
+export gs, gsLog, gsIter, pdgs, pdgsIter, pdgsLog, oneShot, pdgsError
 
 include("PhaseDiversity/OTHelpers.jl")
 using .OTHelpers

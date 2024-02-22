@@ -66,7 +66,7 @@ LatticeCore.isft(v::LF{ComplexAmplitude}) = LF{ComplexAmplitude}(fftshift(ifft(i
     Usage:
     ldq(lattice1, lattice2, flambda)
     """
-ldq(L1::Lattice, L2::Lattice, flambda=1) = (all(isapprox.(dualShiftLattice(L1, flambda), L2)) || throw(DomainError((L1, L2), "Unequal lattices.")); return nothing)
+ldq(L1::Lattice, L2::Lattice, flambda=1) = (all(isapprox.(dualShiftLattice(L1, flambda), L2)) || throw(DomainError((L1, L2), "Non-dual lattices.")); return nothing)
 
 """
     ldq(f1::LF, f2::LF)
@@ -102,7 +102,7 @@ ldq(f1::LF, f2::LF) = (all(isapprox.(dualShiftLattice(f1.L, f1.flambda), f2.L)) 
     """
 function dualPhase(L::Lattice{N}, flambda::Real=1.0; dL = nothing) where N
     if isnothing(dL)
-        dL = dualShiftLattice(L)
+        dL = dualShiftLattice(L,flambda)
     end
     b = latticeDisplacement(L)
     return LF{RealPhase}(.+((b[i] * toDim(dL[i],i,N) for i=1:N)...) ./ flambda , dL, flambda)

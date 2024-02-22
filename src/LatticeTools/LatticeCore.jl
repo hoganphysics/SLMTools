@@ -4,9 +4,8 @@ include("LatticeFields.jl")
 using .LatticeFields
 export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase
 export Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF
-export subfield, wrap, square, sublattice
-
-export natlat, padout, sft, isft, latticeDisplacement, toDim, naturalize, r2, ldot
+export subfield, wrap, square, sublattice, normalizeLF, phasor
+export natrange, natlat, padout, sft, isft, latticeDisplacement, toDim, naturalize, r2, ldot, Nyquist
 
 
 
@@ -16,15 +15,22 @@ export natlat, padout, sft, isft, latticeDisplacement, toDim, naturalize, r2, ld
     natlat(n::Int) 
     Create a "natural" 1D lattice for a given integer n, i.e. a lattice which is self-dual under DFT.
 	"""
-function natlat(n::Int)
+function natrange(n::Int)
     return (-floor(n / 2):floor((n - 1) / 2)) ./ sqrt(n)
 end
 
 """
-    natlat(s::NTuple{N,Integer}) 
-    Overload of natlat for an N-dimensional lattice specified by a tuple of integers."""
-function natlat(s::NTuple{N,Integer}) where {N}
-    return ((natlat(n) for n in s)...,)
+    natlat(ns::NTuple{N,Integer}) 
+    Make a natlat for an N-dimensional lattice specified by a tuple of integers."""
+function natlat(ns::NTuple{N,Integer}) where {N}
+    return ((natrange(n) for n in ns)...,)
+end
+
+"""
+    natlat(ns::Integer...) 
+    Make a natlat for an N-dimensional lattice specified by N integer arguments."""
+function natlat(ns::Real...)
+    return natlat(ns)
 end
 
 """
@@ -186,5 +192,19 @@ ldot(x::Lattice{N},v::NTuple{N,Real}) where N = ldot(v,x)
 ldot(v::Vector{T},x::Lattice{N}) where {T,N} = (length(v)==N || error("Vector length != Lattice dimension."); .+( (toDim(x[i] * v[i],i,N) for i=1:N)... ))
 ldot(x::Lattice{N},v::Vector{T}) where {N,T} = ldot(v,x)
 
+#endregion
+
+#region ------------------- Nyquist frequency -------------------
+
+"""
+	Nyquist(L::Lattice{N}) 
+	
+	Returns a tuple of the Nyquist frequencies of the lattice L in each dimension.  Useful for making phase ramps for the SLM; 
+	often you'll want the phase ramp to be Nyquist(L) .* (1/2,0).
+	"""
+function Nyquist(L::Lattice{N}) where N
+    return 1 ./ (2 .* step.(L))
+end
+#endregion
 
 end # module Core
