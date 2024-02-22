@@ -1,5 +1,5 @@
 using Test
-using SLMTools
+using SLMTools.LatticeTools
 
 # Sample data and lattices for testing
 data = rand(ComplexF64, 10, 10)
