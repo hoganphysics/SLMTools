@@ -1,3 +1,7 @@
+name = "SLMTools"
+uuid = "f76648cb-5210-489e-a211-dabef911c8c1"
+version = "0.2.0" 
+
 [deps]
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"

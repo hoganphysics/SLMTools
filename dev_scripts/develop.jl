@@ -8,3 +8,5 @@ full_path = joinpath(base_dir, mypkgname)
 
 Pkg.activate()
 Pkg.develop(path=full_path)
+
+# Template(interactive=true)("PackageA")

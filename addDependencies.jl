@@ -21,3 +21,8 @@ Pkg.add(["Images", "Interpolations", "FileIO", "Plots", "FFTW", "Statistics",
 
 Pkg.instantiate() # Install the packages
 Pkg.precompile() # Precompile the packages
+
+# base_dir = "Z:\\home\\Vandy\\code\\julia\\SLMTools"
+# cd(base_dir)
+# Pkg.activate(".")
+# Pkg.add("SLMTools") # add the package
