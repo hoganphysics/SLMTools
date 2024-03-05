@@ -87,12 +87,10 @@ LF3 = LF{ComplexPhase}(data2, L2, flambda)
     end
 end
 
-
-
 @testset "dualPhase without specifying dL" begin
     dpField = dualPhase(L1)
     @test isa(dpField, LF{RealPhase})
-    @test dpField.L == dualShiftLattice(L1)
+    @test dpField.L == dualShiftLattice(L1, 1.0)
 end
 
 @testset "dualPhase with specifying dL" begin

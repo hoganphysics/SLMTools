@@ -125,7 +125,7 @@ ramp(x::T) where {T<:Number} = (x < 0 ? zero(T) : x)
     """
 function lfParabolaCap(T::DataType, L::Lattice{N}, curvature::Real, height::Real, flambda::Real=1.0; center::Union{Nothing,Vector{<:Real}}=nothing) where N
     if isnothing(center)
-        center = zeros(N)
+        center = zeros(N) 
     end
     L = Tuple(L[i] .- center[i] for i=1:N)
     return LF{T}(ramp.(height .- curvature*r2(L)/2),L,flambda)

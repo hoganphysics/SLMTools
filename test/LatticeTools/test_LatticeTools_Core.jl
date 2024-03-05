@@ -10,10 +10,10 @@ using SLMTools.LatticeTools.LatticeCore
         @test test_function(l) == 30
     end
 end
-@testset "natlat Tests" begin
-    @testset "1D lattice tests" begin
+@testset "natlat natrange Tests" begin
+    @testset "natrange tests" begin
         # Test for n = 5
-        test_lattice = natlat(5)
+        test_lattice = natrange(5)
         expected_lattice = [-2, -1, 0, 1, 2] ./ sqrt(5)
         @test test_lattice == expected_lattice
     end

@@ -1,6 +1,6 @@
 module ImageProcessing
 using FileIO: load, save
-using PyCall
+# using PyCall
 using Images: Gray, RGB, Colorant
 using ..LatticeTools
 using ..Misc
@@ -409,21 +409,21 @@ end
 
     This function executes python code which saves an image from the given Julia array data. The Python script is read from the file `script` and the image data is passed to the Python function `save_as_bmp` along with the output filename.
     """
-function saveAs8BitBMP(image_data::Array{Int64,2}, output_filename::String)
-    py_executable_path = PyCall.python
-    ENV["PYTHON"] = py_executable_path
-    # Read the entire Python script as a string    
-    python_script = read("to8Bbmp.py", String)
+# function saveAs8BitBMP(image_data::Array{Int64,2}, output_filename::String)
+#     py_executable_path = PyCall.python
+#     ENV["PYTHON"] = py_executable_path
+#     # Read the entire Python script as a string    
+#     python_script = read("to8Bbmp.py", String)
 
-    # Execute the Python script
-    py"exec($python_script)"
+#     # Execute the Python script
+#     py"exec($python_script)"
 
-    # Convert Julia array to a format that can be passed to Python
-    py_image_data = PyObject(image_data)
+#     # Convert Julia array to a format that can be passed to Python
+#     py_image_data = PyObject(image_data)
 
-    # Call the Python function with the image data and output filename
-    py"save_as_bmp($py_image_data, $output_filename)"
-end
+#     # Call the Python function with the image data and output filename
+#     py"save_as_bmp($py_image_data, $output_filename)"
+# end
 
 
 

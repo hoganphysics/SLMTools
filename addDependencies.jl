@@ -1,7 +1,9 @@
 # This script can be run to add dependencies to the module.
-# It should be run from the root directory of the package.
+# It should be run from the root directory of the package. although currently it does that by setting the base_dir variable.
 # After doing this, you may have to restart the Julia session to use the new dependencies.
 using Pkg
+base_dir = "Z:\\home\\Vandy\\code\\julia\\SLMTools"
+cd(base_dir)
 Pkg.activate(".")
 # Pkg.add("Images") # add the package
 # Pkg.add("Interpolations") # add the package
@@ -15,7 +17,12 @@ Pkg.activate(".")
 # Pkg.add("ImageMagick")
 # "StochasticOptimalTransport"
 Pkg.add(["Images", "Interpolations", "FileIO", "Plots", "FFTW", "Statistics",
-    "FreeTypeAbstraction", "OptimalTransport", "PyCall", "ImageMagick"])
+    "FreeTypeAbstraction", "OptimalTransport", "ImageMagick","Revise"])
 
 Pkg.instantiate() # Install the packages
 Pkg.precompile() # Precompile the packages
+
+# base_dir = "Z:\\home\\Vandy\\code\\julia\\SLMTools"
+# cd(base_dir)
+# Pkg.activate(".")
+# Pkg.add("SLMTools") # add the package
