@@ -35,7 +35,7 @@ function lfRampedParabola(T::DataType, imSize::NTuple{N,Integer}, pixelScale::Re
 end
 
 """
-    lfRampedParabola(T::DataType, L::Lattice{N}, pAmp::Real, rAmps::NTuple{N,Real}, offset::Real=0.0; lambda::Real=1.0) where N
+    lfRampedParabola(T::DataType, L::Lattice{N}, pAmp::Real, rAmps::NTuple{N,Real}, offset::Real=0.0; flambda::Real=1.0) where N
 
     Create a LatticeField representing a ramped parabolic distribution.  Accepts input lattice and polynomial coefficients. 
 	

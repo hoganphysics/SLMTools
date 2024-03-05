@@ -181,15 +181,16 @@ end
 
 """
     centroid(img::LF{Intensity,T,N}, threshold::Real=0.1) where {T, N}
+	centroid(img::Array{T,N}, threshold::Real=0.1) where {T, N}
 
-    Calculate the centroid of a LatticeField in its own coordinates.
+    Calculate the centroid of a LatticeField in its lattice coordinates, or of an image in pixel coordinates.
 
-    This function computes the centroid (center of mass) of the intensity distribution in a LatticeField `img`. 
-    Values below a specified `threshold` are clipped to zero before the calculation.
+    This function computes the centroid (center of mass) of the intensity distribution given by `img`. 
+    Values below a specified `threshold` fraction relative to the maximum value of `img` are clipped to zero before the calculation.
 
     # Arguments
-    - `img::LF{Intensity,T,N}`: A LatticeField representing the intensity distribution.
-    - `threshold::Real`: A threshold value for clipping intensities (default: 0.1).
+    - `img::Union{LF{Intensity,T,N},Array{T,N}}`: A LatticeField or Array representing the intensity distribution.
+    - `threshold::Real`: A (relative) threshold value for clipping intensities (default: 0.1).
 
     # Returns
     - A tuple representing the coordinates of the centroid within the LatticeField.
@@ -197,8 +198,8 @@ end
     # Errors
     - Throws an error if the total intensity sum is zero (i.e., a black image), as the centroid cannot be normalized in this case.
 
-    The centroid is calculated by clipping the LatticeField intensities, summing them, and then computing 
-    the weighted average position of the remaining intensity distribution.
+    The centroid is calculated by clipping `img` and then computing 
+    the weighted average position of the resulting intensity distribution.
     """
 function centroid(img::LF{Intensity,T,N}, threshold::Real=0.1) where {T,N}
     # Centroid of a LatticeField, in its own coordinates. 
@@ -207,7 +208,12 @@ function centroid(img::LF{Intensity,T,N}, threshold::Real=0.1) where {T,N}
     (s > 0) || error("Black image.  Can't normalize")
     return [(sum(collapse(clipped, i) .* img.L[i]) for i = 1:N)...] ./ s
 end
-centroid(img::Array{T,N}) where {T,N} = [sum((1:size(img)[j]) .* sum(img, dims=delete!(Set(1:N), j))[:]) for j = 1:N] ./ sum(img)
+function centroid(img::Array{T,N}, threshold::Real=0.1) where {T,N} 
+    clipped = clip.(img, threshold*maximum(img))
+    s = sum(clipped)
+    (s > 0) || error("Black image.  Can't normalize")
+    return [(sum(collapse(clipped, i) .* (1:size(img)[i])) for i = 1:N)...] ./ s
+end
 
 """
     SchroffError(target::LF{Intensity},reality::LF{Intensity},threshold=0.5)

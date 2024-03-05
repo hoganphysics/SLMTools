@@ -189,7 +189,7 @@ end
     - An error is thrown if `sinkhorn` returns `NaN`, suggesting a change in the value of `ε`.
     """
 
-function pdotPhase(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeField{Intensity,<:Real,N},αRoot::Real,αTarget::Real, βRoot::Vector, βTarget::Vector, ε::Real;options...) where N
+function pdotPhase(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeField{Intensity,<:Real,N},αRoot::Real,αTarget::Real, βRoot::Union{Vector,NTuple{N,Real}}, βTarget::Union{Vector,NTuple{N,Real}}, ε::Real;options...) where N
 	G2Root.flambda == G2Target.flambda || error("Unequal flambdas.")
     u,v = normalizeDistribution(G2Root.data), normalizeDistribution(G2Target.data)
     L1 = natlat(size(G2Root))
@@ -225,7 +225,7 @@ end
     # Returns
     - `LatticeField{ComplexAmplitude}`: A lattice field representing the inferred beam.
     """
-function pdotBeamEstimate(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeField{Intensity,<:Real,N}, αRoot::Real,αTarget::Real, βRoot::Vector, βTarget::Vector, ε::Real; LFine::Union{Nothing,Lattice{N}}=nothing, options...) where N
+function pdotBeamEstimate(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeField{Intensity,<:Real,N}, αRoot::Real,αTarget::Real, βRoot::Union{Vector,NTuple{N,Real}}, βTarget::Union{Vector,NTuple{N,Real}}, ε::Real; LFine::Union{Nothing,Lattice{N}}=nothing, options...) where N
     Φ = pdotPhase(G2Root,G2Target,αRoot,αTarget,βRoot,βTarget,ε;options...)
     GR = sqrt(G2Root)
     if !isnothing(LFine)
