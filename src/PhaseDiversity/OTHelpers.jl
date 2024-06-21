@@ -51,7 +51,12 @@ end
 """
     pdCostMatrix(L::Lattice{N}, αRoot::Real, αTarget::Real; normalization=maximum) where {N}
 
-    Calculate the cost matrix for optimal transport problem.
+    DEPRECATED: This function is not necessary, as using getCostMatrix results in the same final answer
+                and better performance of the sinkhorn method.  We once thought this function necessary,
+                but later understood from scaling properties of OT that it is not.  It may still be 
+                occasionally useful for visualization of the cost matrix, so we leave it here. 
+    
+    Calculate the cost matrix for optimal transport problem. 
 
     # Arguments
     - `L::Lattice{N}`: The lattice on which the cost is calculated.
@@ -168,9 +173,6 @@ function otPhase(U::LatticeField{Intensity,<:Real,N},V::LatticeField{Intensity,<
     L2 = natlat(size(V))
     L2 = Tuple(L2[i] .* (maximum(L1[i])/maximum(L2[i])) for i=1:N)
     C = getCostMatrix(L1, L2)
-#    # if the total number of elements in u and v is above 130^4, then error out because of insufficient memory
-    length(u[:])+length(v[:]) > 130^4 && error("The total number of elements in u and v is above 130^4, which too much, dont go beyond size = (128, 128) for each.")
-    C = getCostMatrix(U.L,V.L)
     γ = sinkhorn(u[:],v[:],C,ε; options...)
     any(isnan,γ) && error("sinkhorn returned nan.  Try changing epsilon.")
     Γ = mapify(γ,U.L,V.L)
@@ -202,7 +204,6 @@ function pdotPhase(G2Root::LatticeField{Intensity,<:Real,N},G2Target::LatticeFie
     L2 = natlat(size(G2Target))
     L2 = Tuple(L2[i] .* (maximum(L1[i])/maximum(L2[i])) for i=1:N)
     C = getCostMatrix(L1, L2)
-#    C = pdCostMatrix(G2Root.L,G2Target.L,αRoot,αTarget;flambda=G2Root.flambda)
     γ = sinkhorn(u[:], v[:], C, ε; options...)
     any(isnan,γ) && error("sinkhorn returned nan.  Try changing epsilon.")
     Γ = mapify(γ,G2Root.L,G2Target.L) ./ (αRoot-αTarget)
