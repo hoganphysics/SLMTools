@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.1"
+julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "3781ff33cfc7392eb4bde353d3b2fe751cbb875f"
+project_hash = "2aea020167d39c4acc378a1ac7a15ffbead1e847"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -214,7 +214,7 @@ weakdeps = ["Dates", "LinearAlgebra"]
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.1.0+0"
+version = "1.1.1+0"
 
 [[deps.ComputationalResources]]
 git-tree-sha1 = "52cb3ec90e8a8bea0e62e275ba577ad0f74821f7"
