@@ -3,7 +3,7 @@ module IFT
 using FFTW
 using ..LatticeTools
 using ..Misc
-export gs, gsIter, gsLog, pdgs, pdgsIter, pdgsLog, oneShot, pdgsError
+export gs, gsIter, gsLog, pdgs, pdgsIter, pdgsLog, oneShot, pdgsError, mraf
 
 #region -------------------Gerchberg-Saxton------------------------------
 """
@@ -294,6 +294,27 @@ function oneShot(img::LF{Intensity,<:Real,N}, alpha::Real, beta::NTuple{N,Real})
     divPhase = LF{RealPhase}(alpha / 2 * r2(dL) + ldot(beta,dL) ,dL,flam)
     dualDivPhase = LF{RealPhase}(-1 / (2 * alpha * flam^2) * (r2(L) - 2*ldot(L,xc) .+ sum(xc.^2)), L, flam)
     return isft(sqrt(img) * dualDivPhase) * conj(divPhase)
+end
+
+#--------------------------- MRAF ---------------------------
+
+function mraf(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, nit::Integer, Φ0::LF{<:Phase,<:Number,N}, roi::CartesianIndices, m::Real) where {N}
+    # Runs nit number of iterations of MRAF on the distributions specified by U and V.  Φ0 is a starting phase guess.
+    ldq(U, V), elq(U, Φ0)                              # Check for compatibility of the lattices
+
+    U = normalizeLF(U)
+    V = normalizeLF(V)
+    guess = U * wrap(Φ0)
+    R = sqrt(sum(square(sft(guess)).data))      # This compensates non-unitarity of sft.
+
+    for i = 1:nit
+        out = sft(guess)
+        tar = phasor.(out.data[roi]) .* V.data[roi] * m
+        out *= (1-m)/R
+        out.data[roi] = tar
+        guess = phasor(isft(out)) * U
+    end
+    return phasor(guess)
 end
 
 

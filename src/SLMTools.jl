@@ -23,7 +23,7 @@ export lfRampedParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText, lfR
 
 include("PhaseRetrieval/IFT.jl")
 using .IFT
-export gs, gsLog, gsIter, pdgs, pdgsIter, pdgsLog, oneShot, pdgsError
+export gs, gsLog, gsIter, pdgs, pdgsIter, pdgsLog, oneShot, pdgsError, mraf
 
 include("PhaseRetrieval/OT.jl")
 using .OT
