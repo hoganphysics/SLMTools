@@ -1,4 +1,4 @@
-module VisualizationHelpers
+module Visualization
 using Images: Gray
 using ..LatticeTools
 export look

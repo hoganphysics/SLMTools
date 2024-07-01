@@ -1,4 +1,4 @@
-module LatticeIFTA
+module IFT
 
 using FFTW
 using ..LatticeTools

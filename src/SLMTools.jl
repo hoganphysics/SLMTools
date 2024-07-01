@@ -8,34 +8,29 @@ export natrange, natlat, sft, isft, padout, naturalize, latticeDisplacement, toD
 export downsample, upsample, coarsen, sublattice
 export dualLattice, dualShiftLattice, ldq, dualPhase
 
-include("other/Misc.jl")
+include("LFIO/Misc.jl")
 using .Misc
 export ramp, nabs, window, normalizeDistribution, safeInverse, hyperSum, centroid, clip, collapse, SchroffError
 
-include("other/ImageProcessing.jl")
+include("LFIO/ImageProcessing.jl")
 using .ImageProcessing
 export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parseFileName, parseStringToNum, getOrientation, dualate, linearFit, savePhase, saveBeam
 # saveAs8BitBMP
 
-include("other/PhaseIntensityMasks.jl")
-using .PhaseIntensityMasks
+include("LFIO/LFTemplates.jl")
+using .LFTemplates
 export lfRampedParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText, lfRect, lfRand
 
-
-include("other/HoganParameters.jl")
-using .HoganParameters
-#export dxcam, dxslm, nslm, flambda, dXslm, Lslm, dL, LslmE, dLE     # These are probably a bad idea for now.  Can lead to bugs. 
-
-include("PhaseDiversity/LatticeIFTA.jl")
-using .LatticeIFTA
+include("PhaseRetrieval/IFT.jl")
+using .IFT
 export gs, gsLog, gsIter, pdgs, pdgsIter, pdgsLog, oneShot, pdgsError
 
-include("PhaseDiversity/OTHelpers.jl")
-using .OTHelpers
+include("PhaseRetrieval/OT.jl")
+using .OT
 export getCostMatrix, pdCostMatrix, pdotBeamEstimate,  mapify, scalarPotentialN, otPhase, pdotPhase, pdotBeamEstimate
 
-include("other/VisualizationHelpers.jl")
-using .VisualizationHelpers
+include("LFIO/Visualization.jl")
+using .Visualization
 export look
 
 

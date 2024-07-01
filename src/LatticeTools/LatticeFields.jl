@@ -218,6 +218,7 @@ end
 LatticeField{S}(array::AbstractArray{T,N}, L::Lattice{N}, flambda::Real=1.0) where {S<:FieldVal,T,N} = LatticeField{S,T,N}(array, L, flambda)
 ramp(x::T) where {T<:Number} = (x < 0 ? zero(T) : x)
 LatticeField{Intensity}(array::AbstractArray{T,N},L::Lattice{N},flambda::Real=1.0) where {T,N} = LatticeField{Intensity,T,N}(ramp.(array),L,flambda)
+LatticeField{ComplexAmp}(array::AbstractArray{T,N},L::Lattice{N},flambda::Real=1.0) where {T,N} = LatticeField{ComplexAmp,ComplexF64,N}(convert.(ComplexF64,array),L,flambda)
 
 """
     LatticeField{S1}(array::AbstractArray{T1,N},f::LatticeField{S2,T2,N}) where {S1<:FieldVal,S2<:FieldVal,T1,T2,N}
@@ -242,10 +243,10 @@ const LF = LatticeField
    
     Checks if two lattices are equal, throwing a `DomainError` if they are not.
     """
-elq(x::Lattice{N}, y::Lattice{N}) where {N} = (all(isapprox.(x, y)) || throw(DomainError((x, y), "Unequal lattices.")); return nothing)
+elq(x::Lattice{N}, y::Lattice{N}) where {N} = (length.(x)==length.(y) && all(isapprox.(x, y)) || throw(DomainError((x, y), "Unequal lattices.")); return nothing)
 
 # Equal lattice query
-elq(x::LF, y::LF) = (all(isapprox.(x.L, y.L)) && isapprox(x.flambda,y.flambda) || throw(DomainError((x.L, y.L), "Unequal lattices.")); return nothing)
+elq(x::LF, y::LF) = (length.(x.L)==length.(y.L) && all(isapprox.(x.L, y.L)) && isapprox(x.flambda,y.flambda) || throw(DomainError((x.L, y.L), "Unequal lattices.")); return nothing)
 
 
 # Minimal methods to make a LatticeField function similarly to an array.
@@ -395,6 +396,9 @@ end
 
 #region -------------------- Basic arithmetic for LatticeFields -------------------------------
 
+# Copying
+Base.copy(f::LF{I}) where I<:FieldVal = LF{I}(copy(f.data),copy(f.L),copy(f.flambda))
+
 # Default behavior is to throw an undefined method error.
 Base.:(*)(args::LF...) = error("Behavior undefined for this combination of inputs: ", *((string(i) * ", " for i in typeof.(args))...))
 Base.:(+)(args::LF...) = error("Behavior undefined for this combination of inputs: ", *((string(i) * ", " for i in typeof.(args))...))
@@ -429,7 +433,9 @@ Base.conj(x::LF{ComplexPhase}) = LF{ComplexPhase}(conj.(x.data), x.L, x.flambda)
 
 # Sums of fields for which it makes sense to do so
 Base.:(+)(x::LF{Intensity}, y::LF{Intensity}) = (elq(x, y); LF{Intensity}(x.data .+ y.data, x.L, x.flambda))
+Base.:(+)(x::Vararg{LF{Intensity},N}) where N = ( Tuple(elq(x[1], x[j]) for j=2:N); LF{Intensity}( +((xi.data for xi in x)...), x[1].L, x[1].flambda))
 Base.:(+)(x::LF{ComplexAmp}, y::LF{ComplexAmp}) = (elq(x, y); LF{ComplexAmp}(x.data .+ y.data, x.L, x.flambda))
+Base.:(+)(x::Vararg{LF{ComplexAmplitude},N}) where N = ( Tuple(elq(x[1], x[j]) for j=2:N); LF{ComplexAmplitude}( +((xi.data for xi in x)...), x[1].L, x[1].flambda))
 
 # Scalar operations always allowed if the LF data type matches the scalar data type
 Base.:(*)(x::T, f::LF{S,T,N}) where {S,T,N} = LF{S,T,N}(f.data .* x, f.L, f.flambda)

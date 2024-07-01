@@ -1,4 +1,4 @@
-module OTHelpers
+module OT
 
 using ..LatticeTools
 using ..Misc

@@ -1,4 +1,4 @@
-module PhaseIntensityMasks
+module LFTemplates
 
 using ..LatticeTools
 using FreeTypeAbstraction: findfont, renderstring!
