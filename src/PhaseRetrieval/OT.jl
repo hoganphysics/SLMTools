@@ -6,7 +6,7 @@ using OptimalTransport: sinkhorn
 using Interpolations: Linear
 using Images: Gray
 
-export getCostMatrix, pdCostMatrix, pdotPhase, pdotBeamEstimate, mapify, scalarPotentialN, otPhase
+export getCostMatrix, pdCostMatrix, pdotPhase, pdotBeamEstimate, mapify, scalarPotentialN, otPhase, hyperSum2
 function look(f::AbstractArray{T,N}) where {T<:Real,N}
     return Gray.(f ./ maximum(f))
 end
@@ -103,6 +103,41 @@ function mapify(plan::AbstractArray{<:Number,2},Lμ::Lattice{N},Lv::Lattice{N}) 
 end
 
 """
+    hyperSum2(A::AbstractArray{T,N}, originIdx::CartesianIndex, sumDim::Int, fixDims) where {T<:Number, N}
+
+    Perform a cumulative sum of array `A` in a hyperplane fixed by `fixDims` at `originIdx`.  
+    Differs from hyperSum by adding a trapezoid rule correction term which makes this a higher order integration method. 
+
+    # Arguments
+    - `A::AbstractArray{T,N}`: An N-dimensional array to sum over.
+    - `originIdx::CartesianIndex`: The index of the origin in the cumulative sum.
+    - `sumDim::Int`: The dimension along which the cumulative sum is performed.
+    - `fixDims`: The dimensions to be fixed (i.e., not summed over).
+
+    # Returns
+    - An array with the same dimensions as `A`, containing the cumulative sum over the specified dimension, adjusted by the value at `originIdx`.
+
+    This function performs a cumulative sum over the dimension `sumDim` while fixing the other specified dimensions. It adjusts the sum relative to the value at `originIdx`, effectively setting the potential to zero at that point.
+    """
+function hyperSum2(A::AbstractArray{T,N}, originIdx::CartesianIndex, sumDim::Int, fixDims) where {T<:Number,N}
+    # Slices array A along dimensions fixDims and cumsums along dimension sumDim.  originIdx indicates which CartesianIndex
+    # should be zero in the cumsum. Collapses remaining dimensions to singletons at the respective originIdx coordinate.  
+    # This function differs from hyperSum in that it adds a trapezoid rule correction term. This has a dramatic effect on the 
+    # output of otPhase. 
+    sumDim in fixDims && error("sumDim can't be in fixDims")
+    sumDim in 1:N && all(d in 1:N for d in fixDims) || error("More dimensions than array axes.")
+
+    dims = Tuple((i in fixDims || i == sumDim ? size(A)[i] : (originIdx[i]:originIdx[i])) for i = 1:N)
+    CI1 = CartesianIndices(dims)
+    sumBox = cumsum(A[CI1], dims=sumDim) .- A[CI1] ./ 2
+
+    dims = Tuple((i in fixDims ? size(A)[i] : (i == sumDim ? (originIdx[i]:originIdx[i]) : 1)) for i = 1:N)
+    CI2 = CartesianIndices(dims)
+    originSlice = sumBox[CI2]
+    return sumBox .- originSlice
+end
+
+"""
     scalarPotentialN(A::AbstractArray{T,M}, L::Lattice{N}; idx = nothing, dimOrder=1:N) where {M, T<:Number, N}
 
     Calculate the scalar potential for an N-dimensional vector field.
@@ -125,7 +160,7 @@ function scalarPotentialN(A::AbstractArray{T,M}, L::Lattice{N}; idx=nothing, dim
     M == N + 1 && N == size(A)[end] || error("A must have dimension one greater than L, and size(A)[end] must equal the dimension of L.")
     isnothing(idx) && (idx = CartesianIndex((length.(L) .÷ 2)...))
     CI = CartesianIndices(size(A)[1:end-1])
-    return .+((hyperSum(A[CI, dimOrder[i]], idx, dimOrder[i], dimOrder[1:(i-1)]) * step(L[dimOrder[i]]) for i = 1:N)...)
+    return .+((hyperSum2(A[CI, dimOrder[i]], idx, dimOrder[i], dimOrder[1:(i-1)]) * step(L[dimOrder[i]]) for i = 1:N)...)
 end
 
 
