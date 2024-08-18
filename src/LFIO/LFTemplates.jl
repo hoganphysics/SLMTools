@@ -34,6 +34,7 @@ ramp(x::T) where {T<:Number} = (x < 0 ? zero(T) : x)
     ftaText(str::String,sz::Tuple{Int,Int}; fnt = "arial bold",pixelsize::Union{Int,Nothing}=nothing,halign=:hcenter,valign=:vcenter,options...)
 
     Make text string `str` into a float array of size `sz`.  The letter size is set with optional kwarg pixelsize. 
+    WARNING: This function (and the package it derives from) does not seem to work on Linux. 
 
     # Arguments
     - `str::String`: Text string.
@@ -149,6 +150,7 @@ end
 end
 
 function ftaText(str::String,sz::Tuple{Int,Int}; fnt = "arial bold",pixelsize::Union{Int,Nothing}=nothing,halign=:hcenter,valign=:vcenter,options...)
+    # WARNING: This function probably doesn't work on Linux machines, due to a bug in the FreeTypeAbstraction package.
     if isnothing(pixelsize)
         pixelsize = sz[2] ÷ length(str)
     end
@@ -161,6 +163,7 @@ end
 
 @addTemplateMethods function lfText(str::String; R::DataType=Float64, pixelsize::Union{Int,Nothing}=nothing, 
         fnt = "arial bold", halign=:hcenter, valign=:vcenter, options...)
+    # WARNING: This function probably doesn't work on Linux machines, due to a bug in the FreeTypeAbstraction package.
     p = convert.(R,ftaText(str,length.(L);pixelsize=pixelsize,fnt=fnt,halign=halign,valign=valign, options...))
 end
 
