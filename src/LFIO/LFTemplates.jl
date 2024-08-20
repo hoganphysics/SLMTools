@@ -21,7 +21,7 @@ function lfStandardOutputFormat(T::DataType,data::Array{S,N},L::Lattice{N},flamb
         if any(data .< 0)
             println("Warning: negative values in nominally non-negative LF data field. Clipping to zero.")
         end
-        return LF{T}(clip.(data,0),L,flambda)
+        return LF{T}(ramp.(data),L,flambda)
     else
         return LF{T}(data,L,flambda)
     end
@@ -147,18 +147,6 @@ end
 @addTemplateMethods function lfRect(sides::NTuple{N,Real},height::Real=1.0)
 	p = zeros(Float64,length.(Lc))
 	p[(abs.(Lc[i]) .<= sides[i]/2 + eps() for i=1:N)...] .= height
-end
-
-function ftaText(str::String,sz::Tuple{Int,Int}; fnt = "arial bold",pixelsize::Union{Int,Nothing}=nothing,halign=:hcenter,valign=:vcenter,options...)
-    # WARNING: This function probably doesn't work on Linux machines, due to a bug in the FreeTypeAbstraction package.
-    if isnothing(pixelsize)
-        pixelsize = sz[2] ÷ length(str)
-    end
-    face = findfont(fnt)
-    x0, y0 = sz .÷ 2
-    arr = zeros(UInt8,sz...)    # Text will go here
-    renderstring!(arr,str,face,pixelsize, x0, y0; halign=halign, valign=valign, options...)
-    return convert.(Float64,arr)./255
 end
 
 @addTemplateMethods function lfText(str::String; R::DataType=Float64, pixelsize::Union{Int,Nothing}=nothing, 
