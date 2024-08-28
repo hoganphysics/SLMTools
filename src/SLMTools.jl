@@ -19,7 +19,7 @@ export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parse
 
 include("LFIO/LFTemplates.jl")
 using .LFTemplates
-export lfRampedParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText, lfRect, lfRand
+export lfParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText, lfRect, lfRand
 
 include("PhaseRetrieval/IFT.jl")
 using .IFT

@@ -16,8 +16,8 @@ L0 = natlat((N,N))
 dL0 = dualShiftLattice(L0)
 
 # Generate an input beam and target output beam
-inputBeam = lfGaussian(Intensity, (N,N), 1.0 ; L=L0)
-targetBeam = lfRing(Intensity, (N,N), 2.5, 0.5; L=L0)
+inputBeam = lfGaussian(Intensity, L0, 1.0)
+targetBeam = lfRing(Intensity, dL0, 2.5, 0.5)
 
 # Use optimal transport to find an SLM phase to make an approximate output beam
 phiOT = otPhase(inputBeam,targetBeam,0.001)
