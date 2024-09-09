@@ -56,6 +56,7 @@ The `S<:FieldVal` type parameter in the definition of `LF` is a way to keep trac
 * `Amplitude`
 * `Modulus <: Amplitude` (alias: `RealAmplitude`, `RealAmp`)
 * `ComplexAmplitude <: Amplitude` (alias: `ComplexAmp`)
+* 
 These types don't do anything on their own--they are only used for keeping track of what each `LF` represents and defining behavior of function methods (i.e. multiple dispatch). 
 
 The basic workflow of SLMTools is this:
