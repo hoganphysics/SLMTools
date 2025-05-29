@@ -207,4 +207,51 @@ function Nyquist(L::Lattice{N}) where N
 end
 #endregion
 
+#region ------------------- Basis transformations -------------------
+using LinearAlgebra # note add LinearAlgebra dependency later
+using ToeplitzMatrices # Also add later
+
+function shiftedDFTBasis(n::Integer)
+    shift = n ÷ 2
+    W = [1/sqrt(n)*exp(-1im * 2 * π * (j-shift)*(k-shift)/n) for j in 0:n-1, k in 0:n-1];
+    return W
+end 
+
+function hermiteBasis(n::Integer)
+    # scale L by 2pi (eigenvalue convention)
+    L = natlat(n)[1]
+    L = L .* 2π
+
+    # Generate a shifted DFT matrix
+    W = shiftedDFTBasis(L)
+    
+    # Form a Hamiltonian matrix
+    Q = diagm(L)
+    P = W*Q*W'
+    QHO = P'*P + Q'*Q
+
+    # Perform the diagonalization
+    λ, H1 = eigen(QHO);
+
+    # QR decomposition to make them real-valued
+    H1 = real((H1 + conj(H1))/2)
+    H,_ = qr(H1)
+    H = Matrix(H)
+    
+    return H, λ
+end
+
+function FrFTBasis(n::Integer, α::Real)
+    # generates hermite basis
+    W = shiftedDFTBasis(n)
+    H, λ = hermiteBasis(n)
+    
+    # generates FrFT matrix
+    λw = diag(H' * W * H)
+    Λ = diagm(λw.^(2α/π))
+    Wα = H * Λ * transpose(H)
+    return Wα
+end
+
 end # module Core
+
