@@ -253,5 +253,39 @@ function FrFTBasis(n::Integer, α::Real)
     return Wα
 end
 
+function wigner_fft(f::Vector{T}) where T<:Number
+    """
+    Computes the wigner transformation using FFT method
+    """    
+    # Reshape function
+    f = reshape(f,1,:).|>ComplexF64
+    n = length(f[:])
+    
+    # Construct r1 and r2
+    r1 = hcat([0], reverse(conj.(f)), zeros(1, n - 1))
+    r2 = hcat([0], f, zeros(1, n - 1))
+
+    # Create Toeplitz matrices
+    w = Toeplitz(zeros(n), r1[:]) .* reverse(Toeplitz(zeros(n), r2[:]), dims=1)
+    
+    # compute FT 
+    w = 1/(2n) * ifftshift(fft(fftshift(w, 2),2),2)
+    
+    return real(w)
+end
+
+function wigner_natlat(psi, L)
+    """
+    Computes the wigner transformation using FFT method
+    """   
+    Wf = wigner_fft(psi)
+    N = size(L)[1]
+    L1 = natlat(2*N)[1] ./ (2*sqrt(2))
+    Wlf = LF{RealAmplitude}(Wf, (L, L1))
+    Wlfdown = downsample(Wlf,(L, L));
+    Wlfdown = Wlfdown * 4
+    return Wlfdown.data
+end
+
 end # module Core
 
