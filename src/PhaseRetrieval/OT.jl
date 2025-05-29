@@ -282,4 +282,82 @@ function pdotBeamEstimate(G2Root::LatticeField{Intensity,<:Real,N},G2Target::Lat
 end
 
 
+# NEW CODE HERE:
+function SinkhornConv2D(μ::Matrix{T}, ν::Matrix{T}, ϵ::Real, max_iter::Integer) where {T<:Real}
+    
+    # parameters
+    N = size(μ)[1]
+    u = ones(N, N)./N^2
+    v = ones(N, N)./N^2 # this initialization doesn't matter
+
+    # loss tracking
+    loss = []
+    prev = copy(u) 
+    
+    # create convolution matrix
+    X, Y = natlat((N,N))
+    A = exp.(-(X.^2 .+ Y'.^2) / (2 * N * ϵ))
+    FA = sft(A)
+
+    for i in range(1, max_iter)
+
+        # row constraint
+        row_sum = real.(isft(sft(u).*FA))
+        v = ν ./ row_sum
+        v = v ./ sum(v)
+        
+        # col constraint
+        col_sum = real.(isft(sft(v).*FA))
+        u = μ ./ col_sum
+        u = u ./ sum(u)
+
+        # log loss
+        push!(loss, norm(u-prev))
+        prev = copy(u)
+
+    end
+    
+    # row constraint
+    row_sum = real.(isft(sft(u).*FA))
+    v = ν ./ row_sum
+    
+    # col constraint
+    col_sum = real.(isft(sft(v).*FA))
+    u = μ ./ col_sum
+    
+    return u, v, loss
+end
+
+
+function dualToGradients(u::Matrix{T}, v::Matrix{T}, μ::Matrix{S}, ϵ::Real) where {T<:Real, S<:Real}
+    
+    # create convolution matrix
+    N = size(u)[1]
+    X, Y = natlat(N,N)
+    A = exp.(-(X.^2 .+ Y'.^2) / (2 * N * ϵ))
+    FA = sft(A)
+    
+    # moment calculation
+    XV = X .* v
+    YV = Y' .* v
+
+    # convolution step
+    AXV = real.(isft(sft(XV).*FA))
+    AYV = real.(isft(sft(YV).*FA))
+    
+    # compute gradients
+    gradϕx = u .* AXV ./ μ
+    gradϕy = u .* AYV ./ μ
+    
+    return gradϕx, gradϕy
+end
+
+function otQuickPhase(g2::LF{Intensity,T,N}, G2::LF{Intensity,T,N}, ϵ::Real, max_iter::Integer) where {T<:Real,N}
+    u, v, loss = SinkhornConv2D(g2.data, G2.data, ϵ, max_iter) 
+    gradϕx, gradϕy = dualToGradients(u, v, g2.data,  ϵ)
+    Φ = scalarPotentialN(cat(gradϕx,gradϕy; dims=3), g2.L)
+    return Φ
+end 
+
 end # module OTHelpers
+
