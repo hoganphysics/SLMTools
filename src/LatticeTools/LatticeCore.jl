@@ -208,15 +208,40 @@ end
 #endregion
 
 #region ------------------- Basis transformations -------------------
-using LinearAlgebra # note add LinearAlgebra dependency later
-using ToeplitzMatrices # Also add later
+using LinearAlgebra 
+using ToeplitzMatrices 
 
+"""
+    shiftedDFTBasis(n::Integer)
+
+    Generate a shifted Discrete Fourier Transform (DFT) basis matrix of size n×n.
+    The basis is centered around the origin, with the zero frequency at the center.
+
+    # Arguments
+    - `n::Integer`: Size of the DFT matrix
+
+    # Returns
+    - `W::Matrix{Complex}`: The shifted DFT basis matrix
+"""
 function shiftedDFTBasis(n::Integer)
     shift = n ÷ 2
     W = [1/sqrt(n)*exp(-1im * 2 * π * (j-shift)*(k-shift)/n) for j in 0:n-1, k in 0:n-1];
     return W
 end 
 
+"""
+    hermiteBasis(n::Integer)
+
+    Generate a discrete Hermite-Gaussian basis, which is simultanously an eigenbasis
+    of the shiftedDFTBasis.
+
+    # Arguments
+    - `n::Integer`: Size of the basis set
+
+    # Returns
+    - `H::Matrix`: The Hermite-Gaussian basis matrix
+    - `λ::Vector`: The eigenvalues of the quantum harmonic oscillator
+"""
 function hermiteBasis(n::Integer)
     # scale L by 2pi (eigenvalue convention)
     L = natlat(n)[1]
@@ -241,6 +266,19 @@ function hermiteBasis(n::Integer)
     return H, λ
 end
 
+"""
+    FrFTBasis(n::Integer, α::Real)
+
+    Generate a Fractional Fourier Transform (FrFT) basis matrix.
+    The FrFT is a generalization of the Fourier transform with fractional order α.
+
+    # Arguments
+    - `n::Integer`: Size of the FrFT matrix
+    - `α::Real`: Fractional order of the transform (in units of π/2)
+
+    # Returns
+    - `Wα::Matrix`: The FrFT basis matrix
+"""
 function FrFTBasis(n::Integer, α::Real)
     # generates hermite basis
     W = shiftedDFTBasis(n)
@@ -253,10 +291,21 @@ function FrFTBasis(n::Integer, α::Real)
     return Wα
 end
 
+"""
+    wigner_fft(f::Vector{T}) where T<:Number
+
+    Compute the Wigner distribution function using FFT method.
+    The Wigner distribution has the first coordinate that lives on the 
+    same lattice as the input data. The second coordinate is on the lattice 
+    that has twice as many points, and is half as big in the extent.
+
+    # Arguments
+    - `f::Vector{T}`: Input signal vector
+
+    # Returns
+    - `w::Matrix`: The Wigner distribution matrix
+"""
 function wigner_fft(f::Vector{T}) where T<:Number
-    """
-    Computes the wigner transformation using FFT method
-    """    
     # Reshape function
     f = reshape(f,1,:).|>ComplexF64
     n = length(f[:])
@@ -272,19 +321,6 @@ function wigner_fft(f::Vector{T}) where T<:Number
     w = 1/(2n) * ifftshift(fft(fftshift(w, 2),2),2)
     
     return real(w)
-end
-
-function wigner_natlat(psi, L)
-    """
-    Computes the wigner transformation using FFT method
-    """   
-    Wf = wigner_fft(psi)
-    N = size(L)[1]
-    L1 = natlat(2*N)[1] ./ (2*sqrt(2))
-    Wlf = LF{RealAmplitude}(Wf, (L, L1))
-    Wlfdown = downsample(Wlf,(L, L));
-    Wlfdown = Wlfdown * 4
-    return Wlfdown.data
 end
 
 end # module Core

@@ -282,7 +282,11 @@ function pdotBeamEstimate(G2Root::LatticeField{Intensity,<:Real,N},G2Target::Lat
 end
 
 
-# NEW CODE HERE:
+# EXPERIMENTAL CODE BELOW
+# The following functions (SinkhornConv2D, dualToGradients, otQuickPhase) are experimental
+# implementations that are currently being tested. They may be unstable or change in future versions.
+
+"""Fast 2D Sinkhorn algorithm implementation using convolution operations."""
 function SinkhornConv2D(μ::Matrix{T}, ν::Matrix{T}, ϵ::Real, max_iter::Integer) where {T<:Real}
     
     # parameters
@@ -329,6 +333,7 @@ function SinkhornConv2D(μ::Matrix{T}, ν::Matrix{T}, ϵ::Real, max_iter::Intege
 end
 
 
+"""Computes gradient of transport potential from Sinkhorn dual variables."""
 function dualToGradients(u::Matrix{T}, v::Matrix{T}, μ::Matrix{S}, ϵ::Real) where {T<:Real, S<:Real}
     
     # create convolution matrix
@@ -352,6 +357,7 @@ function dualToGradients(u::Matrix{T}, v::Matrix{T}, μ::Matrix{S}, ϵ::Real) wh
     return gradϕx, gradϕy
 end
 
+"""Fast phase retrieval using Sinkhorn algorithm with convolution operations."""
 function otQuickPhase(g2::LF{Intensity,T,N}, G2::LF{Intensity,T,N}, ϵ::Real, max_iter::Integer) where {T<:Real,N}
     u, v, loss = SinkhornConv2D(g2.data, G2.data, ϵ, max_iter) 
     gradϕx, gradϕy = dualToGradients(u, v, g2.data,  ϵ)
