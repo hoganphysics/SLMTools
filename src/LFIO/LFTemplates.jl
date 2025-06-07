@@ -3,7 +3,7 @@ module LFTemplates
 using ..LatticeTools
 using FreeTypeAbstraction: findfont, renderstring!
 
-export lfParabola, lfGaussian, lfRing, lfParabolaCap, ftaText, lfText, lfRect, lfRand
+export lfParabola, lfGaussian, lfRing, lfCap, ftaText, lfText, lfRect, lfRand
 
 
 ################################## Helper functions #################################
