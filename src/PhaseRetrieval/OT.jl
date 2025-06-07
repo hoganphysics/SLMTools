@@ -287,82 +287,91 @@ end
 # implementations that are currently being tested. They may be unstable or change in future versions.
 
 """Fast 2D Sinkhorn algorithm implementation using convolution operations."""
-function SinkhornConv2D(μ::Matrix{T}, ν::Matrix{T}, ϵ::Real, max_iter::Integer) where {T<:Real}
-    
+function toDim(v, d::Int, n::Int)
+    reshape(v, ((i == d ? length(v) : 1) for i = 1:n)...)
+end
+
+function SinkhornIterBase!(u::Array{T1, N}, v::Array{T1, N},U::Array{T2, N}, V::Array{T3, N},FAu::Array{T4, N},FAv::Array{T4, N}) where {T1<:Real,T2<:Real,T3<:Real,T4<:Number,N}
+        # row constraint
+        row_sum = real.(isft(sft(u).*FAu))
+        v[:] = (V .* safeInverse.(row_sum))[:]
+        v .*= safeInverse(sum(v))
+        
+        # col constraint
+        col_sum = real.(isft(sft(v).*FAv))
+        u[:] = (U .* safeInverse.(col_sum))[:]
+        u .*= safeInverse(sum(u))
+end
+
+function SinkhornConvN(U::Array{T1, N}, V::Array{T2, N}, ϵ::Real, max_iter::Integer; every::Union{Nothing,Integer}=nothing) where {T1<:Real,T2<:Real,N}
     # parameters
-    N = size(μ)[1]
-    u = ones(N, N)./N^2
-    v = ones(N, N)./N^2 # this initialization doesn't matter
+    u = fill(1/prod(size(U)),size(U))
+    v = Array{T2}(undef,size(V))
 
     # loss tracking
     loss = []
     prev = copy(u) 
     
-    # create convolution matrix
-    X, Y = natlat((N,N))
-    A = exp.(-(X.^2 .+ Y'.^2) / (2 * N * ϵ))
-    FA = sft(A)
+    # create convolution matrices
+    keru = r2(natlat(size(u)))
+    kerv = r2(natlat(size(v)))
+    keru ./= keru[1,1]    # keru attains its maximum value at its first point. Faster than maximum(keru). 
+    kerv ./= kerv[1,1]
+    Au = exp.(-keru / ϵ)
+    Av = exp.(-kerv / ϵ)
+    FAu = sft(Au)
+    FAv = sft(Av)
 
     for i in range(1, max_iter)
-
-        # row constraint
-        row_sum = real.(isft(sft(u).*FA))
-        v = ν ./ row_sum
-        v = v ./ sum(v)
+        SinkhornIterBase!(u, v, U, V, FAu, FAv)
         
-        # col constraint
-        col_sum = real.(isft(sft(v).*FA))
-        u = μ ./ col_sum
-        u = u ./ sum(u)
-
         # log loss
-        push!(loss, norm(u-prev))
-        prev = copy(u)
-
+        if !isnothing(every) && mod(i,every)==0
+            push!(loss, norm(u-prev))
+            prev = copy(u)
+        end
     end
     
     # row constraint
-    row_sum = real.(isft(sft(u).*FA))
-    v = ν ./ row_sum
+    row_sum = real.(isft(sft(u).*FAu))
+    v = V .* safeInverse.(row_sum)
     
     # col constraint
-    col_sum = real.(isft(sft(v).*FA))
-    u = μ ./ col_sum
+    col_sum = real.(isft(sft(v).*FAv))
+    u = U .* safeInverse.(col_sum)
     
     return u, v, loss
 end
 
 
 """Computes gradient of transport potential from Sinkhorn dual variables."""
-function dualToGradients(u::Matrix{T}, v::Matrix{T}, μ::Matrix{S}, ϵ::Real) where {T<:Real, S<:Real}
+function dualToGradients(u::Array{T1,N}, v::Array{T1,N}, U::Array{T2,N}, LV::Lattice{N}, ϵ::Real) where {T1<:Real, T2<:Real,N}
     
     # create convolution matrix
-    N = size(u)[1]
-    X, Y = natlat(N,N)
-    A = exp.(-(X.^2 .+ Y'.^2) / (2 * N * ϵ))
-    FA = sft(A)
+    kerv = r2(natlat(size(v)))
+    kerv ./= kerv[1,1]
+    Av = exp.(-kerv / ϵ)
+    FAv = sft(Av)
     
     # moment calculation
-    XV = X .* v
-    YV = Y' .* v
+    gradphi = zeros(size(u)...,N)
 
     # convolution step
-    AXV = real.(isft(sft(XV).*FA))
-    AYV = real.(isft(sft(YV).*FA))
+    uscale = u .* safeInverse.(U)
+    for i=1:N
+        CI = CartesianIndices((size(u)...,i:i))
+        gradphi[CI] = uscale .* real.(isft(sft( v .* toDim(LV[i],i,N) ).*FAv))
+    end
     
-    # compute gradients
-    gradϕx = u .* AXV ./ μ
-    gradϕy = u .* AYV ./ μ
-    
-    return gradϕx, gradϕy
+    return gradphi
 end
 
 """Fast phase retrieval using Sinkhorn algorithm with convolution operations."""
 function otQuickPhase(g2::LF{Intensity,T,N}, G2::LF{Intensity,T,N}, ϵ::Real, max_iter::Integer) where {T<:Real,N}
-    u, v, loss = SinkhornConv2D(g2.data, G2.data, ϵ, max_iter) 
-    gradϕx, gradϕy = dualToGradients(u, v, g2.data,  ϵ)
-    Φ = scalarPotentialN(cat(gradϕx,gradϕy; dims=3), g2.L)
-    return Φ
+    u, v, loss = SinkhornConvN(g2.data, G2.data, ϵ, max_iter; every=1)
+    vf = dualToGradients(u, v, g2.data, G2.L,  ϵ)
+    Φ = scalarPotentialN(vf, g2.L)
+    return LF{RealPhase}(Φ, L0), loss
 end 
 
 end # module OTHelpers
