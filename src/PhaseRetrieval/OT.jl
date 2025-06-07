@@ -5,8 +5,9 @@ using ..Misc
 using OptimalTransport: sinkhorn
 using Interpolations: Linear
 using Images: Gray
+using LinearAlgebra: norm
 
-export getCostMatrix, pdCostMatrix, pdotPhase, pdotBeamEstimate, mapify, scalarPotentialN, otPhase, hyperSum2
+export getCostMatrix, pdCostMatrix, pdotPhase, pdotBeamEstimate, mapify, scalarPotentialN, otPhase, hyperSum2, otQuickPhase, SinkhornConvN, dualToGradients
 function look(f::AbstractArray{T,N}) where {T<:Real,N}
     return Gray.(f ./ maximum(f))
 end
@@ -371,7 +372,7 @@ function otQuickPhase(g2::LF{Intensity,T,N}, G2::LF{Intensity,T,N}, ϵ::Real, ma
     u, v, loss = SinkhornConvN(g2.data, G2.data, ϵ, max_iter; every=1)
     vf = dualToGradients(u, v, g2.data, G2.L,  ϵ)
     Φ = scalarPotentialN(vf, g2.L)
-    return LF{RealPhase}(Φ, L0), loss
+    return LF{RealPhase}(Φ, g2.L), loss
 end 
 
 end # module OTHelpers

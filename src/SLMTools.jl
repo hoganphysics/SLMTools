@@ -27,7 +27,7 @@ export gs, gsLog, gsIter, pdgs, pdgsIter, pdgsLog, oneShot, pdgsError, mraf
 
 include("PhaseRetrieval/OT.jl")
 using .OT
-export getCostMatrix, pdCostMatrix, pdotBeamEstimate,  mapify, scalarPotentialN, otPhase, pdotPhase, pdotBeamEstimate
+export getCostMatrix, pdCostMatrix, pdotBeamEstimate, mapify, scalarPotentialN, otPhase, pdotPhase, pdotBeamEstimate, otQuickPhase, SinkhornConvN, dualToGradients
 
 include("LFIO/Visualization.jl")
 using .Visualization
