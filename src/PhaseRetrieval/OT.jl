@@ -316,8 +316,8 @@ function SinkhornConvN(U::Array{T1, N}, V::Array{T2, N}, ϵ::Real, max_iter::Int
     # create convolution matrices
     keru = r2(natlat(size(u)))
     kerv = r2(natlat(size(v)))
-    keru ./= keru[1,1]    # keru attains its maximum value at its first point. Faster than maximum(keru). 
-    kerv ./= kerv[1,1]
+    keru ./= keru[1]    # keru attains its maximum value at its first point. Faster than maximum(keru). 
+    kerv ./= kerv[1]
     Au = exp.(-keru / ϵ)
     Av = exp.(-kerv / ϵ)
     FAu = sft(Au)
@@ -350,7 +350,7 @@ function dualToGradients(u::Array{T1,N}, v::Array{T1,N}, U::Array{T2,N}, LV::Lat
     
     # create convolution matrix
     kerv = r2(natlat(size(v)))
-    kerv ./= kerv[1,1]
+    kerv ./= kerv[1]
     Av = exp.(-kerv / ϵ)
     FAv = sft(Av)
     

@@ -141,6 +141,28 @@ end
 end
 
 @addTemplateMethods function lfCap(curvature::Real, height::Real)
+    """
+    lfCap(curvature::Real, height::Real)
+
+    Creates a capped parabolic light field with specified curvature and height.
+
+    This function generates a light field that represents a parabolic cap, which is useful for creating
+    phase patterns with a specific curvature and maximum height. The cap is created by applying a ramp
+    function to the difference between the height and a parabolic term.
+
+    # Arguments
+    - `curvature::Real`: The curvature of the parabolic cap. Positive values create a concave cap,
+                        negative values create a convex cap.
+    - `height::Real`: The maximum height of the cap. Values above this height are clipped to zero.
+
+    # Returns
+    - A `LatticeField` representing the capped parabolic pattern.
+
+    # Notes
+    - The function uses the `ramp` function to clip negative values to zero.
+    - The parabolic term is calculated as `curvature * r2(L)/2`, where `r2(L)` is the squared radius
+      in the lattice coordinates.
+    """
     p = ramp.(height .- curvature*r2(L)/2)
 end
 
