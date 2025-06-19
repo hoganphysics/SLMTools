@@ -246,7 +246,7 @@ const LF = LatticeField
 elq(x::Lattice{N}, y::Lattice{N}) where {N} = (length.(x)==length.(y) && all(isapprox.(x, y)) || throw(DomainError((x, y), "Unequal lattices.")); return nothing)
 
 # Equal lattice query
-elq(x::LF, y::LF) = (length.(x.L)==length.(y.L) && all(isapprox.(x.L, y.L)) && isapprox(x.flambda,y.flambda) || throw(DomainError((x.L, y.L), "Unequal lattices.")); return nothing)
+elq(x::LF, y::LF) = (length.(x.L)==length.(y.L) && all(isapprox.(x.L, y.L)) && isapprox(x.flambda,y.flambda) || throw(DomainError((x.L, y.L), "Unequal lattices or flambdas.")); return nothing)
 
 
 # Minimal methods to make a LatticeField function similarly to an array.
