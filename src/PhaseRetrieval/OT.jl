@@ -369,10 +369,11 @@ end
 
 """Fast phase retrieval using Sinkhorn algorithm with convolution operations."""
 function otQuickPhase(g2::LF{Intensity,T,N}, G2::LF{Intensity,T,N}, ϵ::Real, max_iter::Integer) where {T<:Real,N}
+	g2.flambda == G2.flambda || error("Unequal flambdas.")
     u, v, loss = SinkhornConvN(g2.data, G2.data, ϵ, max_iter; every=1)
     vf = dualToGradients(u, v, g2.data, G2.L,  ϵ)
-    Φ = scalarPotentialN(vf, g2.L)
-    return LF{RealPhase}(Φ, g2.L), loss
+    Φ = scalarPotentialN(vf, g2.L) / g2.flambda
+    return LF{RealPhase}(Φ, g2.L, g2.flambda), loss
 end 
 
 end # module OTHelpers
