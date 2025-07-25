@@ -14,7 +14,7 @@ export ramp, nabs, window, normalizeDistribution, safeInverse, hyperSum, centroi
 
 include("LFIO/ImageProcessing.jl")
 using .ImageProcessing
-export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parseFileName, parseStringToNum, getOrientation, dualate, linearFit, savePhase, saveBeam
+export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parseFileName, parseStringToNum, getOrientation, dualate, linearFit, savePhase, saveBeam, savePhase8BMP
 # saveAs8BitBMP
 
 include("LFIO/LFTemplates.jl")
