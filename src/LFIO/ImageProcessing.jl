@@ -1,10 +1,11 @@
-module ImageProcessing
-using FileIO: load, save
-# using PyCall
-using Images: Gray, RGB, Colorant
-using ..LatticeTools
-using ..Misc
-using Interpolations: cubic_spline_interpolation
+#=
+Functions for working with real images in the context of beam estimation.  There are many conventions we have adopted in the interest of 
+    developing a convenient workflow for this generally challenging and annoying problem. 
+
+Requires:
+    using FileIO: load, save
+    using Images: Gray, RGB, Colorant
+=#
 
 export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parseFileName, parseStringToNum, getOrientation, dualate, linearFit, savePhase, saveBeam, saveAs8BitBMP
 
@@ -424,9 +425,3 @@ end
 #     # Call the Python function with the image data and output filename
 #     py"save_as_bmp($py_image_data, $output_filename)"
 # end
-
-
-
-
-
-end # module ImageProcessing

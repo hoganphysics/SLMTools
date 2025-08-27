@@ -1,38 +1,35 @@
 module SLMTools
 
+using Interpolations: Flat, Periodic, CubicSplineInterpolation, LinearInterpolation, Linear
+using FFTW  # Needed for IFT.jl
+#using FFTW: fftshift, ifftshift, fft, ifft, plan_fft, plan_ifft  # Needed for DualLattices.jl and IFT.jl
+using LinearAlgebra 
+using ToeplitzMatrices 
+using OptimalTransport: sinkhorn
+#using LinearAlgebra: norm
+using FileIO: load, save
+using Images: Gray, RGB, Colorant  # Needed for ImageProcessing.jl
+#using Images: Gray  # Needed for Visualization.jl
+using FreeTypeAbstraction: findfont, renderstring!
 
-include("LatticeTools/LatticeTools.jl")
-using .LatticeTools
-export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF, subfield, wrap, square, sublattice, normalizeLF, phasor
-export natrange, natlat, sft, isft, padout, naturalize, latticeDisplacement, toDim, r2, ldot, Nyquist
-export downsample, upsample, coarsen, sublattice
-export dualLattice, dualShiftLattice, ldq, dualPhase
+include("LatticeFields/LatticeField.jl")
+
+include("LatticeFields/LatticeUtils.jl")
+
+include("LatticeFields/Resampling.jl")
+
+include("LatticeFields/DualLattices.jl")
 
 include("LFIO/Misc.jl")
-using .Misc
-export ramp, nabs, window, normalizeDistribution, safeInverse, hyperSum, centroid, clip, collapse, SchroffError
 
 include("LFIO/ImageProcessing.jl")
-using .ImageProcessing
-export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parseFileName, parseStringToNum, getOrientation, dualate, linearFit, savePhase, saveBeam
-# saveAs8BitBMP
 
 include("LFIO/LFTemplates.jl")
-using .LFTemplates
-export lfParabola, lfGaussian, lfRing, lfCap, ftaText, lfText, lfRect, lfRand
 
 include("PhaseRetrieval/IFT.jl")
-using .IFT
-export gs, gsLog, gsIter, pdgs, pdgsIter, pdgsLog, oneShot, pdgsError, mraf
 
 include("PhaseRetrieval/OT.jl")
-using .OT
-export getCostMatrix, pdCostMatrix, pdotBeamEstimate, mapify, scalarPotentialN, otPhase, pdotPhase, pdotBeamEstimate, otQuickPhase, SinkhornConvN, dualToGradients
 
 include("LFIO/Visualization.jl")
-using .Visualization
-export look
 
-
-export testing
-end # module SLMTools
+end 

@@ -1,16 +1,14 @@
-module OT
+#=
+Methods for optimal transport based phase generation and beam estimation. 
 
-using ..LatticeTools
-using ..Misc
-using OptimalTransport: sinkhorn
-using Interpolations: Linear
-using Images: Gray
-using LinearAlgebra: norm
+Requires:
+    using OptimalTransport: sinkhorn
+    using Interpolations: Linear
+    using LinearAlgebra: norm
+=#
 
-export getCostMatrix, pdCostMatrix, pdotPhase, pdotBeamEstimate, mapify, scalarPotentialN, otPhase, hyperSum2, otQuickPhase, SinkhornConvN, dualToGradients
-function look(f::AbstractArray{T,N}) where {T<:Real,N}
-    return Gray.(f ./ maximum(f))
-end
+export getCostMatrix, pdCostMatrix, pdotPhase, pdotBeamEstimate, mapify, scalarPotentialN, otPhase, hyperSum2, otQuickPhase, SinkhornConvN, dualToGradients, normalizeDistribution
+
 """
     getCostMatrix(L::Lattice{N}; normalization=maximum) where N
 
@@ -104,6 +102,38 @@ function mapify(plan::AbstractArray{<:Number,2},Lμ::Lattice{N},Lv::Lattice{N}) 
 end
 
 """
+    hyperSum(A::AbstractArray{T,N}, originIdx::CartesianIndex, sumDim::Int, fixDims) where {T<:Number, N}
+
+    Perform a cumulative sum of array `A` in a hyperplane fixed by `fixDims` at `originIdx`.
+
+    # Arguments
+    - `A::AbstractArray{T,N}`: An N-dimensional array to sum over.
+    - `originIdx::CartesianIndex`: The index of the origin in the cumulative sum.
+    - `sumDim::Int`: The dimension along which the cumulative sum is performed.
+    - `fixDims`: The dimensions to be fixed (i.e., not summed over).
+
+    # Returns
+    - An array with the same dimensions as `A`, containing the cumulative sum over the specified dimension, adjusted by the value at `originIdx`.
+
+    This function performs a cumulative sum over the dimension `sumDim` while fixing the other specified dimensions. It adjusts the sum relative to the value at `originIdx`, effectively setting the potential to zero at that point.
+    """
+function hyperSum(A::AbstractArray{T,N}, originIdx::CartesianIndex, sumDim::Int, fixDims) where {T<:Number,N}
+    # Slices array A along dimensions fixDims and cumsums along dimension sumDim.  Does this for each value of 
+    # the remaining dimensions.  originIdx indicates which CartesianIndex should be zero in the cumsum.
+    sumDim in fixDims && error("sumDim can't be in fixDims")
+    sumDim in 1:N && all(d in 1:N for d in fixDims) || error("More dimensions than array axes.")
+
+    dims = (((i in fixDims || i == sumDim ? size(A)[i] : (originIdx[i]:originIdx[i])) for i = 1:N)...,)
+    CI1 = CartesianIndices(dims)
+    sumBox = cumsum(A[CI1], dims=sumDim)
+
+    dims = (((i in fixDims ? size(A)[i] : (i == sumDim ? (originIdx[i]:originIdx[i]) : 1)) for i = 1:N)...,)
+    CI2 = CartesianIndices(dims)
+    originSlice = sumBox[CI2]
+    return sumBox .- originSlice
+end
+
+"""
     hyperSum2(A::AbstractArray{T,N}, originIdx::CartesianIndex, sumDim::Int, fixDims) where {T<:Number, N}
 
     Perform a cumulative sum of array `A` in a hyperplane fixed by `fixDims` at `originIdx`.  
@@ -165,6 +195,21 @@ function scalarPotentialN(A::AbstractArray{T,M}, L::Lattice{N}; idx=nothing, dim
 end
 
 
+"""
+    normalizeDistribution(U::AbstractArray{T,N}) where {T<:Number,N}
+
+    Normalize an array to represent a probability distribution.
+
+    This function takes an arbitrary numeric array `U` and transforms it into a positive real array 
+    where the sum of all elements equals 1. This is commonly used to represent a discrete probability distribution.
+
+    # Arguments
+    - `U::AbstractArray{T,N}`: An array of any shape containing numeric values. The array can be of any dimension `N`.
+
+    # Returns
+    - `AbstractArray{T,N}`: An array of the same shape as `U`, where each element is non-negative, and 
+    the sum of all elements is 1.
+    """
 function normalizeDistribution(U::AbstractArray{T,N}) where {T<:Number,N}
     # Makes an arbitrary array into a positive real array with sum 1, i.e. a probability distribution. 
     U = abs.(U)
@@ -174,6 +219,8 @@ end
 """
     otPhase(U::LatticeField{Intensity,<:Real,N}, V::LatticeField{Intensity,<:Number,N}, ε::Real; options...) where {N}
 
+    CONSIDER USING otQuickPhase INSTEAD!  It is slightly less stable, but much faster and less memory intensive. 
+    
     Solve the optimal transport problem between two distributions represented by lattice fields.
 
     Given two distributions `U` and `V` represented as `LatticeField{Intensity}` objects, this function computes 
@@ -198,7 +245,7 @@ end
     - If `sinkhorn` returns `NaN`, an error is thrown suggesting to try changing the value of `ε`.
 
     # See Also
-    - `normalizeDistribution`, `sinkhorn`, `scalarPotentialN`
+    - `otQuickPhase`, `pdotPhase`, `pdotBeamEstimate`
     """
 function otPhase(U::LatticeField{Intensity,<:Real,N},V::LatticeField{Intensity,<:Number,N},ε::Real;options...) where N
     # Solves the optimal transport problem between distributions U and V, returning a LatticeField{RealPhase} representing
@@ -287,10 +334,10 @@ end
 # The following functions (SinkhornConv2D, dualToGradients, otQuickPhase) are experimental
 # implementations that are currently being tested. They may be unstable or change in future versions.
 
-"""Fast 2D Sinkhorn algorithm implementation using convolution operations."""
-function toDim(v, d::Int, n::Int)
-    reshape(v, ((i == d ? length(v) : 1) for i = 1:n)...)
-end
+# """Fast 2D Sinkhorn algorithm implementation using convolution operations."""
+# function toDim(v, d::Int, n::Int)
+#     reshape(v, ((i == d ? length(v) : 1) for i = 1:n)...)
+# end
 
 function SinkhornIterBase!(u::Array{T1, N}, v::Array{T1, N},U::Array{T2, N}, V::Array{T3, N},FAu::Array{T4, N},FAv::Array{T4, N}) where {T1<:Real,T2<:Real,T3<:Real,T4<:Number,N}
         # row constraint
@@ -367,14 +414,41 @@ function dualToGradients(u::Array{T1,N}, v::Array{T1,N}, U::Array{T2,N}, LV::Lat
     return gradphi
 end
 
-"""Fast phase retrieval using Sinkhorn algorithm with convolution operations."""
-function otQuickPhase(g2::LF{Intensity,T,N}, G2::LF{Intensity,T,N}, ϵ::Real, max_iter::Integer) where {T<:Real,N}
+"""
+    otQuickPhase(U::LatticeField{Intensity,<:Real,N}, V::LatticeField{Intensity,<:Number,N}, ε::Real, max_iter::Integer; return_loss=false) where {N}
+
+    Solve the optimal transport problem between two distributions represented by lattice fields.  Uses a custom
+    fast Sinkhorn-type algorithm. 
+
+    Given two distributions `U` and `V` represented as `LatticeField{Intensity}` objects, this function computes 
+    the optimal transport map between them using the Sinkhorn algorithm. It returns a `LatticeField{RealPhase}` 
+    representing the scalar potential of the transport map.
+
+    # Arguments
+    - `U::LatticeField{Intensity,<:Real,N}`: A lattice field representing the source distribution.
+    - `V::LatticeField{Intensity,<:Number,N}`: A lattice field representing the target distribution.
+    - `ε::Real`: The regularization parameter for the Sinkhorn algorithm.  0.005 is usually a good starting point.
+    - `max_iter`: Maximum number of iterations.  Usually 10 is adequate. 
+    - `return_loss`: If true, also return the loss history from the Sinkhorn iterations.
+
+    # Returns
+    - `LatticeField{RealPhase}`: A lattice field representing the scalar potential of the optimal transport map.
+
+    # Notes
+    - Numerical instability results from very small values of `ε`.  If your output looks worse than expected, try increasing `ε`.
+
+    # See Also
+    - `otPhase`, `pdotPhase`, `pdotBeamEstimate`
+    """
+function otQuickPhase(g2::LF{Intensity,T,N}, G2::LF{Intensity,T,N}, ϵ::Real, max_iter::Integer; return_loss=false) where {T<:Real,N}
 	g2.flambda == G2.flambda || error("Unequal flambdas.")
     u, v, loss = SinkhornConvN(g2.data, G2.data, ϵ, max_iter; every=1)
     vf = dualToGradients(u, v, g2.data, G2.L,  ϵ)
     Φ = scalarPotentialN(vf, g2.L) / g2.flambda
-    return LF{RealPhase}(Φ, g2.L, g2.flambda), loss
-end 
-
-end # module OTHelpers
-
+    if return_loss
+        return LF{RealPhase}(Φ, g2.L, g2.flambda), loss
+    else
+        return LF{RealPhase}(Φ, g2.L, g2.flambda)
+    end
+end
+ 

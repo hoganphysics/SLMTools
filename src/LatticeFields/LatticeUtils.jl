@@ -1,16 +1,23 @@
-module LatticeCore
-using FFTW
-include("LatticeFields.jl")
-using .LatticeFields
+#=
+Utility functions for working with LatticeFields.
+Requires:
+    using FFTW: fftshift, ifftshift, fft
+    using LinearAlgebra 
+    using ToeplitzMatrices 
+
+Notes: 
+    All the dependencies are just for Andrii's Wigner and FrFT functions. 
+=#
+
 export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase
 export Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF
 export subfield, wrap, square, sublattice, normalizeLF, phasor
-export natrange, natlat, padout, sft, isft, latticeDisplacement, toDim, naturalize, r2, ldot, Nyquist
+export natrange, natlat, padout, latticeDisplacement, toDim, naturalize, r2, ldot, Nyquist
 
 
 
 
-#region -----------------------natlat------------------------
+#-----------------------natlat------------------------
 """ 
     natlat(n::Int) 
     Create a "natural" 1D lattice for a given integer n, i.e. a lattice which is self-dual under DFT.
@@ -52,9 +59,7 @@ function naturalize(f::LF{S,T,N}) where {S<:FieldVal,T,N}
 end
 
 
-#endregion
-
-#region -------------------padout, lattice, then array, then field-------------------
+#-------------------padout, lattice, then array, then field-------------------
 """
     padout(L::AbstractRange, p::Tuple{Int,Int}) 
     Pads an AbstractRange by a certain number of points before the first element and after the last element.
@@ -101,34 +106,7 @@ padout(A::Array{T,N}, p::Int, filler=zero(T)) where {T,N} = padout(A, ((p for i 
     """
 padout(f::LF{S,T,N}, p::NTuple{N,Int}, filler=zero(T)) where {S<:FieldVal,T,N} = LF{S,T,N}(padout(f.data, p, filler), padout(f.L, p), f.flambda)
 
-#endregion
-
-#region -------------------sft, isft-------------------
-"""
-    sft(v)
-
-    Performs a shifted Fourier transform on the input vector `v`. This function first applies an inverse shift (using `ifftshift`), then performs a Fourier transform (`fft`), and finally applies a forward shift (`fftshift`).
-    # Arguments
-    - `v`: An array to be transformed.
-    # Returns
-    - An array containing the shifted Fourier transform of `v`.
-    """
-sft(v) = fftshift(fft(ifftshift(v)))
-# sft(v::LF{ComplexAmplitude}) = LF{ComplexAmplitude}(fftshift(fft(ifftshift(v.data))), dualShiftLattice(v.L, v.flambda), v.flambda)
-
-"""
-    isft(v)
-    Performs an shifted inverse Fourier transform on the input vector `v`. This function first applies an inverse shift (using `ifftshift`), then performs an inverse Fourier transform (`ifft`), and finally applies a forward shift (`fftshift`).
-    # Arguments
-    - `v`: An array to be transformed.
-    # Returns
-    - An array containing the inverse shifted Fourier transform of `v`.
-    """
-isft(v) = fftshift(ifft(ifftshift(v)))
-# isft(v::LF{ComplexAmplitude}) = LF{ComplexAmplitude}(fftshift(ifft(ifftshift(v.data))), dualShiftLattice(v.L, v.flambda), v.flambda)
-#endregion
-
-#region -------------------lattice displacement and toDim-------------------
+#-------------------lattice displacement and toDim-------------------
 
 """
     latticeDisplacement(L::Lattice)
@@ -169,9 +147,7 @@ function toDim(v, d::Int, n::Int)
     reshape(v, ((i == d ? length(v) : 1) for i = 1:n)...)
 end
 
-#endregion
-
-#region ------------------- Lattice vector math -------------------
+#------------------- Lattice vector math -------------------
 
 """
 	r2(x::Lattice{N}) 
@@ -192,9 +168,7 @@ ldot(x::Lattice{N},v::NTuple{N,Real}) where N = ldot(v,x)
 ldot(v::Vector{T},x::Lattice{N}) where {T,N} = (length(v)==N || error("Vector length != Lattice dimension."); .+( (toDim(x[i] * v[i],i,N) for i=1:N)... ))
 ldot(x::Lattice{N},v::Vector{T}) where {N,T} = ldot(v,x)
 
-#endregion
-
-#region ------------------- Nyquist frequency -------------------
+#------------------- Nyquist frequency -------------------
 
 """
 	Nyquist(L::Lattice{N}) 
@@ -205,11 +179,7 @@ ldot(x::Lattice{N},v::Vector{T}) where {N,T} = ldot(v,x)
 function Nyquist(L::Lattice{N}) where N
     return 1 ./ (2 .* step.(L))
 end
-#endregion
-
-#region ------------------- Basis transformations -------------------
-using LinearAlgebra 
-using ToeplitzMatrices 
+#------------------- Basis transformations -------------------
 
 """
     shiftedDFTBasis(n::Integer)
@@ -322,6 +292,3 @@ function wigner_fft(f::Vector{T}) where T<:Number
     
     return real(w)
 end
-
-end # module Core
-

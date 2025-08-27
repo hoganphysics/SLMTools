@@ -1,12 +1,15 @@
-module Resampling
-using ..LatticeCore
-using Interpolations: Flat, Periodic, CubicSplineInterpolation
-using FFTW: fftshift, ifftshift
+#=
+Methods for resampling LatticeFields (and arrays).
+Requires:
+    using Interpolations: Flat, Periodic, CubicSplineInterpolation
+    using FFTW: fftshift, ifftshift 
+=#
 
 export downsample, coarsen, upsample
 
 cubic_spline_interpolation = CubicSplineInterpolation
-#region ------------------downsample lattices ----------------------------
+
+#------------------downsample lattices ----------------------------
 
 """
     downsample(r::AbstractRange, n::Int)
@@ -75,9 +78,7 @@ function downsample(L::Lattice{N}, ns::NTuple{N,Int}) where {N}
     return ((downsample(L[i], ns[i]) for i = 1:N)...,)
 end
 
-#endregion
-
-#region -------------------downsample arrays -------------------------------
+#-------------------downsample arrays -------------------------------
 
 """
     downsample(x::AbstractArray{T,N}, Lu::Lattice{N}, Ld::Lattice{N}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {T<:Number,N}
@@ -149,9 +150,7 @@ function downsample(x::AbstractArray{T,N}, ns::NTuple{N,Int}; interpolation=cubi
     return downsample(x, Lu, Ld; interpolation=interpolation, bc=bc)
 end
 
-#endregion
-
-#region -------------------downsample fields -------------------------------
+#-------------------downsample fields -------------------------------
 
 """
     downsample(f::LatticeField{S,T,N}, Ld::Lattice{N}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {S<:FieldVal,T<:Number,N}
@@ -172,7 +171,6 @@ function downsample(f::LatticeField{S,T,N}, Ld::Lattice{N}; interpolation=cubic_
     # between the lattices at all--this function just interpolates x from one lattice to the other. 
     return LatticeField{S}(downsample(f.data, f.L, Ld; interpolation=interpolation, bc=bc), Ld, f.flambda)
 end
-vandyfooo=0
 
 
 """
@@ -215,9 +213,7 @@ function downsample(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; interpolation=cub
     return LatticeField{S}(downsample(f.data, f.L, Ld; interpolation=interpolation, bc=bc), Ld, f.flambda)
 end
 
-#endregion
-
-#region -------------------- coarsen (downsampling by averaging)--------------------------------
+#-------------------- coarsen (downsampling by averaging)--------------------------------
 
 """
     coarsen(x::AbstractArray{T,N}, ns::NTuple{N,Int}; reducer=(x::AbstractArray -> sum(x)/length(x[:]))) where {T<:Number,N}
@@ -306,9 +302,7 @@ function coarsen(f::LatticeField{S,T,N}, n::Int; reducer=(x::AbstractArray -> su
 end
 
 
-#endregion
-
-#region --------------------upsample lattices----------------------------
+#--------------------upsample lattices----------------------------
 
 """
     upsample(r::AbstractRange, n::Int)
@@ -363,9 +357,8 @@ function upsample(L::Lattice{N}, ns::NTuple{N,Int}) where {N}
     return ((upsample(L[i], ns[i]) for i = 1:N)...,)
 end
 
-#endregion
+#---------------------upsample array--------------------------------
 
-#region ---------------------upsample array--------------------------------
 """
     upsample(f::LatticeField{S,T,N}, Lu::Lattice{N}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {S<:FieldVal,T<:Number,N}
 
@@ -432,9 +425,8 @@ function upsample(x::AbstractArray{T,N}, ns::NTuple{N,Int}; interpolation=cubic_
     Lu = upsample(Ld, ns)
     return upsample(x, Ld, Lu; interpolation=interpolation, bc=bc)
 end
-#endregion
 
-#region -------------------upsample fields -------------------------------
+#-------------------upsample fields -------------------------------
 
 """
     upsample(f::LatticeField{S,T,N}, Lu::Lattice{N}; interpolation=cubic_spline_interpolation, bc=zero(T)) where {S<:FieldVal,T<:Number,N}
@@ -494,10 +486,4 @@ function upsample(f::LatticeField{S,T,N}, ns::NTuple{N,Int}; interpolation=cubic
     # Upsamples an array from to a grid that is ns[i] times finer in dimension i, i.e. a grid upsampled by n.
     Lu = upsample(f.L, ns)
     return upsample(f, Lu; interpolation=interpolation, bc=bc)
-end
-
-#endregion
-
-
-
 end

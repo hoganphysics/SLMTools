@@ -1,17 +1,16 @@
-module DualLattices
-using ..LatticeCore
-using Interpolations: LinearInterpolation  
-linear_interpolation = LinearInterpolation
-using FFTW: fft, ifft, fftshift, ifftshift
+#=
+Methods for working with dual lattices.
+Requires:
+    using Interpolations: LinearInterpolation  
+    using FFTW: fft, ifft, fftshift, ifftshift
+=#
 
 export dualLattice, dualShiftLattice, dualPhase, ldq
-
 export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase
 export Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF
 export subfield, wrap, square, sublattice
 
-# export natlat, padout, sft, isft, latticeDisplacement, toDim
-
+export sft, isft
 
 """
     dualLattice(L::Lattice{N}, flambda::Number=1) where N
@@ -47,8 +46,6 @@ function dualShiftLattice(L::Lattice{N}, flambda::Number=1) where {N}
     # These frequencies are equivalent to those of fftshift(dualLattice), but the initial entries are negative
     return (((-floor(Int, length(l) / 2):floor(Int, (length(l) - 1) / 2)) .* flambda ./ (length(l) * step(l)) for l in L)...,)
 end
-LatticeCore.sft(v::LF{ComplexAmplitude}) = LF{ComplexAmplitude}(fftshift(fft(ifftshift(v.data))), dualShiftLattice(v.L, v.flambda), v.flambda)
-LatticeCore.isft(v::LF{ComplexAmplitude}) = LF{ComplexAmplitude}(fftshift(ifft(ifftshift(v.data))), dualShiftLattice(v.L, v.flambda), v.flambda)
 
 """
     ldq(L1::Lattice, L2::Lattice, flambda=1)
@@ -109,4 +106,27 @@ function dualPhase(L::Lattice{N}, flambda::Real=1.0; dL = nothing) where N
 end
 
 
-end # module DualLattices
+#------------------- sft, isft -------------------
+"""
+    sft(v)
+
+    Performs a shifted Fourier transform on the input vector `v`. This function first applies an inverse shift (using `ifftshift`), then performs a Fourier transform (`fft`), and finally applies a forward shift (`fftshift`).
+    # Arguments
+    - `v`: An array to be transformed.
+    # Returns
+    - An array containing the shifted Fourier transform of `v`.
+    """
+sft(v) = fftshift(fft(ifftshift(v)))
+
+"""
+    isft(v)
+    Performs an shifted inverse Fourier transform on the input vector `v`. This function first applies an inverse shift (using `ifftshift`), then performs an inverse Fourier transform (`ifft`), and finally applies a forward shift (`fftshift`).
+    # Arguments
+    - `v`: An array to be transformed.
+    # Returns
+    - An array containing the inverse shifted Fourier transform of `v`.
+    """
+isft(v) = fftshift(ifft(ifftshift(v)))
+
+sft(v::LF{ComplexAmplitude}) = LF{ComplexAmplitude}(fftshift(fft(ifftshift(v.data))), dualShiftLattice(v.L, v.flambda), v.flambda)
+isft(v::LF{ComplexAmplitude}) = LF{ComplexAmplitude}(fftshift(ifft(ifftshift(v.data))), dualShiftLattice(v.L, v.flambda), v.flambda)

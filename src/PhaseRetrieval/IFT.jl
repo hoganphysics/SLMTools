@@ -1,11 +1,13 @@
-module IFT
+#=
+Iterative Fourier Transform methods for both beam estimation and phase generation. 
 
-using FFTW
-using ..LatticeTools
-using ..Misc
+Requires:
+    using FFTW: fft, ifft, fftshift, ifftshift, plan_fft, plan_ifft
+=#
+
 export gs, gsIter, gsLog, pdgs, pdgsIter, pdgsLog, oneShot, pdgsError, mraf
 
-#region -------------------Gerchberg-Saxton------------------------------
+#-------------------Gerchberg-Saxton------------------------------
 """
     gs(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, nit::Integer, Φ0::LF{<:Phase,<:Number,N}) where N -> LF{ComplexPhase}
 
@@ -142,9 +144,8 @@ function gsError(U::LF{Intensity,<:Real,N}, V::LF{Intensity,<:Real,N}, Φ::LF{<:
     return gsError(sqrt(U),sqrt(V),Φ)
 end
 
-#endregion
-# add method to compensate for given phase
-#region ----------------Phase Diversity --------------------
+
+#----------------Phase Diversity --------------------
 
 
 """
@@ -269,8 +270,6 @@ function pdgsError(divMods::NTuple{M,LF{Modulus,<:Number,N}},divPhases::NTuple{M
     return sum(sum((abs.(divMods[i].data) - abs.(reconstructions[i].data)).^2) for i=1:M) / M
 end
 
-#endregion
-
 
 """
     oneShot4(img::LF{Intensity,<:Real,N}, alpha::Real, beta::NTuple{N,Real}) where {N}
@@ -316,6 +315,3 @@ function mraf(U::LF{Modulus,<:Real,N}, V::LF{Modulus,<:Real,N}, nit::Integer, Φ
     end
     return phasor(guess)
 end
-
-
-end # module LatticeIFTA

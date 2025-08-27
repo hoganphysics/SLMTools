@@ -1,9 +1,11 @@
-module LatticeFields
+#=
+Definitions of LatticeField and associated types and methods.
+=#
 
 export Lattice, elq, RealPhase, Generic, Phase, FieldVal, ComplexPhase, UPhase, UnwrappedPhase, S1Phase, Intensity, Amplitude, Modulus, RealAmplitude, RealAmp, ComplexAmplitude, ComplexAmp, LatticeField, LF, normalizeLF, phasor
 export subfield, wrap, square, sublattice
 
-#region ---------------------------Abstract Types and aliases--------------------------------------------
+#---------------------------Abstract Types and aliases--------------------------------------------
 """
     Lattice{N}
 
@@ -154,9 +156,8 @@ abstract type ComplexAmplitude <: Amplitude end
     Type alias for `ComplexAmplitude`.
     """
 const ComplexAmp = ComplexAmplitude
-#endregion
 
-#region ---------------------------LatticeField--------------------------------------------
+#---------------------------LatticeField--------------------------------------------
 
 """
     LatticeField{S<:FieldVal,T,N}
@@ -216,8 +217,8 @@ end
     This constructor is particularly useful when the types `T` and `N` can be automatically inferred from the input array. 
     """
 LatticeField{S}(array::AbstractArray{T,N}, L::Lattice{N}, flambda::Real=1.0) where {S<:FieldVal,T,N} = LatticeField{S,T,N}(array, L, flambda)
-ramp(x::T) where {T<:Number} = (x < 0 ? zero(T) : x)
-LatticeField{Intensity}(array::AbstractArray{T,N},L::Lattice{N},flambda::Real=1.0) where {T,N} = LatticeField{Intensity,T,N}(ramp.(array),L,flambda)
+rampPrivate(x::T) where {T<:Number} = (x < 0 ? zero(T) : x)    # This is here to make this file logically independent from all the others.
+LatticeField{Intensity}(array::AbstractArray{T,N},L::Lattice{N},flambda::Real=1.0) where {T,N} = LatticeField{Intensity,T,N}(rampPrivate.(array),L,flambda)
 LatticeField{ComplexAmp}(array::AbstractArray{T,N},L::Lattice{N},flambda::Real=1.0) where {T,N} = LatticeField{ComplexAmp,ComplexF64,N}(convert.(ComplexF64,array),L,flambda)
 
 """
@@ -282,9 +283,8 @@ function Base.getindex(f::LatticeField{S,T,N}, x::CartesianIndices) where {S,T,N
     return LatticeField{S,T,N}(getindex(f.data,x),sublattice(f.L,x),f.flambda)
 end
 
-#endregion
+#----------------------sublattice--------------------------------
 
-#region ----------------------sublattice--------------------------------
 """
     sublattice(L::Lattice{N}, box::CartesianIndices) where {N}
 
@@ -324,9 +324,9 @@ function sublattice(L::Lattice{N}, x::Union{I,AbstractRange{I}}...) where {N,I<:
     y = (((i isa Integer) ? (i:i) : i for i in x)...,)
     return ((L[j][y[j]] for j = 1:N)...,)
 end
-#endregion
 
-#region ---------------------------subfield--------------------------------------------
+#---------------------------subfield--------------------------------------------
+
 """
     subfield(f::LatticeField{S,T,N}, x::I...) where {S,T,N,I<:Integer}
 
@@ -392,9 +392,8 @@ function subfield(f::LatticeField{S,T,N}, x::Union{I,AbstractRange{I}}...) where
     z = filter(i -> !(x[i] isa Integer), 1:length(x))
     return LatticeField{S,T,length(z)}(getindex(f.data, x...), sublattice(f.L[z], x[z]...), f.flambda)
 end
-#endregion
 
-#region -------------------- Basic arithmetic for LatticeFields -------------------------------
+#-------------------- Basic arithmetic for LatticeFields -------------------------------
 
 # Copying
 Base.copy(f::LF{I}) where I<:FieldVal = LF{I}(copy(f.data),copy(f.L),copy(f.flambda))
@@ -463,9 +462,7 @@ Base.:(/)(f::LF{S,T,N}, x::Complex) where {S,T<:Complex,N} = LF{S,T,N}(f.data ./
 
 
 
-#endregion
-
-#region --------------------------- wrap, square, normalizeLF --------------------------------------------
+#--------------------------- wrap, square, normalizeLF --------------------------------------------
 """
     square(x::LF{<:Amplitude})
 
@@ -573,10 +570,3 @@ phasor(z::ComplexF64) = iszero(z) ? one(ComplexF64) : z / abs(z)
 
     """
 phasor(f::LF{ComplexAmp}) = LF{ComplexPhase}(phasor.(f.data),f.L,f.flambda)
-
-
-#endregion
-
-
-
-end # module LatticeFields

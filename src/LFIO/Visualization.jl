@@ -1,6 +1,11 @@
-module Visualization
-using Images: Gray
-using ..LatticeTools
+#=
+Methods for visualizing LatticeFields, primarily via the look function.  look is designed to do "the right thing" for 
+    any possible LF type. 
+
+Requires:
+    using Images: Gray
+=#
+
 export look
 
 cycle1(x::Complex) = (angle(x) + pi) / (2pi)
@@ -49,4 +54,3 @@ end
 function look(f::AbstractArray{T,N}) where {T<:Real,N}
     return Gray.(f ./ maximum(f))
 end
-end # module VisualizationHelpers
