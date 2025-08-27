@@ -10,19 +10,23 @@ It provides various algorithms for calibrating input beams and generating SLM ph
 ```julia
 using SLMTools
 
-# Generate an input grid and corresponding output grid
+# Generate an input grid and corresponding output grid.
 N = 128
 L0 = natlat((N,N))
 dL0 = dualShiftLattice(L0)
 
-# Generate an input beam and target output beam
+# Generate an input beam and target output beam.
 inputBeam = lfGaussian(Intensity, L0, 1.0)
 targetBeam = lfRing(Intensity, dL0, 2.5, 0.5)
 
-# Use optimal transport to find an SLM phase to make an approximate output beam
+# Use optimal transport to find an SLM phase to make an approximate output beam.
 phiOT = otPhase(inputBeam,targetBeam,0.001)
 
-# Refine the above phase using the Gerchberg-Saxton algorithm.
+# Alternative optimal transport function.  This function is much faster, but somewhat
+# less stable than otPhase.  Consequently we use a slightly higher regularization parameter.
+phiOT2 = otQuickPhase(inputBeam,targetBeam,0.005,100)
+
+# Refine the OT generated phase using the Gerchberg-Saxton algorithm.
 phiGS = gs(inputBeam,targetBeam,100,phiOT)
 
 # View the resulting output beams
@@ -67,7 +71,8 @@ The basic workflow of SLMTools is this:
 
 ### Useful functions
 The following are some of the major useful functions provided by this package. 
-* `otPhase`: Uses optimal transport to generate an SLM phase for transforming a given input beam into a target output beam.
+* `otPhase`: Uses optimal transport to generate an SLM phase for transforming a given input beam into a target output beam. IMPORTANT NOTE: This function has largely been superceded by `otQuickPhase`.
+* `otQuickPhase`: A new version of `otPhase` which uses a custom algorithm that greatly improves speed and relaxes memory requirements.  This function is slightly less stable that `otPhase`, but should probably be the go-to OT solver for most people most of the time.  This function can easily handle arrays/lattices with many millions of points. You may need to fiddle with the regularization parameter epsilon a bit to get good results. 
 * `gs`: Uses the Gerchberg-Saxton algorithm to generate an SLM phase for transforming a given input beam into a target output beam.
 * `mraf`: Uses the Mixed Region Amplitude Freedom (MRAF) algorithm to generate an SLM phase for transforming a given input beam into a target output beam.
 * `pdotBeamEstimate`: Uses optimal transport to estimate the input beam incident upon an SLM, given a set of diversity phase images and phase coefficients.
