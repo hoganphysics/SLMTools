@@ -10,195 +10,251 @@ export lfParabola, lfGaussian, lfRing, lfCap, ftaText, lfText, lfRect, lfRand
 ################################## Function docstrings #################################
 
 """
-    lfParabola(quad::Real, lin::NTuple{N,Real}=Tuple(0.0 for i=1:N))
+    lfParabola(...,quad::Real, lin::NTuple{N,Real}=Tuple(0.0 for i=1:N))
 
-    LF template function generating a parabolic LatticeField with specified quadratic and linear coefficients.  All 
-    LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
-    method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
-    or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples 
-    below for how to use the template arguments.  In this case, the peculiar arguments are as follows: 
+LF template function generating a parabolic LatticeField with specified quadratic and linear coefficients. 
 
-    # Peculiar arguments
-    - `quad::Real`: Second derivative of the parabola.
-    - `lin::NTuple{N,Real}`: First derivative of the parabola in each dimension.
+All LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
+method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
+or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples 
+below for how to use the template arguments.  In this case, the peculiar arguments are as follows: 
 
-    # Returns
-    - `LatticeField` with a parabolic distribution.
+# Peculiar arguments
+- `quad::Real`: Second derivative of the parabola.
+- `lin::NTuple{N,Real}`: First derivative of the parabola in each dimension.
 
-    # Notes
-    - The output is calculated as `quad * r2(L)/2 + ldot(lin,L)`, where `r2(L)` is the squared radius
-      in the lattice coordinates and `ldot` is the lattice dot product.
+# Template arguments
+Use one or the other of the following argument combinations as the initial argument(s) to this function:
+- `T::FieldVal`, `L::Lattice`: The fieldval (e.g. `RealPhase``, `Intensity`) and lattice.
+- `f::LF{T}`: An LF whose type and lattice fill the roles of `T`, `L` in the above version. 
 
-    # Examples
-    - f1 = lfParabola(Intensity,natlat(128,128),1.5)
-    - f2 = lfParabola(f1,2.1,(0.1,0.2))
-    """
-function lfParabola()
-    println("This is a placeholder method for documenting lfParabola. See docstring for functional methods.")
-end
+# Keyword arguments
+- `center::NTuple{N,Real}=Tuple(0.0 for i=1:N)`: Center position by which to offset the output. 
+- `flambda::Real=1.0`: flambda value.  This is only available when the template arguments are of the `T,L` form. 
+
+# Returns
+- `LatticeField` with a parabolic distribution.
+
+# Notes
+- The output is calculated as `quad * r2(L)/2 + ldot(lin,L)`, where `r2(L)` is the squared radius
+    in the lattice coordinates and `ldot` is the lattice dot product.
+
+# Examples
+- f1 = lfParabola(Intensity,natlat(128,128),1.5)
+- f2 = lfParabola(f1,2.1,(0.1,0.2))
+"""
+function lfParabola end
 
 """
-    lfGaussian(radius::Real, norm::Real=1.0)
+    lfGaussian(...,radius::Real, norm::Real=1.0)
 
-    LF template function generating a Gaussian LatticeField with specified radius and normalization.  All 
-    LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
-    method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
-    or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples 
-    below for how to use the template arguments.  In this case, the peculiar arguments are as follows: 
+LF template function generating a Gaussian LatticeField with specified radius and normalization. 
 
-    # Peculiar arguments
-    - `radius::Real`: Standard deviation of the Gaussian.
-    - `norm::Real`: Normalization factor for the Gaussian.
+All LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
+method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
+or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples 
+below for how to use the template arguments.  In this case, the peculiar arguments are as follows: 
 
-    # Returns
-    - `LatticeField` with a Gaussian distribution.
+# Peculiar arguments
+- `radius::Real`: Standard deviation of the Gaussian.
+- `norm::Real`: Normalization factor for the Gaussian.
 
-    # Notes
-    - The output is calculated as `exp(-r2(L)/(2*radius^2))`, where `r2(L)` is the squared radius
-      in the lattice coordinates.
+# Template arguments
+Use one or the other of the following argument combinations as the initial argument(s) to this function:
+- `T::FieldVal`, `L::Lattice`: The fieldval (e.g. `RealPhase``, `Intensity`) and lattice.
+- `f::LF{T}`: An LF whose type and lattice fill the roles of `T`, `L` in the above version. 
 
-    # Examples
-    - f1 = lfGaussian(Intensity,natlat(128,128),1.5)
-    - f2 = lfGaussian(f1,2.1)
-    """
-function lfGaussian()
-    println("This is a placeholder method for documenting lfGaussian. See docstring for functional methods.")
-end
+# Keyword arguments
+- `center::NTuple{N,Real}=Tuple(0.0 for i=1:N)`: Center position by which to offset the output. 
+- `flambda::Real=1.0`: flambda value.  This is only available when the template arguments are of the `T,L` form. 
+
+# Returns
+- `LatticeField` with a Gaussian distribution.
+
+# Notes
+- The output is calculated as `exp(-r2(L)/(2*radius^2))`, where `r2(L)` is the squared radius
+    in the lattice coordinates.
+
+# Examples
+- f1 = lfGaussian(Intensity,natlat(128,128),1.5)
+- f2 = lfGaussian(f1,2.1)
+"""
+function lfGaussian end
 
 """
-    lfRing(radius::Number, width::Number)
+    lfRing(<template args>,radius::Number, width::Number; <kwargs>)
 
-    LF template function generating a ring-shaped LatticeField with specified radius and width.  All 
-    LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
-    method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
-    or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples 
-    below for how to use the template arguments.  In this case, the peculiar arguments are as follows: 
-
-    # Peculiar arguments
-    - `radius::Number`: Radius of the ring.
-    - `width::Number`: Width of the ring.
-
-    # Returns
-    - `LatticeField` with a ring-shaped distribution.
-
-    # Notes
-    - The output is calculated as `exp(-(sqrt(r2(L)) - radius)^2 / (2*width^2))`, where `r2(L)` is the squared radius
-      in the lattice coordinates.
-
-    # Examples
-    - f1 = lfRing(Intensity,natlat(128,128),2.0,0.5)
-    - f2 = lfRing(f1,2.0,0.5)
-    """
-function lfRing()
-    println("This is a placeholder method for documenting lfRing. See docstring for functional methods.")
-end
-
-    """
-    lfCap(curvature::Real, height::Real)
-
-    LF template function generating a truncated parabolic LatticeField with specified curvature and height.  All 
-    LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
-    method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
-    or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples 
-    below for how to use the template arguments.  In this case, the peculiar arguments are as follows: 
-
-    # Peculiar arguments
-    - `curvature::Real`: Second derivative of the parabola.
-    - `height::Real`: Height of the cap.
-
-    # Returns
-    - `LatticeField` with a parabola cap distribution.
-
-    # Notes
-    - The output is calculated as `ramp(curvature * r2(L)/2)`, where `r2(L)` is the squared radius
-      in the lattice coordinates.
-
-    # Examples
-    - f1 = lfCap(Intensity,natlat(128,128),1.5,2.0)
-    - f2 = lfCap(f1,2.1,2.0)
-    """
-    function lfCap()
-        println("This is a placeholder method for documenting lfCap. See docstring for functional methods.")
-    end
-
-    """
-    lfText(str::String)
-
-    LF template function generating a text LatticeField with specified string.  All 
-    LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
-    method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
-    or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples 
-    below for how to use the template arguments.  In this case, the peculiar arguments are as follows: 
-
-    # Peculiar arguments
-    - `str::String`: Text string to be rendered.
-    - `pixelsize::Union{Int,Nothing}=nothing`: Text size parameter.
-    - `fnt = "arial bold"`: Font.
-    - `halign=:hcenter`: Horizontal alignment.
-    - `valign=:vcenter`: Vertical alignment.
-    - `options...`: Additional rendering options.
-
-    # Returns
-    - `LatticeField` with a text distribution.
-
-    # Notes
-    - The output is generated using the `ftaText` function, which renders the text string into a float array.
-
-    # Examples
-    - f1 = lfText(Intensity,natlat(128,128),"C")
-    - f2 = lfText(f1,"C")
-    """
-    function lfText()
-        println("This is a placeholder method for documenting lfText. See docstring for functional methods.")
-    end
-
-    """
-    lfRect()
-
-    LF template function generating a rectangular shaped (i.e. boxcar function) LatticeField.  All
-    LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
-    method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
-    or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples 
-    below for how to use the template arguments.  In this case, the peculiar arguments are as follows: 
+LF template function generating a ring-shaped LatticeField with specified radius and width.  
     
-    # Peculiar arguments
-    - sides::NTuple{N,Real}: Lengths of the sides of the rectangle in each dimension.
-    - height::Real=1.0: Height of the boxcar function.
+All LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
+method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
+or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples 
+below for how to use the template arguments.  In this case, the peculiar arguments are as follows: 
 
-    # Returns
-    - `LatticeField` with a rectangular shape.
+# Peculiar arguments
+- `radius::Number`: Radius of the ring.
+- `width::Number`: Width of the ring.
 
-    # Examples
-    - f1 = lfRect(Intensity,natlat(128,128),(1.5,2.3))
-    - f2 = lfRect(f1,(1.5,1.3))
+# Template arguments
+Use one or the other of the following argument combinations as the initial argument(s) to this function:
+- `T::FieldVal`, `L::Lattice`: The fieldval (e.g. `RealPhase``, `Intensity`) and lattice.
+- `f::LF{T}`: An LF whose type and lattice fill the roles of `T`, `L` in the above version. 
+
+# Keyword arguments
+- `center::NTuple{N,Real}=Tuple(0.0 for i=1:N)`: Center position by which to offset the output. 
+- `flambda::Real=1.0`: flambda value.  This is only available when the template arguments are of the `T,L` form. 
+
+# Returns
+- `LatticeField` with a ring-shaped distribution.
+
+# Notes
+- The output is calculated as `exp(-(sqrt(r2(L)) - radius)^2 / (2*width^2))`, where `r2(L)` is the squared radius
+    in the lattice coordinates.
+
+# Examples
+- f1 = lfRing(Intensity,natlat(128,128),2.0,0.5)
+- f2 = lfRing(f1,2.0,0.5)
+"""
+function lfRing end
+
+"""
+    lfCap(...,curvature::Real, height::Real)
+
+LF template function generating a truncated parabolic LatticeField with specified curvature and height.  
+
+All LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
+method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
+or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples 
+below for how to use the template arguments.  In this case, the peculiar arguments are as follows: 
+
+# Peculiar arguments
+- `curvature::Real`: Second derivative of the parabola.
+- `height::Real`: Height of the cap.
+
+# Template arguments
+Use one or the other of the following argument combinations as the initial argument(s) to this function:
+- `T::FieldVal`, `L::Lattice`: The fieldval (e.g. `RealPhase``, `Intensity`) and lattice.
+- `f::LF{T}`: An LF whose type and lattice fill the roles of `T`, `L` in the above version. 
+
+# Keyword arguments
+- `center::NTuple{N,Real}=Tuple(0.0 for i=1:N)`: Center position by which to offset the output. 
+- `flambda::Real=1.0`: flambda value.  This is only available when the template arguments are of the `T,L` form. 
+
+# Returns
+- `LatticeField` with a parabola cap distribution.
+
+# Notes
+- The output is calculated as `ramp(curvature * r2(L)/2)`, where `r2(L)` is the squared radius
+    in the lattice coordinates.
+
+# Examples
+- f1 = lfCap(Intensity,natlat(128,128),1.5,2.0)
+- f2 = lfCap(f1,2.1,2.0)
+"""
+function lfCap end
+
+"""
+    lfText(...,str::String)
+
+LF template function generating a text LatticeField with specified string. 
+
+All LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
+method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
+or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples 
+below for how to use the template arguments.  In this case, the peculiar arguments are as follows: 
+
+# Peculiar arguments
+- `str::String`: Text string to be rendered.
+- `pixelsize::Union{Int,Nothing}=nothing`: Text size parameter.
+- `fnt = "arial bold"`: Font.
+- `halign=:hcenter`: Horizontal alignment.
+- `valign=:vcenter`: Vertical alignment.
+- `options...`: Additional rendering options.
+
+# Template arguments
+Use one or the other of the following argument combinations as the initial argument(s) to this function:
+- `T::FieldVal`, `L::Lattice`: The fieldval (e.g. `RealPhase``, `Intensity`) and lattice.
+- `f::LF{T}`: An LF whose type and lattice fill the roles of `T`, `L` in the above version. 
+
+# Keyword arguments
+- `center::NTuple{N,Real}=Tuple(0.0 for i=1:N)`: Center position by which to offset the output. 
+- `flambda::Real=1.0`: flambda value.  This is only available when the template arguments are of the `T,L` form. 
+
+# Returns
+- `LatticeField` with a text distribution.
+
+# Notes
+- The output is generated using the `ftaText` function, which renders the text string into a float array.
+
+# Examples
+- f1 = lfText(Intensity,natlat(128,128),"C")
+- f2 = lfText(f1,"C")
+"""
+function lfText end
+
     """
-    function lfRect()
-        println("This is a placeholder method for documenting lfRect. See docstring for functional methods.")
-    end
+    lfRect(...,sides::NTuple{N,Real},height::Real=1.0)
 
-    """
-    lfRand()
+LF template function generating a rectangular shaped (i.e. boxcar function) LatticeField.  
 
-    LF template function generating a random LatticeField.  All
-    LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
-    method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
-    or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples 
-    below for how to use the template arguments.  In this case, there are no peculiar arguments, save an optional 
-    keyword argument to specify the data type of the field values.
+All LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
+method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
+or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples 
+below for how to use the template arguments.  In this case, the peculiar arguments are as follows: 
 
-    # Peculiar arguments
-    - R::DataType=Float64: Data type of the random values.
-    
-    # Returns
-    - `LatticeField` with random values.
+# Peculiar arguments
+- sides::NTuple{N,Real}: Lengths of the sides of the rectangle in each dimension.
+- height::Real=1.0: Height of the boxcar function.
 
-    # Examples
-    - f1 = lfRand(Intensity,natlat(128,128))
-    - f2 = lfRand(f1)
-    """
-    function lfRand()
-        println("This is a placeholder method for documenting lfRand. See docstring for functional methods.")
-    end
+# Template arguments
+Use one or the other of the following argument combinations as the initial argument(s) to this function:
+- `T::FieldVal`, `L::Lattice`: The fieldval (e.g. `RealPhase``, `Intensity`) and lattice.
+- `f::LF{T}`: An LF whose type and lattice fill the roles of `T`, `L` in the above version. 
+
+# Keyword arguments
+- `center::NTuple{N,Real}=Tuple(0.0 for i=1:N)`: Center position by which to offset the output. 
+- `flambda::Real=1.0`: flambda value.  This is only available when the template arguments are of the `T,L` form. 
+
+# Returns
+- `LatticeField` with a rectangular shape.
+
+# Examples
+- f1 = lfRect(Intensity,natlat(128,128),(1.5,2.3))
+- f2 = lfRect(f1,(1.5,1.3))
+"""
+function lfRect end
+
+"""
+    lfRand(...)
+
+LF template function generating a random LatticeField. 
+
+All LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
+method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
+or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples 
+below for how to use the template arguments.  In this case, there are no peculiar arguments, save an optional 
+keyword argument to specify the data type of the field values.
+
+# Peculiar arguments
+- R::DataType=Float64: Data type of the random values.
+
+# Template arguments
+Use one or the other of the following argument combinations as the initial argument(s) to this function:
+- `T::FieldVal`, `L::Lattice`: The fieldval (e.g. `RealPhase``, `Intensity`) and lattice.
+- `f::LF{T}`: An LF whose type and lattice fill the roles of `T`, `L` in the above version. 
+
+# Keyword arguments
+- `center::NTuple{N,Real}=Tuple(0.0 for i=1:N)`: Center position by which to offset the output. 
+- `flambda::Real=1.0`: flambda value.  This is only available when the template arguments are of the `T,L` form. 
+
+# Returns
+- `LatticeField` with random values.
+
+# Examples
+- f1 = lfRand(Intensity,natlat(128,128))
+- f2 = lfRand(f1)
+"""
+function lfRand end
 
 ################################## Helper functions #################################
 
