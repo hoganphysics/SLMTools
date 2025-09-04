@@ -524,7 +524,7 @@ end
 end
 
 @addTemplateMethods function lfCap(curvature::Real, height::Real)
-    p = ramp.(height .- curvature*r2(L)/2)
+    p = ramp.(height .- curvature*r2(Lc)/2)
 end
 
 @addTemplateMethods function lfRect(sides::NTuple{N,Real},height::Real=1.0)
