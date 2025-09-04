@@ -5,7 +5,7 @@ Requires:
     using FreeTypeAbstraction: findfont, renderstring!
 =#
 
-export lfParabola, lfGaussian, lfRing, lfCap, ftaText, lfText, lfRect, lfRand
+export lfParabola, lfGaussian, lfRing, lfCap, ftaText, lfText, lfRect, lfRand, lfHeart, lfSmile, lfPointer, lfBlur
 
 ################################## Function docstrings #################################
 
@@ -256,6 +256,102 @@ Use one or the other of the following argument combinations as the initial argum
 """
 function lfRand end
 
+"""
+    lfHeart(...,scale; flip=false)
+
+LF template function generating a heart-shaped LatticeField.
+
+All LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
+method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
+or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples 
+below for how to use the template arguments.  In this case, the peculiar arguments are as follows:  
+
+# Peculiar arguments
+- `scale`: Overall scale of the heart shape.
+- `flip=false`: If true, flip the heart vertically.
+
+# Template arguments
+Use one or the other of the following argument combinations as the initial argument(s) to this function:
+- `T::FieldVal`, `L::Lattice`: The fieldval (e.g. `RealPhase``, `Intensity`) and lattice.
+- `f::LF{T}`: An LF whose type and lattice fill the roles of `T`, `L` in the above version.
+
+# Keyword arguments
+- `center::NTuple{N,Real}=Tuple(0.0 for i=1:N)`: Center position by which to offset the output. 
+- `flambda::Real=1.0`: flambda value.  This is only available when the template arguments are of the `T,L` form.
+
+# Returns
+- `LatticeField` with a heart shape.
+
+# Examples
+- f1 = lfHeart(Intensity,natlat(128,128),1.5)
+- f2 = lfHeart(f1,2.1)
+"""
+function lfHeart end
+
+"""
+    lfSmile(...,scale; flip=false)
+
+LF template function generating a smiley face LatticeField.
+
+All LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
+method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
+or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples
+below for how to use the template arguments.  In this case, the peculiar arguments are as follows:
+
+# Peculiar arguments
+- `scale`: Overall scale of the smiley face.
+- `flip=false`: If true, flip the smiley vertically.
+
+# Template arguments
+Use one or the other of the following argument combinations as the initial argument(s) to this function:
+- `T::FieldVal`, `L::Lattice`: The fieldval (e.g. `RealPhase``, `Intensity`) and lattice.
+- `f::LF{T}`: An LF whose type and lattice fill the roles of `T`, `L` in the above version.
+
+# Keyword arguments
+- `center::NTuple{N,Real}=Tuple(0.0 for i=1:N)`: Center position by which to offset the output.
+- `flambda::Real=1.0`: flambda value.  This is only available when the template arguments are of the `T,L` form.
+
+# Returns
+- `LatticeField` with a smiley face.
+
+# Examples
+- f1 = lfSmile(Intensity,natlat(128,128),1.5)
+- f2 = lfSmile(f1,2.1)
+"""
+function lfSmile end
+
+"""
+    lfPointer(...,scale; flip=false)
+
+LF template function generating a pointing hand emoji LatticeField.
+
+All LF template functions have a method which accepts a Lattice and LF type (e.g. Intensity, Modulus) and another
+method which acccepts an LF from which the Lattice and LF type are inferred. In either case, the first argument
+or arguments are these template objects, and subsequent arguments are peculiar to the function.  See examples
+below for how to use the template arguments.  In this case, the peculiar arguments are as follows:
+
+# Peculiar arguments
+- `scale`: Overall scale of the pointing hand.
+- `flip=false`: If true, flip the hand vertically.
+
+# Template arguments
+Use one or the other of the following argument combinations as the initial argument(s) to this function:
+- `T::FieldVal`, `L::Lattice`: The fieldval (e.g. `RealPhase``, `Intensity`) and lattice.
+- `f::LF{T}`: An LF whose type and lattice fill the roles of `T`, `L` in the above version.
+
+# Keyword arguments
+- `center::NTuple{N,Real}=Tuple(0.0 for i=1:N)`: Center position by which to offset the output.
+- `flambda::Real=1.0`: flambda value.  This is only available when the template arguments are of the `T,L` form.
+
+# Returns
+- `LatticeField` with a pointing hand emoji.
+
+# Examples
+- f1 = lfPointer(Intensity,natlat(128,128),1.5)
+- f2 = lfPointer(f1,2.1)
+"""
+function lfPointer end
+
 ################################## Helper functions #################################
 
 function lfStandardOutputFormat(T::DataType,data::Array{S,N},L::Lattice{N},flambda::Real) where {S,N}
@@ -307,8 +403,45 @@ function ftaText(str::String,sz::Tuple{Int,Int}; fnt = "arial bold",pixelsize::U
     return convert.(Float64,arr)./255
 end
 
+################################## lfBlur #################################
+
+"""
+    lfBlur(f::LF{T,S,N},r::Real) where {T,S,N}
+
+Apply a Gaussian blur to the LatticeField `f` with standard deviation `r`.
+
+# Arguments
+- `f::LF{T,S,N}`: Input LatticeField.
+- `r::Real`: Standard deviation of the Gaussian blur.
+
+# Returns
+- `LF{T}`: Blurred LatticeField.
+"""
+function lfBlur(f::LF{T,S,N},r::Real) where {T,S<:Complex,N}
+    ker = lfGaussian(Intensity,f.L,r).data
+    data = isft(sft(ker) .* sft(f.data))
+    return LF{T}(data,f.L,f.flambda)
+end
+
+function lfBlur(f::LF{T,S,N},r::Real) where {T,S<:Real,N}
+    ker = lfGaussian(Intensity,f.L,r).data
+    data = abs.(isft(sft(ker) .* sft(f.data)))
+    return LF{T}(data,f.L,f.flambda)
+end
 
 ################################## Metaprogramming for auto-generating methods #################################
+#=
+The macro @addTemplateMethods(funcExpr) takes a function expression defining a template function (e.g. lfGaussian)
+and generates two methods for it: one that accepts a Lattice and FieldVal type, and another that accepts an LF object.
+The generated methods handle common tasks such as centering the lattice and formatting the output, allowing the
+user-defined function to focus solely on the specific computation.  
+
+In defining the function to be passed to the macro, the following rules apply:
+- The function name should be the template function name (e.g. lfGaussian).
+- The argument(s) should be the peculiar arguments for the function (e.g. radius for lfGaussian). Both positional and keyword arguments are supported.
+- The function body should compute the array `p` representing the field values, using the centered lattice `Lc`.
+- The function should not include return statements; the macro will append a standard return statement.
+=#
 
 methodPattern1 = quote
     function fname(T::DataType,L::Lattice{N} ; 
@@ -403,4 +536,188 @@ end
         fnt = "arial bold", halign=:hcenter, valign=:vcenter, options...)
     # WARNING: This function probably doesn't work on Linux machines, due to a bug in the FreeTypeAbstraction package.
     p = convert.(R,ftaText(str,length.(L);pixelsize=pixelsize,fnt=fnt,halign=halign,valign=valign, options...))
+end
+
+################################## LF emojies #################################
+
+# The functions below are for generating fun shapes: Heart, smiley face, and pointing hand emojies. 
+
+#------- Heart -------#
+function heartQ(x::Real,y::Real,w::Real,t::Real,b::Real)
+    r = 1 - cbrt( (x/w)^2 )
+    if r < 0 
+        return 0.0
+    end
+    c = sqrt(r)
+    yt = t*(2*c - c^2 - c^3)
+    yb = b*(-2*c - c^2 + c^3)
+    return yb <= y <= yt ? 1.0 : 0.0
+end
+function heartQ(x::Real,y::Real,scale::Real)
+    w = scale
+    t = scale * 1.2/sqrt(2)
+    b = scale/sqrt(2)
+    return heartQ(x,y,w,t,b)
+end
+
+@addTemplateMethods function lfHeart(scale; flip=false)
+    p = [heartQ(x,y,scale) for x in Lc[1], y in Lc[2]]
+    if flip
+        p = reverse(transpose(p),dims=1)
+    end
+end
+
+#------- Smiley -------#
+
+function smileQ(x::Real,y::Real,hr::Real,mr::Real,ma::Real,mt::Real,erx::Real,ery::Real,ex::Real,ey::Real)
+    if x^2+y^2>hr^2   # Outside head
+        return 0.0
+    end
+    if y < 0 && (mr+mt)^2 > x^2+y^2 > (mr-mt)^2 && abs(x/y) < tan(ma)    # In lips
+        return 0.1
+    end
+    if (abs(x) - ex)^2/erx^2 + (y-ey)^2/ery^2 < 1    # In eyes
+        return 0.1
+    end
+    return 1.0
+end
+
+function smileQ(x::Real,y::Real,scale::Real)
+    hr = scale
+    mr = scale * 0.6
+    ma = 3*pi/8
+    mt = scale * 0.05
+    erx = scale * 0.12
+    ery = scale * 0.25
+    ex = scale * 0.3
+    ey = scale * 0.3
+    return smileQ(x,y,hr,mr,ma,mt,erx,ery,ex,ey)
+end
+
+@addTemplateMethods function lfSmile(scale; flip=false)
+    p = [smileQ(x,y,scale) for x in Lc[1], y in Lc[2]]
+    if flip
+        p = reverse(transpose(p),dims=1)
+    end
+end
+
+#------- Pointer -------#
+
+function pointerOutlineQ(x::Real,y::Real,bt::Real,bh::Real,
+        fr::Real,l1::Real,l2::Real,l3::Real,l4::Real,
+        tr::Real,l0::Real,
+        hl0::Real,hl1::Real)
+    R = (fr*8+tr)/2
+    # base of hand
+    if x<=0 && (R-bt)^2 <= x^2+y^2 <= (R+bt)^2
+        return bh
+    end
+    # outside of hand
+    if (-R-bt)<=y<=(-R+bt) && 0<=x<=hl1
+        return bh
+    end
+    # finger tips
+    tcx = hl1 .+ [l1,l2,l3,l4]
+    tcy = (-R + fr) .+ 2*fr*[3:-1:0;]
+    if any( (fr-bt)^2 <= (x-tcx[j])^2 + (y-tcy[j])^2 <= (fr+bt)^2 && x>tcx[j] for j=1:4)
+        return bh
+    end
+
+    # Between fingers
+    if any( tcy[j]-fr-bt<=y<=tcy[j]-fr+bt && hl1 <= x <= tcx[j] for j=1:4 )
+        return bh
+    end
+    if any( (y-(tcy[j]-fr))^2 + (x-hl1)^2 <= bt^2 for j=1:3 )
+        return bh
+    end
+    
+    # Top of hand
+    if tcy[1] + fr - bt <= y <= tcy[1] + fr + bt && hl0 <= x <= tcx[1]
+        return bh
+    end
+    if (x-hl0)^2 + (y- (tcy[1]+fr))^2 <= bt^2
+        return bh
+    end
+
+    # Thumb
+    if x>=(hl0+l0) && y >= tcy[1]+fr && (tr-bt)^2 <= (x - (hl0+l0))^2 + (y-(tcy[1]+fr))^2 <= (tr+bt)^2
+        return bh
+    end
+    if hl0+l0>=x>=0 && (R-bt)<=y<=(R+bt)
+        return bh
+    end
+    return 0.0
+end
+
+function pointerOutlineQ(x::Real,y::Real,scale::Real)
+    bt = scale * 0.025
+    bh = 0.5
+    fr = scale * 0.1
+    l1 = scale * 0.7
+    l2 = scale * 0.25
+    l3 = scale * 0.2
+    l4 = scale * 0.15
+    tr = scale * 0.15
+    l0 = scale * 0.1
+    hl0 = scale * 0.2
+    hl1 = scale * 0.5
+    return pointerOutlineQ(x,y,bt,bh,fr,l1,l2,l3,l4,tr,l0,hl0,hl1)
+end
+
+function pointerFillQ(x::Real,y::Real,
+        fr::Real,l1::Real,l2::Real,l3::Real,l4::Real,
+        tr::Real,l0::Real,
+        hl0::Real,hl1::Real)
+    R = (fr*8+tr)/2
+    tcx = hl1 .+ [l1,l2,l3,l4]
+    tcy = (-R + fr) .+ 2*fr*[3:-1:0;]
+    
+    # base of hand
+    if x<=0 && x^2+y^2 <= R^2
+        return 1.0
+    end
+
+    # palm
+    if -R<=y<=tcy[1]+fr && 0<=x<=hl1
+        return 1.0
+    end
+
+    # fingers
+    if any( tcy[j]-fr <= y <= tcy[j]+fr && hl1<=x<=tcx[j] for j=1:4)
+        return 1.0
+    end
+    if any( x>tcx[j] && (x-tcx[j])^2 + (y-tcy[j])^2 <= fr^2 for j=1:4)
+        return 1.0
+    end
+
+    # thumb
+    if 0<=x<=hl0+l0 && tcy[1]+fr<=y<=R
+        return 1.0
+    end
+    if x>=hl0+l0 && y>=tcy[1]+fr && (x-(hl0+l0))^2 + (y-(tcy[1]+fr))^2 < tr^2
+        return 1.0
+    end
+    return 0.0
+end
+
+function pointerFillQ(x::Real,y::Real,scale::Real)
+    fr = scale * 0.1
+    l1 = scale * 0.7
+    l2 = scale * 0.25
+    l3 = scale * 0.2
+    l4 = scale * 0.15
+    tr = scale * 0.15
+    l0 = scale * 0.1
+    hl0 = scale * 0.2
+    hl1 = scale * 0.5
+    return pointerFillQ(x,y,fr,l1,l2,l3,l4,tr,l0,hl0,hl1)
+end
+
+@addTemplateMethods function lfPointer(scale; flip=false)
+    dataFill = [pointerFillQ(x,y,scale) for x in Lc[1], y in Lc[2]]
+    dataBorder = [pointerOutlineQ(x,y,scale) for x in Lc[1], y in Lc[2]]
+    p = [iszero(dataBorder[J]) ? dataFill[J] : dataBorder[J] for J in CartesianIndices(size(dataFill))]
+    if flip
+        p = reverse(transpose(p),dims=1)
+    end
 end
