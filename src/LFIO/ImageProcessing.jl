@@ -6,8 +6,7 @@ Requires:
     using FileIO: load, save
     using Images: Gray, RGB, Colorant
 =#
-
-export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parseFileName, parseStringToNum, getOrientation, dualate, linearFit, savePhase, saveBeam, saveAs8BitBMP
+export getImagesAndFilenames, imageToFloatArray, itfa, castImage, loadDir, parseFileName, parseStringToNum, getOrientation, dualate, linearFit, savePhase, saveBeam, savePhase8BMP
 
 """
     castImage(T::DataType, img::Matrix{<:Colorant}, L::Lattice{2}, flambda::Real)
@@ -398,30 +397,39 @@ function saveBeam(beam::Matrix{ComplexF64}, name::String, data=[:beamCsv, :angle
     end
 end
 
+# ────────────────────────────────────────────────────────────────────
+#   8‑bit BMP version
+# ────────────────────────────────────────────────────────────────────
 
 """
-    saveAs8BitBMP(image_data::Array{Int64,2}, output_filename::String)
+    savePhase8BMP(A::AbstractArray{ComplexF64,2}, name::String)
 
-    Execute a Python script and save an image from Julia array data.
+Normalize the phase of a complex array to `[0, 1]`, convert to
+`Gray{N0f8}`, and save as **uncompressed 8‑bit BMP** using
+`save_gray8bmp`.
+"""
+function savePhase8BMP(A::AbstractArray{ComplexF64,2}, name::String)
+    img = Gray.((angle.(A) .+ π) ./ (2π))         
+    # save_gray8bmp(name * ".bmp", img)
+    save_gray8bmp(name, img)
+end
 
-    # Arguments
-    - `image_data::Array{Int64,2}`: A 2D array of integers representing the image data.
-    - `output_filename::String`: The filename for the saved image.
+"""
+    savePhase8BMP(x::LF{ComplexPhase}, name::String)
 
-    This function executes python code which saves an image from the given Julia array data. The Python script is read from the file `script` and the image data is passed to the Python function `save_as_bmp` along with the output filename.
-    """
-# function saveAs8BitBMP(image_data::Array{Int64,2}, output_filename::String)
-#     py_executable_path = PyCall.python
-#     ENV["PYTHON"] = py_executable_path
-#     # Read the entire Python script as a string    
-#     python_script = read("to8Bbmp.py", String)
+Wrapper for `LatticeField`s that contain complex phase data.
+"""
+savePhase8BMP(x::LF{ComplexPhase}, name::String) =
+    savePhase8BMP(x.data, name)
 
-#     # Execute the Python script
-#     py"exec($python_script)"
+"""
+    savePhase8BMP(x::LF{RealPhase}, name::String)
 
-#     # Convert Julia array to a format that can be passed to Python
-#     py_image_data = PyObject(image_data)
+For real‑valued phase data already in `[0, 1)`, save directly.
+"""
+savePhase8BMP(x::LF{RealPhase}, name::String) =
+    # save_gray8bmp(name * ".bmp", Gray.(mod.(x.data, 1)))
+    save_gray8bmp(name, Gray.(mod.(x.data, 1)))
 
-#     # Call the Python function with the image data and output filename
-#     py"save_as_bmp($py_image_data, $output_filename)"
-# end
+
+

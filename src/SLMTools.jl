@@ -11,6 +11,7 @@ using FileIO: load, save
 using Images: Gray, RGB, Colorant  # Needed for ImageProcessing.jl
 #using Images: Gray  # Needed for Visualization.jl
 using FreeTypeAbstraction: findfont, renderstring!
+using ColorTypes, FixedPointNumbers   # Gray, N0f8
 
 include("LatticeFields/LatticeField.jl")
 
@@ -31,5 +32,7 @@ include("PhaseRetrieval/IFT.jl")
 include("PhaseRetrieval/OT.jl")
 
 include("LFIO/Visualization.jl")
+
+include("BMP8Writer.jl")
 
 end 
