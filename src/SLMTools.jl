@@ -33,6 +33,6 @@ include("PhaseRetrieval/OT.jl")
 
 include("LFIO/Visualization.jl")
 
-include("BMP8Writer.jl")
+include("LFIO/BMP8Writer.jl")
 
 end 
