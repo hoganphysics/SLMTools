@@ -11,7 +11,8 @@ using FileIO: load, save
 using Images: Gray, RGB, Colorant  # Needed for ImageProcessing.jl
 #using Images: Gray  # Needed for Visualization.jl
 using FreeTypeAbstraction: findfont, renderstring!
-using ColorTypes, FixedPointNumbers   # Gray, N0f8
+using ColorTypes
+using FixedPointNumbers   # Gray, N0f8
 
 include("LatticeFields/LatticeField.jl")
 
