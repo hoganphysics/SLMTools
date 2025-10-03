@@ -396,7 +396,7 @@ end
 #-------------------- Basic arithmetic for LatticeFields -------------------------------
 
 # Copying
-Base.copy(f::LF{I}) where I<:FieldVal = LF{I}(copy(f.data),copy(f.L),copy(f.flambda))
+Base.copy(f::LF{I}) where I<:FieldVal = LF{I}(copy(f.data),f.L,f.flambda)
 
 # Default behavior is to throw an undefined method error.
 Base.:(*)(args::LF...) = error("Behavior undefined for this combination of inputs: ", *((string(i) * ", " for i in typeof.(args))...))
