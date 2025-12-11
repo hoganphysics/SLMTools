@@ -417,7 +417,14 @@ end
 """
     otQuickPhase(U::LatticeField{Intensity,<:Real,N}, V::LatticeField{Intensity,<:Number,N}, ε::Real, max_iter::Integer; return_loss=false) where {N}
 
-    Solve the optimal transport problem between two distributions represented by lattice fields.  Uses a custom
+    TEMPORARILY DEPRECATED.  This function does not behave as expected for dimensions other than 2, and has been
+	superceded for the time being by otPhase2.  The fundamental problem with this function is that the iteration
+	step in SinkhornConvN can only be written as the double matrix multiplication in the particular case of N==2.
+	In other dimensions, one must instead do a contraction of the cost function kernel along each dimension of u
+	and v.  This will be a thing to work on...  Below is the old doc string for this function.  But please use 
+	otPhase2 instead. 
+
+	Solve the optimal transport problem between two distributions represented by lattice fields.  Uses a custom
     fast Sinkhorn-type algorithm. 
 
     Given two distributions `U` and `V` represented as `LatticeField{Intensity}` objects, this function computes 
@@ -451,4 +458,64 @@ function otQuickPhase(g2::LF{Intensity,T,N}, G2::LF{Intensity,T,N}, ϵ::Real, ma
         return LF{RealPhase}(Φ, g2.L, g2.flambda)
     end
 end
- 
+
+"""
+    otQuickPhase(inputIntensity::LatticeField{Intensity,<:Real,N}, targetIntensity::LatticeField{Intensity,<:Number,N}, ε::Real, max_iter::Integer) where {N}
+
+    Solve the optimal transport problem between two distributions represented by lattice fields.  Uses a custom
+    fast dual Sinkhorn-type algorithm. 
+
+    Given two distributions `inputIntensity` and `targetIntensity` represented as `LatticeField{Intensity}` objects, 
+	this function computes the optimal transport map between them using the Sinkhorn algorithm. It thenreturns a 
+	`LatticeField{RealPhase}` representing the scalar potential of the transport map.
+
+    # Arguments
+    - `inputIntensity::LatticeField{Intensity,<:Real,N}`: A lattice field representing the source distribution.
+    - `targetIntensity::LatticeField{Intensity,<:Number,N}`: A lattice field representing the target distribution.
+    - `ε::Real`: The regularization parameter for the Sinkhorn algorithm.  0.0002 is usually a good starting point.
+    - `max_iter`: Maximum number of iterations.  Usually 200 is adequate, but sometimes fewer are sufficient. 
+
+    # Returns
+    - `LatticeField{RealPhase}`: A lattice field representing the scalar potential of the optimal transport map.
+
+    # Notes
+    - Numerical instability results from very small values of `ε`.  If your output looks worse than expected, try increasing `ε`.
+
+    # See Also
+    - `otPhase`, `pdotPhase`, `pdotBeamEstimate`
+    """
+function otPhase2(inputIntensity::LatticeField{Intensity,<:Real,2}, targetIntensity::LatticeField{Intensity,<:Number,2}, ε::Real, iter::Int; options...)
+    @assert size(inputIntensity) == size(targetIntensity) "inputIntensity and targetIntensity must have the same size."
+    @assert inputIntensity.flambda == inputIntensity.flambda "Unequal flambdas."
+    a = inputIntensity.data ./ sum(inputIntensity.data)
+    b = targetIntensity.data ./ sum(targetIntensity.data)
+    n,m = size(a)
+    X, Y = natlat((n,m))
+    Kx = [exp(-(i - j)^2/(2*n*ε)) for i in X, j in X]
+    Ky = [exp(-(i - j)^2/(2*n*ε)) for i in Y, j in Y]
+    u = fill(1/n^2,(n,n))
+    v = fill(1/n^2,(n,n));
+    
+    # Sinkhorn-Knopp iteration
+    for iter in 1:iter
+        u = a ./ (Kx * v * Ky)
+        v = b ./ (Kx * u * Ky)
+    end
+
+    # gradients
+    scale = u ./ a
+    dphi_dx = scale .* (Kx * (v .* X) * Ky)
+    dphi_dy = scale .* (Kx * (v .* Y') * Ky)
+    Γ = cat(dphi_dx,dphi_dy; dims=3)
+    Φ = scalarPotentialN(Γ, inputIntensity.L; dimOrder=2:-1:1) / inputIntensity.flambda
+    
+    return LF{RealPhase}(Φ,inputIntensity.L,inputIntensity.flambda)
+end
+
+function otPhase2(inputMod::LatticeField{Modulus,<:Real,N}, targetMod::LatticeField{Modulus,<:Number,N}, ε::Real, iter::Int; options...) where N
+    return otPhase2(square(inputMod), square(targetMod), ε::Real, iter::Int; options...)
+end
+
+function otPhase2(inputIntensity::LatticeField{Intensity,<:Real,N}, targetIntensity::LatticeField{Intensity,<:Number,N}, ε::Real, iter::Int; options...) where N
+    error("otPhase2 is only implemented for 2 dimensional problems.")
+end
