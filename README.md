@@ -22,17 +22,18 @@ targetBeam = lfRing(Intensity, dL0, 2.5, 0.5)
 # Use optimal transport to find an SLM phase to make an approximate output beam.
 phiOT = otPhase(inputBeam,targetBeam,0.001)
 
-# Alternative optimal transport function.  This function is much faster, but somewhat
-# less stable than otPhase.  Consequently we use a slightly higher regularization parameter.
-phiOT2 = otQuickPhase(inputBeam,targetBeam,0.005,100)
+# Alternative optimal transport function.  This function is faster and works on larger 
+# arrays, but is currently only implemented in 2 dimensions.  
+phiOT2 = otPhase2(inputBeam,targetBeam,0.0002,200)
 
 # Refine the OT generated phase using the Gerchberg-Saxton algorithm.
 phiGS = gs(inputBeam,targetBeam,100,phiOT)
 
 # View the resulting output beams
 outputOT = square(sft(sqrt(inputBeam) * phiOT))
+outputOT2 = square(sft(sqrt(inputBeam) * phiOT2))
 outputGS = square(sft(sqrt(inputBeam) * phiGS))
-look(targetBeam,outputOT,outputGS)
+look(targetBeam,outputOT,outputOT2,outputGS)
 ```
 
 ## Installation
