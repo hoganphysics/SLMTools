@@ -7,7 +7,7 @@ Requires:
     using LinearAlgebra: norm
 =#
 
-export getCostMatrix, pdCostMatrix, pdotPhase, pdotBeamEstimate, mapify, scalarPotentialN, otPhase, hyperSum2, otQuickPhase, SinkhornConvN, dualToGradients, normalizeDistribution
+export getCostMatrix, pdCostMatrix, pdotPhase, pdotBeamEstimate, mapify, scalarPotentialN, otPhase, hyperSum2, otQuickPhase, SinkhornConvN, dualToGradients, normalizeDistribution, otPhase2
 
 """
     getCostMatrix(L::Lattice{N}; normalization=maximum) where N
