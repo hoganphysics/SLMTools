@@ -309,9 +309,9 @@ function dualate(f::LF{S,T,2},L::Lattice{2},center::Vector{<:Real},θ::Real,flam
     R = [cos(θ) -sin(θ) ; sin(θ) cos(θ)]
     r0, dx, dy = (R * [Lx0, Ly0]), Lxs * R[:,1], Lys * R[:,2]
     if naturalize
-        return LF{S}([interp((r0 + dx*I[1] + dy*I[2])...) for I in CartesianIndices(length.(dL))],natlat(length.(dL)),1.0);
+        return LF{S}([interp((r0 + dx * (I[1] - 1) + dy * (I[2] - 1))...) for I in CartesianIndices(length.(dL))],natlat(length.(dL)),1.0);
     else
-        return LF{S}([interp((r0 + dx*I[1] + dy*I[2])...) for I in CartesianIndices(length.(dL))],dL,flambda);
+        return LF{S}([interp((r0 + dx * (I[1] - 1) + dy * (I[2] - 1))...) for I in CartesianIndices(length.(dL))],dL,flambda);
     end
 end
 dualate(fs::Vector{<:LF{S}},L::Lattice{2},center::Vector{<:Real},theta::Real,flambda::Real=1.0;kwargs...) where {S<:FieldVal} = 
