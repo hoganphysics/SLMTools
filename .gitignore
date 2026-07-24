@@ -1,3 +1,4 @@
 *.vscode
 test.bmp
 Thumbs.db
+.DS_Store
