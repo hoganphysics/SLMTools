@@ -105,7 +105,7 @@ function downsample(x::AbstractArray{T,N}, Lu::Lattice{N}, Ld::Lattice{N}; inter
     if size(x) != length.(Lu)
         throw(DomainError((size(x), length.(Lu)), "downsample: Size of array x does not match size of lattice Lu."))
     end
-    return interpolation(Lu, x, extrapolation_bc=bc)[Ld...]
+    return interpolation(Lu, x, extrapolation_bc=bc)(Ld...)
 end
 
 """
@@ -380,7 +380,7 @@ function upsample(x::AbstractArray{T,N}, Ld::Lattice{N}, Lu::Lattice{N}; interpo
     if size(x) != length.(Ld)
         throw(DomainError((size(x), length.(Ld)), "upsample: Size of array x does not match size of lattice Ld."))
     end
-    return interpolation(Ld, x, extrapolation_bc=bc)[Lu...]
+    return interpolation(Ld, x, extrapolation_bc=bc)(Lu...)
 end
 
 """
