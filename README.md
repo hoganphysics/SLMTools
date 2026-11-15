@@ -72,7 +72,7 @@ The basic workflow of SLMTools is this:
 
 ### Useful functions
 The following are some of the major useful functions provided by this package. 
-* `otPhase`: Uses optimal transport to generate an SLM phase for transforming a given input beam into a target output beam. IMPORTANT NOTE: This function has largely been superceded by `otQuickPhase`.
+* `otPhase`: Uses optimal transport to generate an SLM phase for transforming a given input beam into a target output beam. IMPORTANT NOTE: This function has largely been superceded by `otPhase2`.
 * `otPhase2`: A new version of `otPhase` which uses a custom algorithm that greatly improves speed and relaxes memory requirements.  This function currently only works in 2 dimensions, but should probably be the go-to OT solver for most people most of the time.  This function can easily handle arrays/lattices with many millions of points. 
 * `gs`: Uses the Gerchberg-Saxton algorithm to generate an SLM phase for transforming a given input beam into a target output beam.
 * `mraf`: Uses the Mixed Region Amplitude Freedom (MRAF) algorithm to generate an SLM phase for transforming a given input beam into a target output beam.
